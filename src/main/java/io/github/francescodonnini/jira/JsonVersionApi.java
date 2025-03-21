@@ -1,6 +1,5 @@
 package io.github.francescodonnini.jira;
 
-import io.github.francescodonnini.jira.RestApi;
 import io.github.francescodonnini.jira.json.version.VersionNetworkEntity;
 import io.github.francescodonnini.model.Version;
 

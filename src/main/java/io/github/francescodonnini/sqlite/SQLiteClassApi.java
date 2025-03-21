@@ -8,7 +8,6 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 public class SQLiteClassApi {
     private static final String JDBC_DRIVER = "jdbc:sqlite:";
@@ -26,7 +25,8 @@ public class SQLiteClassApi {
     }
 
     private void createClassesTableIfNotExists() throws SQLException {
-        try (var connection = DriverManager.getConnection(getConnectionString(dbPath))) {
+        try (var connection = DriverManager.getConnection(getConnectionString(dbPath));
+             var stmt = connection.createStatement();) {
             var sql = """
                 CREATE TABLE IF NOT EXISTS classes (
                     path TEXT,
@@ -34,16 +34,14 @@ public class SQLiteClassApi {
                     buggy INTEGER DEFAULT 0,
                     content TEXT,
                     PRIMARY KEY(path, number));""";
-            var stmt = connection.createStatement();
             stmt.execute(sql);
         }
     }
 
     public List<JavaClass> getLocal() throws SQLException {
-        try (var connection = DriverManager.getConnection(getConnectionString(dbPath))) {
-            var sql = "SELECT path, number, buggy, content FROM classes;";
-            var stmt = connection.createStatement();
-            var rs = stmt.executeQuery(sql);
+        try (var connection = DriverManager.getConnection(getConnectionString(dbPath));
+             var stmt = connection.createStatement();) {
+            var rs = stmt.executeQuery("SELECT path, number, buggy, content FROM classes;");
             List<JavaClass> classes = new ArrayList<>();
             while (rs.next()) {
                 var path = rs.getString("path");
@@ -61,10 +59,11 @@ public class SQLiteClassApi {
     }
 
     public void saveLocal(List<JavaClass> classes) throws SQLException {
-        try (var conn = DriverManager.getConnection(getConnectionString(dbPath))) {
+        try (var conn = DriverManager.getConnection(getConnectionString(dbPath));
+             var psql = conn.prepareStatement("INSERT INTO classes(path, number, buggy, content) VALUES(?, ?, ?, ?)")) {
             conn.setAutoCommit(false);
             var counter = 0;
-            var psql = conn.prepareStatement("INSERT INTO classes(path, number, buggy, content) VALUES(?, ?, ?, ?)");
+
             var it = classes.stream().map(this::toLocalEntity).iterator();
             while (it.hasNext()) {
                 var bean = it.next();
