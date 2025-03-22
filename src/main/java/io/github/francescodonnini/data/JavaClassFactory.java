@@ -24,6 +24,7 @@ public class JavaClassFactory {
     // releases è la lista delle release da cui selezionare i file per le entry.
     private final List<Release> releases;
 
+
     public JavaClassFactory(String projectPath, List<Release> releases) {
         this.projectPath = projectPath;
         this.releases = releases;
@@ -110,7 +111,6 @@ public class JavaClassFactory {
     // createEntry legge un file in path afferente a release (si assume che quando invocato il metodo è stato fatto
     // checkout allo snapshot della repository indicato da release).
     // createEntry inizializza i campi path, buggy, content e release della classe relativa a path
-    // TODO: Effettuare il parsing delle classi in modo tale che una entry corrisponde effettivamente a una classe
     // e non a un file. In Java sebbene sia la norma che un file coincide con una classe, può capitare che ci siano
     // classi nidificate.
     private Optional<JavaClass> createEntry(Path path, Release release) {
