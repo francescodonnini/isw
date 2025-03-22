@@ -85,7 +85,7 @@ public class SQLiteClassApi {
     private JavaClassLocalEntity toLocalEntity(JavaClass jc) {
         var bean = new JavaClassLocalEntity();
         bean.setBuggy(jc.isBuggy());
-        bean.setPath(jc.getPath());
+        bean.setPath(jc.getPath().toString());
         bean.setReleaseNumber(jc.getRelease().number());
         bean.setContent(jc.getContent());
         return bean;

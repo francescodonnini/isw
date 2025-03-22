@@ -1,12 +1,18 @@
 package io.github.francescodonnini.model;
 
+import java.nio.file.Path;
+
 public class JavaClass {
     private boolean buggy;
-    private String path;
+    private Path path;
     private final Release release;
     private final String content;
 
     public JavaClass(boolean buggy, String path, Release release, String content) {
+        this(buggy, Path.of(path), release, content);
+    }
+
+    public JavaClass(boolean buggy, Path path, Release release, String content) {
         this.buggy = buggy;
         this.path = path;
         this.release = release;
@@ -21,11 +27,15 @@ public class JavaClass {
         this.buggy = buggy;
     }
 
-    public String getPath() {
+    public Path getPath() {
         return path;
     }
 
     public void setPath(String path) {
+        setPath(Path.of(path));
+    }
+
+    public void setPath(Path path) {
         this.path = path;
     }
 

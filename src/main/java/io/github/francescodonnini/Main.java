@@ -20,10 +20,10 @@ import java.sql.SQLException;
 
 public class Main {
     public static void main(String[] args) throws ConfigurationException, IOException, GitAPIException, SQLException {
-        if (args.length != 1) {
-            System.exit(1);
+        if (args.length != 2) {
+            System.exit(-1);
         }
-        var projectName = "SYNCOPE";
+        var projectName = args[1];
         // regex "<project name>-d+" è presente in tutti i commit che chiudono un ticket di JIRA
         var pattern = "%s-\\d+".formatted(projectName);
         var settings = new IniSettings(args[0]);
