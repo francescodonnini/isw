@@ -1,11 +1,7 @@
 package io.github.francescodonnini.ast;
 
 
-import com.sun.source.tree.CompilationUnitTree;
-import com.sun.source.tree.LineMap;
-import com.sun.source.tree.MethodTree;
 import com.sun.source.util.JavacTask;
-import com.sun.source.util.TreeScanner;
 import com.sun.source.util.Trees;
 import io.github.francescodonnini.config.IniSettings;
 import io.github.francescodonnini.csv.CsvReleaseApi;
@@ -28,7 +24,7 @@ public class AstWalker {
         if (args.length != 2) {
             System.exit(-1);
         }
-        var classes = getClasses(args[0], args[1]);
+        var classes = getClasses(args[0], args[1].toUpperCase());
         var i = new Random().nextInt(classes.size());
         var clazz = classes.get(i);
         System.out.println(clazz.getContent());
@@ -39,8 +35,12 @@ public class AstWalker {
                 .getJavaFileObjects(file);
         var task = (JavacTask) compiler.getTask(null, null, null, null, null, units);
         var cc = new CyclomaticComplexity();
-        for (var t : task.parse()) {
-            t.accept(cc, null);
+        var sourcePositions = Trees.instance(task).getSourcePositions();
+        var loc = new LineOfCode(sourcePositions);
+        for (var cu : task.parse()) {
+            cu.accept(loc, cu);
+            loc.getLOC().forEach(System.out::println);
+            cu.accept(cc, null);
             cc.getComplexity().forEach(System.out::println);
         }
     }

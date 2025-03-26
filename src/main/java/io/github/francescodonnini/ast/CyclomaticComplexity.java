@@ -21,13 +21,8 @@ public class CyclomaticComplexity extends TreeScanner<Void, Void> {
     public Void visitMethod(MethodTree node, Void unused) {
         complexity = 1;
         visitBlock(node.getBody(), null);
-        complexities.put(getSignature(node), complexity);
+        complexities.put(AstUtils.getSignature(node), complexity);
         return super.visitMethod(node, null);
-    }
-
-    private String getSignature(MethodTree node) {
-        var rt = node.getReturnType();
-        return "%s %s".formatted(rt == null ? "void" : rt.toString(), node.getName());
     }
 
     @Override
