@@ -2,7 +2,6 @@ package io.github.francescodonnini.ast;
 
 
 import com.sun.source.util.JavacTask;
-import com.sun.source.util.Trees;
 import io.github.francescodonnini.config.IniSettings;
 import io.github.francescodonnini.csv.CsvReleaseApi;
 import io.github.francescodonnini.model.JavaClass;
@@ -35,13 +34,15 @@ public class AstWalker {
                 .getJavaFileObjects(file);
         var task = (JavacTask) compiler.getTask(null, null, null, null, null, units);
         var cc = new CyclomaticComplexity();
-        var sourcePositions = Trees.instance(task).getSourcePositions();
-        var loc = new LineOfCode(sourcePositions);
+        var loc = new LineOfCode();
+        var ipc = new InputParametersCount();
         for (var cu : task.parse()) {
             cu.accept(loc, cu);
             loc.getLOC().forEach(System.out::println);
             cu.accept(cc, null);
             cc.getComplexity().forEach(System.out::println);
+            cu.accept(ipc, null);
+            ipc.getInputParametersCount().forEach(System.out::println);
         }
     }
 

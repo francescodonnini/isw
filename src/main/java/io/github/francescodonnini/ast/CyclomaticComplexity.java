@@ -19,8 +19,13 @@ public class CyclomaticComplexity extends TreeScanner<Void, Void> {
 
     @Override
     public Void visitMethod(MethodTree node, Void unused) {
-        complexity = 1;
-        visitBlock(node.getBody(), null);
+        complexity = 0;
+        var body = node.getBody();
+        // questo controllo è necessario nel caso in cui il metodo in esame non ha implementazione, cioè è un metodo
+        // di un'interfaccia oppure astratto.
+        if (body != null) {
+            visitBlock(node.getBody(), null);
+        }
         complexities.put(AstUtils.getSignature(node), complexity);
         return super.visitMethod(node, null);
     }
