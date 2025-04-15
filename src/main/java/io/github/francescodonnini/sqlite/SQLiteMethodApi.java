@@ -22,7 +22,7 @@ public class SQLiteMethodApi implements SQLiteApi.PreparedStatementFactory<JavaM
 
     @Override
     public PreparedStatement create(Connection connection) throws SQLException {
-        return connection.prepareStatement("INSERT INTO methods(buggy, signature, classPath, classNumber, content) VALUES (?, ?, ?, ?, ?)");
+        return connection.prepareStatement("INSERT INTO methods(buggy, signature, classPath, releaseId, content) VALUES (?, ?, ?, ?, ?)");
     }
 
     @Override
@@ -30,7 +30,7 @@ public class SQLiteMethodApi implements SQLiteApi.PreparedStatementFactory<JavaM
         preparedStatement.setInt(1, entity.isBuggy() ? 1 : 0);
         preparedStatement.setString(2, entity.getSignature());
         preparedStatement.setString(3, entity.getPath().toString());
-        preparedStatement.setInt(4, entity.getReleaseNumber());
+        preparedStatement.setString(4, entity.getReleaseId());
         preparedStatement.setString(5, entity.getContent());
     }
 
@@ -39,7 +39,7 @@ public class SQLiteMethodApi implements SQLiteApi.PreparedStatementFactory<JavaM
         var buggy = rs.getInt("buggy") == 1;
         var signature = rs.getString("signature");
         var path = Path.of(rs.getString("classPath"));
-        var release = rs.getInt("classNumber");
+        var release = rs.getString("releaseId");
         var content = rs.getString("content");
         var oc = classes.stream().filter(c -> filter(c, path, release)).findFirst();
         if (oc.isEmpty()) {
@@ -49,8 +49,8 @@ public class SQLiteMethodApi implements SQLiteApi.PreparedStatementFactory<JavaM
         return Optional.of(new JavaMethod(buggy, clazz, signature, content));
     }
 
-    private boolean filter(JavaClass clazz, Path path, int release) {
-        return clazz.getPath().equals(path) && clazz.getRelease().number() == release;
+    private boolean filter(JavaClass clazz, Path path, String releaseId) {
+        return clazz.getPath().equals(path) && clazz.getRelease().id().equals(releaseId);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class SQLiteMethodApi implements SQLiteApi.PreparedStatementFactory<JavaM
         bean.setSignature(model.getSignature());
         bean.setContent(model.getContent());
         bean.setPath(model.getJavaClass().getPath());
-        bean.setReleaseNumber(model.getJavaClass().getRelease().number());
+        bean.setReleaseId(model.getJavaClass().getRelease().id());
         return bean;
     }
 
@@ -69,10 +69,6 @@ public class SQLiteMethodApi implements SQLiteApi.PreparedStatementFactory<JavaM
     }
 
     public void saveLocal(List<JavaMethod> classes) throws SQLException {
-        try {
-            api.saveLocal(classes, this, this);
-        } catch (SQLException e) {
-
-        }
+        api.saveLocal(classes, this, this);
     }
 }

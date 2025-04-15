@@ -42,10 +42,10 @@ public class SQLiteApi {
             var sql = """
                 CREATE TABLE IF NOT EXISTS classes (
                     path TEXT,
-                    number INTEGER,
+                    releaseId TEXT,
                     parent TEXT,
                     content TEXT,
-                    PRIMARY KEY(path, number));
+                    PRIMARY KEY(path, releaseId));
                 """;
             stmt.execute(sql);
         }
@@ -58,10 +58,10 @@ public class SQLiteApi {
                     buggy       INTEGER,
                     signature   TEXT,
                     classPath   TEXT,
-                    classNumber INTEGER,
+                    releaseId   TEXT,
                     content     TEXT,
-                    PRIMARY KEY(signature, classPath, classNumber),
-                    FOREIGN KEY(classPath, classNumber) REFERENCES classes(path, number));""";
+                    PRIMARY KEY(signature, classPath, releaseId),
+                    FOREIGN KEY(classPath, releaseId) REFERENCES classes(path, releaseId));""";
             stmt.execute(sql);
         }
     }
@@ -89,10 +89,11 @@ public class SQLiteApi {
             var it = classes.stream().map(localEntityFactory::toLocalEntity).iterator();
             while (it.hasNext()) {
                 var bean = it.next();
+                System.out.println(bean);
                 statementFactory.prepare(psql, bean);
                 psql.addBatch();
                 ++counter;
-                if (counter % 1024 == 0) {
+                if (counter % 1 == 0) {
                     psql.executeBatch();
                 }
             }

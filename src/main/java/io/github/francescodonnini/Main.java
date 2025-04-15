@@ -7,6 +7,7 @@ import io.github.francescodonnini.data.*;
 import io.github.francescodonnini.jira.JsonReleaseApi;
 import io.github.francescodonnini.jira.JsonVersionApi;
 import io.github.francescodonnini.jira.RestApi;
+import io.github.francescodonnini.model.JavaMethod;
 import io.github.francescodonnini.sqlite.SQLiteApi;
 import io.github.francescodonnini.sqlite.SQLiteClassApi;
 import io.github.francescodonnini.sqlite.SQLiteMethodApi;
@@ -15,6 +16,8 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.List;
 import java.util.stream.IntStream;
 
 public class Main {
@@ -35,7 +38,7 @@ public class Main {
         var localReleaseApi = new CsvReleaseApi(Path.of(path, "releases.csv").toString());
         var releaseApi = new ReleaseRepository(remoteReleaseApi, localReleaseApi);
         var releases = releaseApi.getReleases();
-        releases = releases.subList(0, releases.size() / 2);
+        releases = releases.subList(0, (int) (releases.size() * 0.2));
         var factory = new DataLoaderImpl(projectPath, releases);
         var sqliteApi = new SQLiteApi(Path.of(path, "classes.db"));
         var localClassApi = new SQLiteClassApi(sqliteApi, releases);
@@ -44,10 +47,15 @@ public class Main {
         var localMethodApi = new SQLiteMethodApi(sqliteApi, classes);
         var methodApi = new JavaMethodRepository(factory, localMethodApi);
         var methods = methodApi.getMethods();
-        IntStream.range(classes.size() - 20, classes.size()).forEach(i -> {
-            var clazz = classes.get(i);
-            System.out.printf("class=%s, release=%s%n", clazz.getPath(), clazz.getRelease().name());
-            methods.stream().filter(m -> m.getJavaClass().getRealPath().equals(clazz.getRealPath())).forEach(m -> System.out.println(m.getSignature()));
-        });
+        printDuplicates(methods);
+    }
+
+    private static void printDuplicates(List<JavaMethod> methods) {
+        var set = new HashSet<JavaMethod>();
+        for (JavaMethod method : methods) {
+            if (!set.add(method)) {
+                System.out.printf("Duplicate method:%n%s %s %s%n", method.getJavaClass().getRelease().id(), method.getJavaClass().getPath(), method.getSignature());
+            }
+        }
     }
 }

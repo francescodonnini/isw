@@ -1,5 +1,6 @@
 package io.github.francescodonnini.data;
 
+import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.Tree;
@@ -10,6 +11,7 @@ import io.github.francescodonnini.model.JavaClass;
 import io.github.francescodonnini.model.JavaMethod;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -19,11 +21,18 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     private final Logger logger = Logger.getLogger(JavaMethodExtractor.class.getName());
     private CompilationUnitTree cu;
     private final List<JavaMethod> methods = new ArrayList<>();
-    private JavaClass clazz;
+    private JavaClass currentClass;
+    private final List<JavaClass> innerClasses = new ArrayList<>();
     private SourcePositions sourcePositions;
+    private int anonymousClassCounter = -1;
 
     public void reset() {
+        innerClasses.clear();
         methods.clear();
+    }
+
+    public List<JavaClass> getInnerClasses() {
+        return innerClasses;
     }
 
     public List<JavaMethod> getMethods() {
@@ -31,7 +40,8 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     }
 
     public void setClass(JavaClass clazz) {
-        this.clazz = clazz;
+        currentClass = clazz;
+        anonymousClassCounter = -1;
     }
 
     public void setCompilationUnit(CompilationUnitTree cu) {
@@ -43,8 +53,34 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     }
 
     @Override
+    public Void visitClass(ClassTree node, Void unused) {
+        ++anonymousClassCounter;
+        if (anonymousClassCounter > 0) {
+            var parent = currentClass;
+            var o = createInnerClass(node);
+            if (o.isPresent()) {
+                currentClass = o.get();
+                innerClasses.add(currentClass);
+                var rv = super.visitClass(node, unused);
+                currentClass = parent;
+                return rv;
+            }
+        }
+        return super.visitClass(node, unused);
+    }
+
+    private Optional<JavaClass> createInnerClass(ClassTree innerNode) {
+        return getContent(innerNode)
+                .map(s -> new JavaClass(
+                currentClass.getParent(),
+                Path.of(currentClass.getPath().toString().replace(".java", "#%d.java".formatted(anonymousClassCounter))),
+                currentClass.getRelease(),
+                s));
+    }
+
+    @Override
     public Void visitMethod(MethodTree node, Void unused) {
-        getContent(node).ifPresent(content -> methods.add(new JavaMethod(false, clazz, AstUtils.getSignature(node), content)));
+        getContent(node).ifPresent(content -> methods.add(new JavaMethod(false, currentClass, AstUtils.getSignature(node), content)));
         return super.visitMethod(node, unused);
     }
 

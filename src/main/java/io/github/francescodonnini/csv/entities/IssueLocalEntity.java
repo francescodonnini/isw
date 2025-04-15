@@ -9,17 +9,17 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class IssueLocalEntity {
-    @CsvBindAndSplitByName(column = "Affected Versions", elementType = Integer.class, splitOn = ",", writeDelimiter = ",", collectionType = List.class)
-    List<Integer> affectedVersions;
+    @CsvBindAndSplitByName(column = "Affected Versions", elementType = String.class, splitOn = ",", writeDelimiter = ",", collectionType = List.class)
+    List<String> affectedVersions;
 
     @CsvCustomBindByName(column = "Created", required = true, converter = LocalDateTimeConverter.class)
     LocalDateTime created;
 
     @CsvBindByName(column = "Fix Version", required = true)
-    int fixVersion;
+    String fixVersion;
 
     @CsvBindByName(column = "Opening Version", required = true)
-    int openingVersion;
+    String openingVersion;
 
     @CsvBindByName(column = "Commits", required = true)
     @CsvBindAndSplitByName(elementType = String.class, splitOn = ",", writeDelimiter = ",")
@@ -31,11 +31,11 @@ public class IssueLocalEntity {
     @CsvBindByName(column = "project", required = true)
     String project;
 
-    public List<Integer> getAffectedVersions() {
+    public List<String> getAffectedVersions() {
         return affectedVersions;
     }
 
-    public void setAffectedVersions(List<Integer> affectedVersions) {
+    public void setAffectedVersions(List<String> affectedVersions) {
         this.affectedVersions = affectedVersions;
     }
 
@@ -47,19 +47,19 @@ public class IssueLocalEntity {
         this.created = created;
     }
 
-    public int getFixVersion() {
+    public String getFixVersion() {
         return fixVersion;
     }
 
-    public void setFixVersion(int fixVersion) {
+    public void setFixVersion(String fixVersion) {
         this.fixVersion = fixVersion;
     }
 
-    public int getOpeningVersion() {
+    public String getOpeningVersion() {
         return openingVersion;
     }
 
-    public void setOpeningVersion(int openingVersion) {
+    public void setOpeningVersion(String openingVersion) {
         this.openingVersion = openingVersion;
     }
 

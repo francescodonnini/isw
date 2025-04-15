@@ -3,15 +3,15 @@ package io.github.francescodonnini.sqlite;
 public class JavaClassLocalEntity {
     private String path;
     private String parent;
-    private int releaseNumber;
+    private String releaseId;
     private String content;
 
-    public int getReleaseNumber() {
-        return releaseNumber;
+    public String getReleaseId() {
+        return releaseId;
     }
 
-    public void setReleaseNumber(int releaseNumber) {
-        this.releaseNumber = releaseNumber;
+    public void setReleaseId(String releaseId) {
+        this.releaseId = releaseId;
     }
 
     public String getParent() {

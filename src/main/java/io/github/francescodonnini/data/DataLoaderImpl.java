@@ -80,9 +80,7 @@ public class DataLoaderImpl implements DataLoader {
             var release = o.get();
             git.checkout().setName(tag).call();
             listAllFiles(Path.of(projectPath)).stream()
-                    .filter(this::isValidPath).forEach(f -> {
-                        createEntry(f, release);
-                    });
+                    .filter(this::isValidPath).forEach(f -> createEntry(f, release));
         }
         // Si reimposta la repository locale di git a quella iniziale.
         git.checkout().setName(current).call();
@@ -157,6 +155,10 @@ public class DataLoaderImpl implements DataLoader {
             extractor.setCompilationUnit(cu);
             cu.accept(extractor, null);
             methods.addAll(extractor.getMethods());
+            var innerClasses = extractor.getInnerClasses();
+            if (!innerClasses.isEmpty()) {
+                classes.addAll(extractor.getInnerClasses());
+            }
             extractor.reset();
         }
     }

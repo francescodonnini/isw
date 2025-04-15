@@ -1,6 +1,7 @@
 package io.github.francescodonnini.model;
 
 import java.nio.file.Path;
+import java.util.Objects;
 
 public class JavaClass {
     private Path parent;
@@ -17,6 +18,17 @@ public class JavaClass {
         this.path = path;
         this.release = release;
         this.content = content;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof JavaClass javaClass)) return false;
+        return Objects.equals(parent, javaClass.parent) && Objects.equals(path, javaClass.path) && Objects.equals(release, javaClass.release) && Objects.equals(content, javaClass.content);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(parent, path, release, content);
     }
 
     public Path getParent() {

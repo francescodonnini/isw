@@ -54,7 +54,6 @@ public class CsvReleaseApi {
 
     protected ReleaseLocalEntity toCsv(Release model) {
         var bean = new ReleaseLocalEntity();
-        bean.setReleaseNumber(model.number());
         bean.setName(model.name());
         bean.setId(model.id());
         bean.setReleaseDate(model.releaseDate());
@@ -62,6 +61,6 @@ public class CsvReleaseApi {
     }
 
     protected Release fromCsv(ReleaseLocalEntity bean) {
-        return new Release(bean.getReleaseNumber(), bean.getId(), bean.getName(), bean.getReleaseDate());
+        return new Release(bean.getId(), bean.getName(), bean.getReleaseDate());
     }
 }

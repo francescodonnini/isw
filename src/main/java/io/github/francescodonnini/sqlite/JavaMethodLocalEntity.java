@@ -6,7 +6,7 @@ public class JavaMethodLocalEntity {
     private boolean buggy;
     private String signature;
     private Path path;
-    private int releaseNumber;
+    private String releaseId;
     private String content;
 
     public boolean isBuggy() {
@@ -33,12 +33,12 @@ public class JavaMethodLocalEntity {
         this.path = path;
     }
 
-    public int getReleaseNumber() {
-        return releaseNumber;
+    public String getReleaseId() {
+        return releaseId;
     }
 
-    public void setReleaseNumber(int releaseNumber) {
-        this.releaseNumber = releaseNumber;
+    public void setReleaseId(String releaseId) {
+        this.releaseId = releaseId;
     }
 
     public String getContent() {
@@ -47,5 +47,10 @@ public class JavaMethodLocalEntity {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    @Override
+    public String toString() {
+        return "%s\t%s\t%s".formatted(signature, path, releaseId);
     }
 }

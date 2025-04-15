@@ -69,11 +69,11 @@ public class CsvIssueApi {
 
     private IssueLocalEntity toCsv(Issue model) {
         var bean = new IssueLocalEntity();
-        bean.setAffectedVersions(model.affectedVersions().stream().map(Release::number).toList());
+        bean.setAffectedVersions(model.affectedVersions().stream().map(Release::id).toList());
         bean.setCommits(model.commits().stream().map(c -> c.getId().getName()).toList());
         bean.setCreated(model.created());
-        bean.setFixVersion(model.fixVersion().number());
-        bean.setOpeningVersion(model.openingVersion().number());
+        bean.setFixVersion(model.fixVersion().id());
+        bean.setOpeningVersion(model.openingVersion().id());
         bean.setKey(model.key());
         bean.setProject(model.project());
         return bean;
@@ -82,10 +82,10 @@ public class CsvIssueApi {
     private Issue fromCsv(IssueLocalEntity bean) {
         List<Release> affectedVersions = new ArrayList<>();
         if (bean.getAffectedVersions() != null) {
-            affectedVersions.addAll(bean.getAffectedVersions().stream().map(this::getByReleaseNumber).toList());
+            affectedVersions.addAll(bean.getAffectedVersions().stream().map(this::getReleaseById).toList());
         }
-        var fixVersion = getByReleaseNumber(bean.getFixVersion());
-        var openingVersion = getByReleaseNumber(bean.getOpeningVersion());
+        var fixVersion = getReleaseById(bean.getFixVersion());
+        var openingVersion = getReleaseById(bean.getOpeningVersion());
         var commitList = new ArrayList<RevCommit>();
         if (bean.getCommits() != null) {
             commitList.addAll(bean.getCommits().stream().map(this::getByObjectId).toList());
@@ -106,8 +106,8 @@ public class CsvIssueApi {
         return commits.stream().filter(c -> c.getId().equals(objectId)).findFirst().orElse(null);
     }
 
-    private Release getByReleaseNumber(int releaseNumber) {
-        return binarySearch(releases, release -> Integer.compare(release.number(), releaseNumber));
+    private Release getReleaseById(String id) {
+        return binarySearch(releases, release -> release.id().compareTo(id));
     }
 
     private static <T> T binarySearch(List<T> releases, ToIntFunction<T> comparator) {

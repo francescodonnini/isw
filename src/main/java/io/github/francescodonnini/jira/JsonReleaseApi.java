@@ -20,9 +20,8 @@ public class JsonReleaseApi {
                 .filter(Version::released).filter(v -> v.releaseDate() != null)
                 .sorted(Comparator.comparing(Version::releaseDate)).toList();
         var releases = new ArrayList<Release>();
-        for (int i = 0; i < versions.size(); i++) {
-            var v = versions.get(i);
-            releases.add(new Release(i, v.id(), v.name(), v.releaseDate()));
+        for (Version v : versions) {
+            releases.add(new Release(v.id(), v.name(), v.releaseDate()));
         }
         return releases;
     }

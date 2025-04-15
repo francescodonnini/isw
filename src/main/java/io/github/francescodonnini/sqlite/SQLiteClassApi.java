@@ -22,13 +22,13 @@ public class SQLiteClassApi implements SQLiteApi.PreparedStatementFactory<JavaCl
 
     @Override
     public PreparedStatement create(Connection connection) throws SQLException {
-        return connection.prepareStatement("INSERT INTO classes(path, number, parent, content) VALUES(?, ?, ?, ?);");
+        return connection.prepareStatement("INSERT INTO classes(path, releaseId, parent, content) VALUES(?, ?, ?, ?);");
     }
 
     @Override
     public void prepare(PreparedStatement preparedStatement, JavaClassLocalEntity entity) throws SQLException {
         preparedStatement.setString(1, entity.getPath());
-        preparedStatement.setInt(2, entity.getReleaseNumber());
+        preparedStatement.setString(2, entity.getReleaseId());
         preparedStatement.setString(3, entity.getParent());
         preparedStatement.setString(4, entity.getContent());
     }
@@ -36,8 +36,8 @@ public class SQLiteClassApi implements SQLiteApi.PreparedStatementFactory<JavaCl
     @Override
     public Optional<JavaClass> fromResultSet(ResultSet rs) throws SQLException {
         var path = rs.getString("path");
-        var number = rs.getInt("number");
-        var o = releases.stream().filter(r -> r.number() == number).findFirst();
+        var releaseId = rs.getString("releaseId");
+        var o = releases.stream().filter(r -> r.id().equals(releaseId)).findFirst();
         if (o.isEmpty()) {
             return Optional.empty();
         }
@@ -51,7 +51,7 @@ public class SQLiteClassApi implements SQLiteApi.PreparedStatementFactory<JavaCl
         var bean = new JavaClassLocalEntity();
         bean.setPath(jc.getPath().toString());
         bean.setParent(jc.getParent().toString());
-        bean.setReleaseNumber(jc.getRelease().number());
+        bean.setReleaseId(jc.getRelease().id());
         bean.setContent(jc.getContent());
         return bean;
     }

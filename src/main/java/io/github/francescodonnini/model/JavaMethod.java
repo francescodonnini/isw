@@ -1,6 +1,7 @@
 package io.github.francescodonnini.model;
 
 import java.nio.file.Path;
+import java.util.Objects;
 
 public class JavaMethod {
     private boolean buggy;
@@ -13,6 +14,17 @@ public class JavaMethod {
         this.signature = signature;
         this.javaClass = javaClass;
         this.content = content;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof JavaMethod that)) return false;
+        return buggy == that.buggy && Objects.equals(signature, that.signature) && Objects.equals(javaClass, that.javaClass) && Objects.equals(content, that.content);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(buggy, signature, javaClass, content);
     }
 
     public boolean isBuggy() {
