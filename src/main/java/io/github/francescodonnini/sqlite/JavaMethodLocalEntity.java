@@ -3,10 +3,19 @@ package io.github.francescodonnini.sqlite;
 import java.nio.file.Path;
 
 public class JavaMethodLocalEntity {
+    private boolean buggy;
     private String signature;
     private Path path;
     private int releaseNumber;
     private String content;
+
+    public boolean isBuggy() {
+        return buggy;
+    }
+
+    public void setBuggy(boolean buggy) {
+        this.buggy = buggy;
+    }
 
     public String getSignature() {
         return signature;

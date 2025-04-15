@@ -4,16 +4,7 @@ public class JavaClassLocalEntity {
     private String path;
     private String parent;
     private int releaseNumber;
-    private boolean buggy;
     private String content;
-
-    public boolean isBuggy() {
-        return buggy;
-    }
-
-    public void setBuggy(boolean buggy) {
-        this.buggy = buggy;
-    }
 
     public int getReleaseNumber() {
         return releaseNumber;

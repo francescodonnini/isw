@@ -31,8 +31,14 @@ public class SQLiteApi {
     }
 
     private void createTablesIfNotExist() throws SQLException {
-        try (var connection = DriverManager.getConnection(getConnectionString(dbPath));
-             var stmt = connection.createStatement()) {
+        try (var connection = DriverManager.getConnection(getConnectionString(dbPath))) {
+            createClassesTable(connection);
+            createMethodsTable(connection);
+        }
+    }
+
+    private void createClassesTable(Connection connection) throws SQLException {
+        try (var stmt = connection.createStatement()) {
             var sql = """
                 CREATE TABLE IF NOT EXISTS classes (
                     path TEXT,
@@ -40,11 +46,20 @@ public class SQLiteApi {
                     parent TEXT,
                     content TEXT,
                     PRIMARY KEY(path, number));
+                """;
+            stmt.execute(sql);
+        }
+    }
+
+    private void createMethodsTable(Connection connection) throws SQLException {
+        try (var stmt = connection.createStatement()) {
+            var sql = """
                 CREATE TABLE IF NOT EXISTS methods (
+                    buggy       INTEGER,
                     signature   TEXT,
                     classPath   TEXT,
                     classNumber INTEGER,
-                    content      TEXT,
+                    content     TEXT,
                     PRIMARY KEY(signature, classPath, classNumber),
                     FOREIGN KEY(classPath, classNumber) REFERENCES classes(path, number));""";
             stmt.execute(sql);

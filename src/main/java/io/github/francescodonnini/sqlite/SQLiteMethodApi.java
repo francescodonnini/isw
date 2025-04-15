@@ -22,19 +22,21 @@ public class SQLiteMethodApi implements SQLiteApi.PreparedStatementFactory<JavaM
 
     @Override
     public PreparedStatement create(Connection connection) throws SQLException {
-        return connection.prepareStatement("INSERT INTO methods(signature, classPath, classNumber, content) VALUES (?, ?, ?, ?)");
+        return connection.prepareStatement("INSERT INTO methods(buggy, signature, classPath, classNumber, content) VALUES (?, ?, ?, ?, ?)");
     }
 
     @Override
     public void prepare(PreparedStatement preparedStatement, JavaMethodLocalEntity entity) throws SQLException {
-        preparedStatement.setString(1, entity.getSignature());
-        preparedStatement.setString(2, entity.getPath().toString());
-        preparedStatement.setInt(3, entity.getReleaseNumber());
-        preparedStatement.setString(4, entity.getContent());
+        preparedStatement.setInt(1, entity.isBuggy() ? 1 : 0);
+        preparedStatement.setString(2, entity.getSignature());
+        preparedStatement.setString(3, entity.getPath().toString());
+        preparedStatement.setInt(4, entity.getReleaseNumber());
+        preparedStatement.setString(5, entity.getContent());
     }
 
     @Override
     public Optional<JavaMethod> fromResultSet(ResultSet rs) throws SQLException {
+        var buggy = rs.getInt("buggy") == 1;
         var signature = rs.getString("signature");
         var path = Path.of(rs.getString("classPath"));
         var release = rs.getInt("classNumber");
@@ -44,7 +46,7 @@ public class SQLiteMethodApi implements SQLiteApi.PreparedStatementFactory<JavaM
             return Optional.empty();
         }
         var clazz = oc.get();
-        return Optional.of(new JavaMethod(clazz, signature, content));
+        return Optional.of(new JavaMethod(buggy, clazz, signature, content));
     }
 
     private boolean filter(JavaClass clazz, Path path, int release) {
@@ -54,6 +56,7 @@ public class SQLiteMethodApi implements SQLiteApi.PreparedStatementFactory<JavaM
     @Override
     public JavaMethodLocalEntity toLocalEntity(JavaMethod model) {
         var bean = new JavaMethodLocalEntity();
+        bean.setBuggy(model.isBuggy());
         bean.setSignature(model.getSignature());
         bean.setContent(model.getContent());
         bean.setPath(model.getJavaClass().getPath());
@@ -62,10 +65,14 @@ public class SQLiteMethodApi implements SQLiteApi.PreparedStatementFactory<JavaM
     }
 
     public List<JavaMethod> getLocal() throws SQLException {
-        return api.getLocal("method", this);
+        return api.getLocal("methods", this);
     }
 
     public void saveLocal(List<JavaMethod> classes) throws SQLException {
-        api.saveLocal(classes, this, this);
+        try {
+            api.saveLocal(classes, this, this);
+        } catch (SQLException e) {
+
+        }
     }
 }

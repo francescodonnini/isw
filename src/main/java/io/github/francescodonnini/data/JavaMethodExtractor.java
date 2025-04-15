@@ -44,9 +44,7 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
 
     @Override
     public Void visitMethod(MethodTree node, Void unused) {
-        getContent(node).ifPresent(content -> {
-            methods.add(new JavaMethod(clazz, AstUtils.getSignature(node), content));
-        });
+        getContent(node).ifPresent(content -> methods.add(new JavaMethod(false, clazz, AstUtils.getSignature(node), content)));
         return super.visitMethod(node, unused);
     }
 

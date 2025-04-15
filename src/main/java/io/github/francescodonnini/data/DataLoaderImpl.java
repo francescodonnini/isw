@@ -138,7 +138,7 @@ public class DataLoaderImpl implements DataLoader {
             // Non sempre ci si sposta alla fine del file invocando skip con il valore dell'intero massimo, potrebbe
             // essere necessario effettuare più invocazioni.
             // buggy inizialmente viene impostato come false, perché l'etichettatura viene fatta in un secondo momento.
-            var clazz = new JavaClass(false, projectPath, path.toString(), release, Files.readString(realPath));
+            var clazz = new JavaClass(projectPath, path.toString(), release, Files.readString(realPath));
             classes.add(clazz);
             extractor.setClass(clazz);
             parseMethods(clazz);

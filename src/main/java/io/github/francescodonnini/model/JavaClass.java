@@ -3,30 +3,20 @@ package io.github.francescodonnini.model;
 import java.nio.file.Path;
 
 public class JavaClass {
-    private boolean buggy;
     private Path parent;
     private Path path;
     private final Release release;
     private final String content;
 
-    public JavaClass(boolean buggy, String parent, String path, Release release, String content) {
-        this(buggy, Path.of(parent), Path.of(path), release, content);
+    public JavaClass(String parent, String path, Release release, String content) {
+        this(Path.of(parent), Path.of(path), release, content);
     }
 
-    public JavaClass(boolean buggy, Path parent, Path path, Release release, String content) {
-        this.buggy = buggy;
+    public JavaClass(Path parent, Path path, Release release, String content) {
         this.parent = parent;
         this.path = path;
         this.release = release;
         this.content = content;
-    }
-
-    public boolean isBuggy() {
-        return buggy;
-    }
-
-    public void setBuggy(boolean buggy) {
-        this.buggy = buggy;
     }
 
     public Path getParent() {

@@ -3,14 +3,20 @@ package io.github.francescodonnini.model;
 import java.nio.file.Path;
 
 public class JavaMethod {
+    private boolean buggy;
     private final String signature;
     private final JavaClass javaClass;
     private final String content;
 
-    public JavaMethod(JavaClass javaClass, String signature, String content) {
+    public JavaMethod(boolean buggy, JavaClass javaClass, String signature, String content) {
+        this.buggy = buggy;
         this.signature = signature;
         this.javaClass = javaClass;
         this.content = content;
+    }
+
+    public boolean isBuggy() {
+        return buggy;
     }
 
     public String getContent() {

@@ -22,7 +22,7 @@ public class SQLiteClassApi implements SQLiteApi.PreparedStatementFactory<JavaCl
 
     @Override
     public PreparedStatement create(Connection connection) throws SQLException {
-        return connection.prepareStatement("INSERT INTO classes(path, number, parent, buggy, content) VALUES(?, ?, ?, ?, ?);");
+        return connection.prepareStatement("INSERT INTO classes(path, number, parent, content) VALUES(?, ?, ?, ?);");
     }
 
     @Override
@@ -30,8 +30,7 @@ public class SQLiteClassApi implements SQLiteApi.PreparedStatementFactory<JavaCl
         preparedStatement.setString(1, entity.getPath());
         preparedStatement.setInt(2, entity.getReleaseNumber());
         preparedStatement.setString(3, entity.getParent());
-        preparedStatement.setBoolean(4, entity.isBuggy());
-        preparedStatement.setString(5, entity.getContent());
+        preparedStatement.setString(4, entity.getContent());
     }
 
     @Override
@@ -43,15 +42,13 @@ public class SQLiteClassApi implements SQLiteApi.PreparedStatementFactory<JavaCl
             return Optional.empty();
         }
         var parent = rs.getString("parent");
-        var buggy = rs.getInt("buggy") == 1;
         var content = rs.getString("content");
-        return Optional.of(new JavaClass(buggy, parent, path, o.get(), content));
+        return Optional.of(new JavaClass(parent, path, o.get(), content));
     }
 
     @Override
     public JavaClassLocalEntity toLocalEntity(JavaClass jc) {
         var bean = new JavaClassLocalEntity();
-        bean.setBuggy(jc.isBuggy());
         bean.setPath(jc.getPath().toString());
         bean.setParent(jc.getParent().toString());
         bean.setReleaseNumber(jc.getRelease().number());
