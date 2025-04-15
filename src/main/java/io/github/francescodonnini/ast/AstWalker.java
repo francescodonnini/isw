@@ -6,6 +6,7 @@ import io.github.francescodonnini.config.IniSettings;
 import io.github.francescodonnini.csv.CsvReleaseApi;
 import io.github.francescodonnini.model.JavaClass;
 import io.github.francescodonnini.model.Release;
+import io.github.francescodonnini.sqlite.SQLiteApi;
 import io.github.francescodonnini.sqlite.SQLiteClassApi;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 
@@ -68,6 +69,6 @@ public class AstWalker {
     }
 
     private static SQLiteClassApi getSQLiteClassApi(String path, List<Release> releases) throws SQLException {
-        return new SQLiteClassApi(Path.of(path, "classes.db"), releases);
+        return new SQLiteClassApi(new SQLiteApi(Path.of(path, "classes.db")), releases);
     }
 }

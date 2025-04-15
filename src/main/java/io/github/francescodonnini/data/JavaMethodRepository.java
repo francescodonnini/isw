@@ -1,39 +1,39 @@
 package io.github.francescodonnini.data;
 
-import io.github.francescodonnini.model.JavaClass;
-import io.github.francescodonnini.sqlite.SQLiteClassApi;
+import io.github.francescodonnini.model.JavaMethod;
+import io.github.francescodonnini.sqlite.SQLiteMethodApi;
 
 import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class JavaClassRepository implements JavaClassApi {
+public class JavaMethodRepository implements JavaMethodApi {
     private final Logger logger = Logger.getLogger(JavaClassRepository.class.getName());
-    private final SQLiteClassApi localSource;
+    private final SQLiteMethodApi localSource;
     private final DataLoader factory;
 
-    public JavaClassRepository(DataLoader factory, SQLiteClassApi localSource) {
+    public JavaMethodRepository(DataLoader factory, SQLiteMethodApi localSource) {
         this.localSource = localSource;
         this.factory = factory;
     }
 
     @Override
-    public List<JavaClass> getClasses() {
+    public List<JavaMethod> getMethods() {
         try {
-            var classes = localSource.getLocal();
-            if (classes.isEmpty()) {
-                classes = factory.getClasses();
-                saveLocal(classes);
+            var methods = localSource.getLocal();
+            if (methods.isEmpty()) {
+                methods = factory.getMethods();
+                saveLocal(methods);
             }
-            return classes;
-        } catch (SQLException e) {
+            return methods;
+        } catch (SQLException | DataLoaderException e) {
             logger.log(Level.SEVERE, e.getMessage(), e);
             return List.of();
         }
     }
 
-    private void saveLocal(List<JavaClass> classes) {
+    private void saveLocal(List<JavaMethod> classes) {
         try {
             localSource.saveLocal(classes);
         } catch (SQLException e) {

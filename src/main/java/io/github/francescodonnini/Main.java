@@ -7,12 +7,15 @@ import io.github.francescodonnini.data.*;
 import io.github.francescodonnini.jira.JsonReleaseApi;
 import io.github.francescodonnini.jira.JsonVersionApi;
 import io.github.francescodonnini.jira.RestApi;
+import io.github.francescodonnini.sqlite.SQLiteApi;
 import io.github.francescodonnini.sqlite.SQLiteClassApi;
+import io.github.francescodonnini.sqlite.SQLiteMethodApi;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.stream.IntStream;
 
 public class Main {
     public static void main(String[] args) throws ConfigurationException, IOException, SQLException {
@@ -33,12 +36,18 @@ public class Main {
         var releaseApi = new ReleaseRepository(remoteReleaseApi, localReleaseApi);
         var releases = releaseApi.getReleases();
         releases = releases.subList(0, releases.size() / 2);
-        var factory = new JavaClassFactory(projectPath, releases);
-        var localClassApi = new SQLiteClassApi(Path.of(path, "classes.db"), releases);
+        var factory = new DataLoaderImpl(projectPath, releases);
+        var sqliteApi = new SQLiteApi(Path.of(path, "classes.db"));
+        var localClassApi = new SQLiteClassApi(sqliteApi, releases);
         var classApi = new JavaClassRepository(factory, localClassApi);
         var classes = classApi.getClasses();
-        for (var clazz : classes.subList(classes.size() - 20, classes.size())) {
+        var localMethodApi = new SQLiteMethodApi(sqliteApi, classes);
+        var methodApi = new JavaMethodRepository(factory, localMethodApi);
+        var methods = methodApi.getMethods();
+        IntStream.range(classes.size() - 20, classes.size()).forEach(i -> {
+            var clazz = classes.get(i);
             System.out.printf("class=%s, release=%s%n", clazz.getPath(), clazz.getRelease().name());
-        }
+            methods.stream().filter(m -> m.getJavaClass().getRealPath().equals(clazz.getRealPath())).forEach(m -> System.out.println(m.getSignature()));
+        });
     }
 }
