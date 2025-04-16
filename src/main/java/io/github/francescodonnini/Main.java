@@ -18,6 +18,8 @@ import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
 public class Main {
@@ -38,7 +40,7 @@ public class Main {
         var localReleaseApi = new CsvReleaseApi(Path.of(path, "releases.csv").toString());
         var releaseApi = new ReleaseRepository(remoteReleaseApi, localReleaseApi);
         var releases = releaseApi.getReleases();
-        releases = releases.subList(0, (int) (releases.size() * 0.2));
+        releases = releases.subList(0, (int) (releases.size() * 0.5));
         var factory = new DataLoaderImpl(projectPath, releases);
         var sqliteApi = new SQLiteApi(Path.of(path, "classes.db"));
         var localClassApi = new SQLiteClassApi(sqliteApi, releases);
@@ -47,15 +49,13 @@ public class Main {
         var localMethodApi = new SQLiteMethodApi(sqliteApi, classes);
         var methodApi = new JavaMethodRepository(factory, localMethodApi);
         var methods = methodApi.getMethods();
-        printDuplicates(methods);
-    }
-
-    private static void printDuplicates(List<JavaMethod> methods) {
-        var set = new HashSet<JavaMethod>();
-        for (JavaMethod method : methods) {
-            if (!set.add(method)) {
-                System.out.printf("Duplicate method:%n%s %s %s%n", method.getJavaClass().getRelease().id(), method.getJavaClass().getPath(), method.getSignature());
-            }
-        }
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        IntStream.range(0, 20).forEach(_ -> {
+            var i = random.nextInt(classes.size());
+            var clazz = classes.get(i);
+            System.out.println(clazz);
+            methods.stream().filter(m -> m.getJavaClass().equals(clazz))
+                    .forEach(System.out::println);
+        });
     }
 }
