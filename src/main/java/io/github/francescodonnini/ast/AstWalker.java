@@ -34,16 +34,10 @@ public class AstWalker {
                 .getStandardFileManager(null, null, null)
                 .getJavaFileObjects(file);
         var task = (JavacTask) compiler.getTask(null, null, null, null, null, units);
-        var cc = new CyclomaticComplexity();
-        var loc = new LineOfCode();
-        var ipc = new InputParametersCount();
+        var sc = new StatementsCounter();
         for (var cu : task.parse()) {
-            cu.accept(loc, cu);
-            loc.getLOC().forEach(System.out::println);
-            cu.accept(cc, null);
-            cc.getComplexity().forEach(System.out::println);
-            cu.accept(ipc, null);
-            ipc.getInputParametersCount().forEach(System.out::println);
+            cu.accept(sc, null);
+            sc.getCount().forEach(System.out::println);
         }
     }
 

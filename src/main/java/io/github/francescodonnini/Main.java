@@ -49,13 +49,6 @@ public class Main {
         var localMethodApi = new SQLiteMethodApi(sqliteApi, classes);
         var methodApi = new JavaMethodRepository(factory, localMethodApi);
         var methods = methodApi.getMethods();
-        ThreadLocalRandom random = ThreadLocalRandom.current();
-        IntStream.range(0, 20).forEach(_ -> {
-            var i = random.nextInt(classes.size());
-            var clazz = classes.get(i);
-            System.out.println(clazz);
-            methods.stream().filter(m -> m.getJavaClass().equals(clazz))
-                    .forEach(System.out::println);
-        });
+
     }
 }
