@@ -89,11 +89,10 @@ public class SQLiteApi {
             var it = classes.stream().map(localEntityFactory::toLocalEntity).iterator();
             while (it.hasNext()) {
                 var bean = it.next();
-                System.out.println(bean);
                 statementFactory.prepare(psql, bean);
                 psql.addBatch();
                 ++counter;
-                if (counter % 1 == 0) {
+                if (counter % 1024 == 0) {
                     psql.executeBatch();
                 }
             }
