@@ -31,6 +31,11 @@ public class JavaClass {
         return Objects.hash(parent, path, release, content);
     }
 
+    @Override
+    public String toString() {
+        return "%s %s".formatted(release.id(), path);
+    }
+
     public Path getParent() {
         return parent;
     }

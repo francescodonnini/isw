@@ -27,6 +27,11 @@ public class JavaMethod {
         return Objects.hash(buggy, signature, javaClass, content);
     }
 
+    @Override
+    public String toString() {
+        return "(%s, %s)".formatted(javaClass.getRelease().id(), signature);
+    }
+
     public boolean isBuggy() {
         return buggy;
     }
