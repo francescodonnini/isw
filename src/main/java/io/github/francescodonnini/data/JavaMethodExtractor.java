@@ -73,9 +73,19 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
         return getContent(innerNode)
                 .map(s -> new JavaClass(
                 currentClass.getParent(),
-                Path.of(currentClass.getPath().toString().replace(".java", "#%d.java".formatted(anonymousClassCounter))),
+                innerClassPath(currentClass, innerNode),
                 currentClass.getRelease(),
                 s));
+    }
+
+    private Path innerClassPath(JavaClass container, ClassTree innerNode) {
+        var s = container.getPath().toString().replace(".java", "");
+        var name = innerNode.getSimpleName().toString();
+        if (!name.isEmpty()) {
+            s += "#" + name;
+        }
+        s += "#" + anonymousClassCounter + ".java";
+        return Path.of(s);
     }
 
     @Override
