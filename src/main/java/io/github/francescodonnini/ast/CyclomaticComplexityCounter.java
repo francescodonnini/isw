@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CyclomaticComplexity extends TreeScanner<Void, Void> {
+public class CyclomaticComplexityCounter extends TreeScanner<Void, Void> {
     public record MethodCC(String name, int complexity) {}
 
     private final Map<String, Integer> complexities = new HashMap<>();

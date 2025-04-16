@@ -12,13 +12,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-public class LineOfCode extends TreeScanner<Void, CompilationUnitTree> {
+public class LineOfCodeCounter extends TreeScanner<Void, CompilationUnitTree> {
     public record MethodLOC(String name, Long loc) {}
 
-    private final Logger LOGGER = Logger.getLogger(LineOfCode.class.getName());
+    private final Logger LOGGER = Logger.getLogger(LineOfCodeCounter.class.getName());
     private final Map<String, Long> locs = new HashMap<>();
 
-    public LineOfCode() {
+    public LineOfCodeCounter() {
     }
 
     public List<MethodLOC> getLOC() {

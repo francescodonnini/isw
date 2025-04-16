@@ -7,13 +7,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class InputParametersCount extends TreeScanner<Void, Void> {
+public class InputParametersCounter extends TreeScanner<Void, Void> {
     public record MethodIPC(String name, int complexity) {}
 
     private final Map<String, Integer> ipc = new HashMap<>();
 
-    public List<InputParametersCount.MethodIPC> getInputParametersCount() {
-        return ipc.entrySet().stream().map(e -> new InputParametersCount.MethodIPC(e.getKey(), e.getValue())).toList();
+    public List<InputParametersCounter.MethodIPC> getInputParametersCount() {
+        return ipc.entrySet().stream().map(e -> new InputParametersCounter.MethodIPC(e.getKey(), e.getValue())).toList();
     }
 
     @Override
