@@ -1,6 +1,8 @@
 package io.github.francescodonnini.model;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class JavaClass {
@@ -8,6 +10,7 @@ public class JavaClass {
     private Path path;
     private final Release release;
     private final String content;
+    private final List<JavaMethod> methods = new ArrayList<>();
 
     public JavaClass(String parent, String path, Release release, String content) {
         this(Path.of(parent), Path.of(path), release, content);
@@ -34,6 +37,14 @@ public class JavaClass {
     @Override
     public String toString() {
         return "%s %s".formatted(release.id(), path);
+    }
+
+    public void addMethod(JavaMethod method) {
+        methods.add(method);
+    }
+
+    public List<JavaMethod> getMethods() {
+        return methods;
     }
 
     public Path getParent() {

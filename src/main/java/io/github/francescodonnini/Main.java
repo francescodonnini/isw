@@ -1,5 +1,10 @@
 package io.github.francescodonnini;
 
+import com.sun.source.util.JavacTask;
+import io.github.francescodonnini.ast.CyclomaticComplexityCounter;
+import io.github.francescodonnini.ast.InputParametersCounter;
+import io.github.francescodonnini.ast.LineOfCodeCounter;
+import io.github.francescodonnini.ast.StatementsCounter;
 import io.github.francescodonnini.config.IniSettings;
 import io.github.francescodonnini.csv.CsvReleaseApi;
 import io.github.francescodonnini.csv.CsvVersionApi;
@@ -7,20 +12,23 @@ import io.github.francescodonnini.data.*;
 import io.github.francescodonnini.jira.JsonReleaseApi;
 import io.github.francescodonnini.jira.JsonVersionApi;
 import io.github.francescodonnini.jira.RestApi;
+import io.github.francescodonnini.metrics.IntMetric;
+import io.github.francescodonnini.metrics.LongMetric;
+import io.github.francescodonnini.metrics.Metric;
+import io.github.francescodonnini.model.JavaClass;
 import io.github.francescodonnini.model.JavaMethod;
 import io.github.francescodonnini.sqlite.SQLiteApi;
 import io.github.francescodonnini.sqlite.SQLiteClassApi;
 import io.github.francescodonnini.sqlite.SQLiteMethodApi;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 
+import javax.tools.ToolProvider;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.IntStream;
 
 public class Main {
     public static void main(String[] args) throws ConfigurationException, IOException, SQLException {
@@ -40,8 +48,14 @@ public class Main {
         var localReleaseApi = new CsvReleaseApi(Path.of(path, "releases.csv").toString());
         var releaseApi = new ReleaseRepository(remoteReleaseApi, localReleaseApi);
         var releases = releaseApi.getReleases();
-        releases = releases.subList(0, (int) (releases.size() * 0.5));
-        var factory = new DataLoaderImpl(projectPath, releases);
+        releases = releases.subList(0, (int) (releases.size() * 0.05));
+        var counters = List.of(
+                new CyclomaticComplexityCounter(),
+                new LineOfCodeCounter(),
+                new InputParametersCounter(),
+                new StatementsCounter()
+        );
+        var factory = new DataLoaderImpl(projectPath, releases, counters);
         var sqliteApi = new SQLiteApi(Path.of(path, "classes.db"));
         var localClassApi = new SQLiteClassApi(sqliteApi, releases);
         var classApi = new JavaClassRepository(factory, localClassApi);
@@ -49,6 +63,18 @@ public class Main {
         var localMethodApi = new SQLiteMethodApi(sqliteApi, classes);
         var methodApi = new JavaMethodRepository(factory, localMethodApi);
         var methods = methodApi.getMethods();
+    }
 
+    private static void printMetrics(JavaMethod m) {
+        System.out.println(m.getSignature());
+        m.getMetrics().forEach(Main::printMetric);
+    }
+
+    private static void printMetric(Metric m) {
+        switch (m) {
+            case IntMetric i -> System.out.printf("%s %d%n", i.getName(), i.getValue());
+            case LongMetric l -> System.out.printf("%s %d%n", l.getName(), l.getValue());
+            default -> System.out.printf("unknown metric: %s%n", m.getName());
+        }
     }
 }

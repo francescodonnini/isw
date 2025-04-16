@@ -1,14 +1,10 @@
 package io.github.francescodonnini.ast;
 
 import com.sun.source.tree.*;
-import com.sun.source.util.TreeScanner;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import io.github.francescodonnini.model.JavaClass;
 
 /**
- * Uno statement è un'unità completa di esecuzione (v. https://docs.oracle.com/javase/tutorial/java/nutsandbolts/expressions.html).
+ * Uno statement è un'unità completa di esecuzione (v. <a href="https://docs.oracle.com/javase/tutorial/java/nutsandbolts/expressions.html"></a>).
  * Le seguenti espressioni possono essere trasformate in statement aggiungendo
  * un ';' alla fine:
  * - Assegnazioni.
@@ -20,82 +16,79 @@ import java.util.Map;
  * - looping: for, while, do-while.
  * - branching: break, continue, return.
  */
-public class StatementsCounter extends TreeScanner<Void, Void> {
-    public record StatementsCount(String name, Long count) {}
-
-    private final Map<String, Long> count = new HashMap<>();
+public class StatementsCounter extends AbstractCounter {
     private long counter = 0L;
 
-    public List<StatementsCounter.StatementsCount> getCount() {
-        return count.entrySet().stream().map(e -> new StatementsCounter.StatementsCount(e.getKey(), e.getValue())).toList();
+    public StatementsCounter() {
+        super("#STMT");
     }
 
     @Override
-    public Void visitMethod(MethodTree node, Void unused) {
+    public Void visitMethod(MethodTree node, JavaClass unused) {
         var oldCounter = counter;
         counter = 0L;
         var rv = super.visitMethod(node, unused);
-        count.put(AstUtils.getSignature(node), counter);
+        update(AstUtils.getSignature(node), counter);
         counter = oldCounter;
         return rv;
     }
 
     @Override
-    public Void visitExpressionStatement(ExpressionStatementTree node, Void unused) {
+    public Void visitExpressionStatement(ExpressionStatementTree node, JavaClass unused) {
         counter++;
         return super.visitExpressionStatement(node, unused);
     }
 
     @Override
-    public Void visitIf(IfTree node, Void unused) {
+    public Void visitIf(IfTree node, JavaClass unused) {
         counter++;
         return super.visitIf(node, unused);
     }
 
     @Override
-    public Void visitSwitch(SwitchTree node, Void unused) {
+    public Void visitSwitch(SwitchTree node, JavaClass unused) {
         counter++;
         return super.visitSwitch(node, unused);
     }
 
     @Override
-    public Void visitEnhancedForLoop(EnhancedForLoopTree node, Void unused) {
+    public Void visitEnhancedForLoop(EnhancedForLoopTree node, JavaClass unused) {
         counter++;
         return super.visitEnhancedForLoop(node, unused);
     }
 
     @Override
-    public Void visitForLoop(ForLoopTree node, Void unused) {
+    public Void visitForLoop(ForLoopTree node, JavaClass unused) {
         counter++;
         return super.visitForLoop(node, unused);
     }
 
     @Override
-    public Void visitDoWhileLoop(DoWhileLoopTree node, Void unused) {
+    public Void visitDoWhileLoop(DoWhileLoopTree node, JavaClass unused) {
         counter++;
         return super.visitDoWhileLoop(node, unused);
     }
 
     @Override
-    public Void visitWhileLoop(WhileLoopTree node, Void unused) {
+    public Void visitWhileLoop(WhileLoopTree node, JavaClass unused) {
         counter++;
         return super.visitWhileLoop(node, unused);
     }
 
     @Override
-    public Void visitBreak(BreakTree node, Void unused) {
+    public Void visitBreak(BreakTree node, JavaClass unused) {
         counter++;
         return super.visitBreak(node, unused);
     }
 
     @Override
-    public Void visitContinue(ContinueTree node, Void unused) {
+    public Void visitContinue(ContinueTree node, JavaClass unused) {
         counter++;
         return super.visitContinue(node, unused);
     }
 
     @Override
-    public Void visitReturn(ReturnTree node, Void unused) {
+    public Void visitReturn(ReturnTree node, JavaClass unused) {
         counter++;
         return super.visitReturn(node, unused);
     }

@@ -6,6 +6,7 @@ import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.util.SourcePositions;
 import com.sun.source.util.TreeScanner;
+import io.github.francescodonnini.ast.AbstractCounter;
 import io.github.francescodonnini.ast.AstUtils;
 import io.github.francescodonnini.model.JavaClass;
 import io.github.francescodonnini.model.JavaMethod;
@@ -25,6 +26,11 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     private final List<JavaClass> innerClasses = new ArrayList<>();
     private SourcePositions sourcePositions;
     private int anonymousClassCounter = -1;
+    private final List<AbstractCounter> counters;
+
+    public JavaMethodExtractor(List<AbstractCounter> counters) {
+        this.counters = counters;
+    }
 
     public void reset() {
         innerClasses.clear();
@@ -62,11 +68,14 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
                 currentClass = o.get();
                 innerClasses.add(currentClass);
                 var rv = super.visitClass(node, unused);
+                counters.forEach(c -> c.visitClass(node, currentClass));
                 currentClass = parent;
                 return rv;
             }
         }
-        return super.visitClass(node, unused);
+        var rv = super.visitClass(node, unused);
+        counters.forEach(c -> c.visitClass(node, currentClass));
+        return rv;
     }
 
     private Optional<JavaClass> createInnerClass(ClassTree innerNode) {
@@ -90,7 +99,10 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
 
     @Override
     public Void visitMethod(MethodTree node, Void unused) {
-        getContent(node).ifPresent(content -> methods.add(new JavaMethod(false, currentClass, AstUtils.getSignature(node), content)));
+        getContent(node).ifPresent(content -> {
+            var m = new JavaMethod(false, currentClass, AstUtils.getSignature(node), content);
+            methods.add(m);
+        });
         return super.visitMethod(node, unused);
     }
 

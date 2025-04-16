@@ -27,7 +27,6 @@ public class AstWalker {
         var classes = getClasses(args[0], args[1].toUpperCase());
         var i = new Random().nextInt(classes.size());
         var clazz = classes.get(i);
-        System.out.println(clazz.getContent());
         var file = createTempFile(clazz);
         var compiler = ToolProvider.getSystemJavaCompiler();
         var units = compiler
@@ -37,7 +36,6 @@ public class AstWalker {
         var sc = new StatementsCounter();
         for (var cu : task.parse()) {
             cu.accept(sc, null);
-            sc.getCount().forEach(System.out::println);
         }
     }
 

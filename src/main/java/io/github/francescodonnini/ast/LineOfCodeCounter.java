@@ -1,32 +1,22 @@
 package io.github.francescodonnini.ast;
 
-import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.MethodTree;
-import com.sun.source.util.TreeScanner;
+import io.github.francescodonnini.model.JavaClass;
 
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.StringReader;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.logging.Logger;
 
-public class LineOfCodeCounter extends TreeScanner<Void, CompilationUnitTree> {
-    public record MethodLOC(String name, Long loc) {}
-
-    private final Logger LOGGER = Logger.getLogger(LineOfCodeCounter.class.getName());
-    private final Map<String, Long> locs = new HashMap<>();
+public class LineOfCodeCounter extends AbstractCounter {
+    private final Logger logger = Logger.getLogger(LineOfCodeCounter.class.getName());
 
     public LineOfCodeCounter() {
-    }
-
-    public List<MethodLOC> getLOC() {
-        return locs.entrySet().stream().map(e -> new MethodLOC(e.getKey(), e.getValue())).toList();
+        super("LOC");
     }
 
     @Override
-    public Void visitMethod(MethodTree node, CompilationUnitTree cu) {
+    public Void visitMethod(MethodTree node, JavaClass unused) {
         var body = node.getBody();
         var loc = 1L;
         if (body != null) {
@@ -37,10 +27,10 @@ public class LineOfCodeCounter extends TreeScanner<Void, CompilationUnitTree> {
                 } while (skipped > 0);
                 loc = ln.getLineNumber();
             } catch (IOException e) {
-                LOGGER.info(e.getMessage());
+                logger.info(e.getMessage());
             }
         }
-        locs.put(AstUtils.getSignature(node), loc);
-        return super.visitMethod(node, cu);
+        update(AstUtils.getSignature(node), loc);
+        return super.visitMethod(node, unused);
     }
 }

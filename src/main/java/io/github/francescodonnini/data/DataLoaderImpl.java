@@ -2,6 +2,7 @@ package io.github.francescodonnini.data;
 
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.Trees;
+import io.github.francescodonnini.ast.AbstractCounter;
 import io.github.francescodonnini.model.JavaClass;
 import io.github.francescodonnini.model.JavaMethod;
 import io.github.francescodonnini.model.Release;
@@ -31,11 +32,12 @@ public class DataLoaderImpl implements DataLoader {
     private final List<JavaClass> classes = new ArrayList<>();
     private final List<JavaMethod> methods = new ArrayList<>();
     private final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-    private final JavaMethodExtractor extractor = new JavaMethodExtractor();
+    private final JavaMethodExtractor extractor;
 
-    public DataLoaderImpl(String projectPath, List<Release> releases) {
+    public DataLoaderImpl(String projectPath, List<Release> releases, List<AbstractCounter> counters) {
         this.projectPath = projectPath;
         this.releases = releases;
+        this.extractor = new JavaMethodExtractor(counters);
     }
 
 
