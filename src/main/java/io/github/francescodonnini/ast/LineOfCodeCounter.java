@@ -12,7 +12,7 @@ public class LineOfCodeCounter extends AbstractCounter {
     private final Logger logger = Logger.getLogger(LineOfCodeCounter.class.getName());
 
     public LineOfCodeCounter() {
-        super("LOC");
+        super("lineOfCode");
     }
 
     @Override

@@ -7,6 +7,8 @@ public class JavaMethodLocalEntity {
     private String signature;
     private Path path;
     private String releaseId;
+    private long lineStart;
+    private long lineEnd;
     private String content;
 
     public boolean isBuggy() {
@@ -39,6 +41,22 @@ public class JavaMethodLocalEntity {
 
     public void setReleaseId(String releaseId) {
         this.releaseId = releaseId;
+    }
+
+    public long getLineStart() {
+        return lineStart;
+    }
+
+    public void setLineStart(long lineStart) {
+        this.lineStart = lineStart;
+    }
+
+    public long getLineEnd() {
+        return lineEnd;
+    }
+
+    public void setLineEnd(long lineEnd) {
+        this.lineEnd = lineEnd;
     }
 
     public String getContent() {

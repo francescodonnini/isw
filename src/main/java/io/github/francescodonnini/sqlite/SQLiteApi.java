@@ -59,6 +59,8 @@ public class SQLiteApi {
                     signature   TEXT,
                     classPath   TEXT,
                     releaseId   TEXT,
+                    lineStart   INTEGER,
+                    lineEnd     INTEGER,
                     content     TEXT,
                     PRIMARY KEY(signature, classPath, releaseId),
                     FOREIGN KEY(classPath, releaseId) REFERENCES classes(path, releaseId));""";

@@ -5,7 +5,7 @@ import io.github.francescodonnini.model.JavaClass;
 
 public class InputParametersCounter extends AbstractCounter {
     public InputParametersCounter() {
-        super("IPC");
+        super("parametersCount");
     }
 
     @Override

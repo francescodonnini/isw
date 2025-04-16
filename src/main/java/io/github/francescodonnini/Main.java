@@ -6,6 +6,8 @@ import io.github.francescodonnini.ast.InputParametersCounter;
 import io.github.francescodonnini.ast.LineOfCodeCounter;
 import io.github.francescodonnini.ast.StatementsCounter;
 import io.github.francescodonnini.config.IniSettings;
+import io.github.francescodonnini.csv.CsvJavaClassApi;
+import io.github.francescodonnini.csv.CsvJavaMethodApi;
 import io.github.francescodonnini.csv.CsvReleaseApi;
 import io.github.francescodonnini.csv.CsvVersionApi;
 import io.github.francescodonnini.data.*;
@@ -55,14 +57,14 @@ public class Main {
                 new InputParametersCounter(),
                 new StatementsCounter()
         );
-        var factory = new DataLoaderImpl(projectPath, releases, counters);
-        var sqliteApi = new SQLiteApi(Path.of(path, "classes.db"));
-        var localClassApi = new SQLiteClassApi(sqliteApi, releases);
+        var factory = new DataLoaderImpl(projectPath, releases, counters, false);
+        var localClassApi = new CsvJavaClassApi(Path.of(path, "classes.csv").toString(), releases);
         var classApi = new JavaClassRepository(factory, localClassApi);
         var classes = classApi.getClasses();
-        var localMethodApi = new SQLiteMethodApi(sqliteApi, classes);
+        var localMethodApi = new CsvJavaMethodApi(Path.of(path, "methods.csv").toString(), classes);
         var methodApi = new JavaMethodRepository(factory, localMethodApi);
         var methods = methodApi.getMethods();
+        methods.forEach(Main::printMetrics);
     }
 
     private static void printMetrics(JavaMethod m) {

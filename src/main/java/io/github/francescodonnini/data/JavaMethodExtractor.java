@@ -27,9 +27,11 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     private SourcePositions sourcePositions;
     private int anonymousClassCounter = -1;
     private final List<AbstractCounter> counters;
+    private final boolean getContent;
 
-    public JavaMethodExtractor(List<AbstractCounter> counters) {
+    public JavaMethodExtractor(List<AbstractCounter> counters, boolean getContent) {
         this.counters = counters;
+        this.getContent = getContent;
     }
 
     public void reset() {
@@ -79,12 +81,20 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     }
 
     private Optional<JavaClass> createInnerClass(ClassTree innerNode) {
-        return getContent(innerNode)
-                .map(s -> new JavaClass(
+        var content = "";
+        if (getContent) {
+            var o = getContent(innerNode);
+            if (o.isPresent()) {
+                content = o.get();
+            } else {
+                return Optional.empty();
+            }
+        }
+        return Optional.of(new JavaClass(
                 currentClass.getParent(),
                 innerClassPath(currentClass, innerNode),
                 currentClass.getRelease(),
-                s));
+                content));
     }
 
     private Path innerClassPath(JavaClass container, ClassTree innerNode) {
@@ -99,10 +109,15 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
 
     @Override
     public Void visitMethod(MethodTree node, Void unused) {
-        getContent(node).ifPresent(content -> {
-            var m = new JavaMethod(false, currentClass, AstUtils.getSignature(node), content);
-            methods.add(m);
-        });
+        var content = "";
+        if (getContent) {
+            var o = getContent(node);
+            if (o.isPresent()) {
+                content = o.get();
+            }
+        }
+        var m = new JavaMethod(false, currentClass, AstUtils.getSignature(node), 0L, -1L, content);
+        methods.add(m);
         return super.visitMethod(node, unused);
     }
 

@@ -20,7 +20,7 @@ public class StatementsCounter extends AbstractCounter {
     private long counter = 0L;
 
     public StatementsCounter() {
-        super("#STMT");
+        super("statementsCount");
     }
 
     @Override

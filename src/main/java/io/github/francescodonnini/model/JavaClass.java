@@ -9,8 +9,16 @@ public class JavaClass {
     private Path parent;
     private Path path;
     private final Release release;
-    private final String content;
+    private String content;
     private final List<JavaMethod> methods = new ArrayList<>();
+
+    public JavaClass(String parent, String path, Release release) {
+        this(Path.of(parent), Path.of(path), release, "");
+    }
+
+    public JavaClass(Path parent, Path path, Release release) {
+        this(parent, path, release, "");
+    }
 
     public JavaClass(String parent, String path, Release release, String content) {
         this(Path.of(parent), Path.of(path), release, content);
@@ -77,5 +85,9 @@ public class JavaClass {
 
     public String getContent() {
         return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 }

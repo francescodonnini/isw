@@ -7,7 +7,7 @@ public class CyclomaticComplexityCounter extends AbstractCounter {
     private int complexity = 1;
 
     public CyclomaticComplexityCounter() {
-        super("CC");
+        super("cyclomaticComplexity");
     }
 
     @Override

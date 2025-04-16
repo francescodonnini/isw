@@ -34,10 +34,10 @@ public class DataLoaderImpl implements DataLoader {
     private final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     private final JavaMethodExtractor extractor;
 
-    public DataLoaderImpl(String projectPath, List<Release> releases, List<AbstractCounter> counters) {
+    public DataLoaderImpl(String projectPath, List<Release> releases, List<AbstractCounter> counters, boolean getContent) {
         this.projectPath = projectPath;
         this.releases = releases;
-        this.extractor = new JavaMethodExtractor(counters);
+        this.extractor = new JavaMethodExtractor(counters, getContent);
     }
 
 

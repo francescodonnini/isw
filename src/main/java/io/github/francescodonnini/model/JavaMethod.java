@@ -14,13 +14,21 @@ public class JavaMethod {
     private boolean buggy;
     private final String signature;
     private final JavaClass javaClass;
-    private final String content;
+    private String content;
+    private final long startLine;
+    private final long endLine;
     private final List<Metric> metrics = new ArrayList<>();
 
-    public JavaMethod(boolean buggy, JavaClass javaClass, String signature, String content) {
+    public JavaMethod(boolean buggy, JavaClass javaClass, String signature, long startLine, long endLine) {
+        this(buggy, javaClass, signature, startLine, endLine, "");
+    }
+
+    public JavaMethod(boolean buggy, JavaClass javaClass, String signature, long startLine, long endLine, String content) {
         this.buggy = buggy;
         this.signature = signature;
         this.javaClass = javaClass;
+        this.startLine = startLine;
+        this.endLine = endLine;
         this.content = content;
         javaClass.addMethod(this);
     }
@@ -53,6 +61,10 @@ public class JavaMethod {
         return content;
     }
 
+    public void setContent(String content) {
+        this.content = content;
+    }
+
     public JavaClass getJavaClass() {
         return javaClass;
     }
@@ -67,6 +79,14 @@ public class JavaMethod {
 
     public Path getPath() {
         return javaClass.getPath();
+    }
+
+    public long getStartLine() {
+        return startLine;
+    }
+
+    public long getEndLine() {
+        return endLine;
     }
 
     public void addMetric(String name, int value) {

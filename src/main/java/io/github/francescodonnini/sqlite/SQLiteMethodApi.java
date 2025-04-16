@@ -22,7 +22,9 @@ public class SQLiteMethodApi implements SQLiteApi.PreparedStatementFactory<JavaM
 
     @Override
     public PreparedStatement create(Connection connection) throws SQLException {
-        return connection.prepareStatement("INSERT INTO methods(buggy, signature, classPath, releaseId, content) VALUES (?, ?, ?, ?, ?)");
+        return connection.prepareStatement("""
+            INSERT INTO methods(buggy, signature, classPath, releaseId, lineStart, lineEnd, content)
+            VALUES (?, ?, ?, ?, ?, ?, ?)""");
     }
 
     @Override
@@ -31,7 +33,9 @@ public class SQLiteMethodApi implements SQLiteApi.PreparedStatementFactory<JavaM
         preparedStatement.setString(2, entity.getSignature());
         preparedStatement.setString(3, entity.getPath().toString());
         preparedStatement.setString(4, entity.getReleaseId());
-        preparedStatement.setString(5, entity.getContent());
+        preparedStatement.setLong(5, entity.getLineStart());
+        preparedStatement.setLong(6, entity.getLineEnd());
+        preparedStatement.setString(7, entity.getContent());
     }
 
     @Override
@@ -40,13 +44,15 @@ public class SQLiteMethodApi implements SQLiteApi.PreparedStatementFactory<JavaM
         var signature = rs.getString("signature");
         var path = Path.of(rs.getString("classPath"));
         var release = rs.getString("releaseId");
+        var lineStart = rs.getLong("lineStart");
+        var lineEnd = rs.getLong("lineEnd");
         var content = rs.getString("content");
         var oc = classes.stream().filter(c -> filter(c, path, release)).findFirst();
         if (oc.isEmpty()) {
             return Optional.empty();
         }
         var clazz = oc.get();
-        return Optional.of(new JavaMethod(buggy, clazz, signature, content));
+        return Optional.of(new JavaMethod(buggy, clazz, signature, lineStart, lineEnd, content));
     }
 
     private boolean filter(JavaClass clazz, Path path, String releaseId) {
@@ -61,6 +67,8 @@ public class SQLiteMethodApi implements SQLiteApi.PreparedStatementFactory<JavaM
         bean.setContent(model.getContent());
         bean.setPath(model.getJavaClass().getPath());
         bean.setReleaseId(model.getJavaClass().getRelease().id());
+        bean.setLineStart(model.getStartLine());
+        bean.setLineEnd(model.getEndLine());
         return bean;
     }
 
