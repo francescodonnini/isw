@@ -1,8 +1,9 @@
 package io.github.francescodonnini;
 
-import io.github.francescodonnini.ast.CyclomaticComplexityCounter;
-import io.github.francescodonnini.ast.InputParametersCounter;
-import io.github.francescodonnini.ast.StatementsCounter;
+import io.github.francescodonnini.collectors.VcsCollector;
+import io.github.francescodonnini.collectors.ast.CyclomaticComplexityCounter;
+import io.github.francescodonnini.collectors.ast.InputParametersCounter;
+import io.github.francescodonnini.collectors.ast.StatementsCounter;
 import io.github.francescodonnini.config.IniSettings;
 import io.github.francescodonnini.csv.CsvJavaClassApi;
 import io.github.francescodonnini.csv.CsvJavaMethodApi;
@@ -12,15 +13,12 @@ import io.github.francescodonnini.data.*;
 import io.github.francescodonnini.jira.JsonReleaseApi;
 import io.github.francescodonnini.jira.JsonVersionApi;
 import io.github.francescodonnini.jira.RestApi;
-import io.github.francescodonnini.metrics.IntMetric;
-import io.github.francescodonnini.metrics.LongMetric;
-import io.github.francescodonnini.metrics.Metric;
 import io.github.francescodonnini.model.JavaMethod;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.eclipse.jgit.api.Git;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.sql.SQLException;
 import java.util.List;
 
 public class Main {
@@ -48,8 +46,8 @@ public class Main {
                 new InputParametersCounter(),
                 new StatementsCounter()
         );
-        System.out.println(releases.get(lastRelease));
-        var factory = new DataLoaderImpl(projectPath, List.of(releases.get(lastRelease)), counters, false);
+        var releaseRange = releases.subList(0, lastRelease);
+        var factory = new DataLoaderImpl(projectPath, releaseRange, counters, false);
         var localClassApi = new CsvJavaClassApi(Path.of(path, "classes.csv").toString(), releases);
         var classApi = new JavaClassRepository(factory, localClassApi, useCache);
         var classes = classApi.getClasses();
@@ -57,18 +55,15 @@ public class Main {
         var methodApi = new JavaMethodRepository(factory, localMethodApi, useCache);
         var methods = methodApi.getMethods();
         System.out.printf("#classes=%d\t#methods=%d\n", classes.size(), methods.size());
+        methods.forEach(Main::printMetrics);
+        var gitPath = Path.of(settings.getString("gitBasePath"), projectName.toLowerCase(), ".git");
+        var vscCollector = new VcsCollector(releaseRange, gitPath);
+        vscCollector.calculate(methods);
     }
 
     private static void printMetrics(JavaMethod m) {
         System.out.println(m.getSignature());
-        m.getMetrics().forEach(Main::printMetric);
+        System.out.println(m.getMetrics());
     }
 
-    private static void printMetric(Metric m) {
-        switch (m) {
-            case IntMetric i -> System.out.printf("%s %d%n", i.getName(), i.getValue());
-            case LongMetric l -> System.out.printf("%s %d%n", l.getName(), l.getValue());
-            default -> System.out.printf("unknown metric: %s%n", m.getName());
-        }
-    }
 }

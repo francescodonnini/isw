@@ -1,4 +1,4 @@
-package io.github.francescodonnini.ast;
+package io.github.francescodonnini.collectors.ast;
 
 import com.sun.source.tree.*;
 import io.github.francescodonnini.model.JavaClass;
@@ -19,16 +19,15 @@ import io.github.francescodonnini.model.JavaClass;
 public class StatementsCounter extends AbstractCounter {
     private long counter = 0L;
 
-    public StatementsCounter() {
-        super("statementsCount");
-    }
-
     @Override
     public Void visitMethod(MethodTree node, JavaClass unused) {
         var oldCounter = counter;
         counter = 0L;
         var rv = super.visitMethod(node, unused);
-        update(AstUtils.getSignature(node), counter);
+        update(AstUtils.getSignature(node), m -> {
+            m.setStatementsCount(counter);
+            return null;
+        });
         counter = oldCounter;
         return rv;
     }

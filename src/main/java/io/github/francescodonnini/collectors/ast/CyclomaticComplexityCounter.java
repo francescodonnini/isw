@@ -1,14 +1,10 @@
-package io.github.francescodonnini.ast;
+package io.github.francescodonnini.collectors.ast;
 
 import com.sun.source.tree.*;
 import io.github.francescodonnini.model.JavaClass;
 
 public class CyclomaticComplexityCounter extends AbstractCounter {
     private int complexity = 1;
-
-    public CyclomaticComplexityCounter() {
-        super("cyclomaticComplexity");
-    }
 
     @Override
     public Void visitMethod(MethodTree node, JavaClass unused) {
@@ -19,7 +15,10 @@ public class CyclomaticComplexityCounter extends AbstractCounter {
         if (body != null) {
             visitBlock(node.getBody(), null);
         }
-        update(AstUtils.getSignature(node), complexity);
+        update(AstUtils.getSignature(node), m -> {
+            m.setCyclomaticComplexity(complexity);
+            return null;
+        });
         return super.visitMethod(node, null);
     }
 

@@ -1,8 +1,9 @@
-package io.github.francescodonnini.data;
+package io.github.francescodonnini.labelling;
 
 import io.github.francescodonnini.model.Issue;
 import io.github.francescodonnini.model.JavaMethod;
 import io.github.francescodonnini.model.Release;
+import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.diff.RawTextComparator;
 import org.eclipse.jgit.lib.Repository;
@@ -19,16 +20,19 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Labeller {
-    private final Logger logger = Logger.getLogger(Labeller.class.getName());
-    private final List<JavaMethod> methods;
-    private final List<Issue> issues;
+public class VcsLabelling {
+    private final Logger logger = Logger.getLogger(VcsLabelling.class.getName());
+    private List<JavaMethod> methods;
+    private List<Issue> issues;
     private Release end;
     private Release start;
     private String path;
 
-    public Labeller(List<JavaMethod> methods, List<Issue> issues) {
+    public void setMethods(List<JavaMethod> methods) {
         this.methods = methods;
+    }
+
+    public void setIssues(List<Issue> issues) {
         this.issues = issues;
     }
 
@@ -44,19 +48,19 @@ public class Labeller {
         this.path = path;
     }
 
-    public List<JavaMethod> fill() {
+    public void fill() {
+        // lista di metodi presenti fino alla release end
         var list = methods.stream()
                 .filter(e -> !e.getRelease().isAfter(end))
                 .toList();
         try {
-            return fillBugginess(list);
+            fillBugginess(list);
         } catch (IOException e) {
             logger.log(Level.INFO, e.getMessage());
-            return List.of();
         }
     }
 
-    private List<JavaMethod> fillBugginess(List<JavaMethod> entries) throws IOException {
+    private void fillBugginess(List<JavaMethod> entries) throws IOException {
         var repository = new FileRepositoryBuilder()
                 .setGitDir(new File(path))
                 .build();
@@ -66,33 +70,31 @@ public class Labeller {
         var list = selectIssues();
         // mapping divide le entry per identificativo di release per facilitare il labelling.
         var mapping = new HashMap<String, List<JavaMethod>>();
-        entries.forEach(e -> mapping.computeIfAbsent(e.getRelease().id(), k -> new ArrayList<>()).add(e));
+        entries.forEach(e -> mapping.computeIfAbsent(e.getRelease().id(), _ -> new ArrayList<>()).add(e));
         // lista di entry che devono essere etichettate come buggy.
-        var buggyClasses = new ArrayList<JavaMethod>();
         for (var issue : list) {
             for (var commit : issue.commits()) {
-                // classes sono le entry potenzialmente interessate dal ticket
-                var classes = new ArrayList<JavaMethod>();
+                // suspects sono le entry potenzialmente interessate dal ticket perché afferenti alle affectedVersion
+                // specificate negli issue di Jira.
+                // TODO: devo includere solo quelli afferenti ad affectedVersion?
+                var suspects = new ArrayList<JavaMethod>();
                 issue.affectedVersions().forEach(v -> {
                     if (mapping.containsKey(v.id())) {
-                        classes.addAll(mapping.get(v.id()));
+                        suspects.addAll(mapping.get(v.id()));
                     }
                 });
-                parseDiffs(classes, buggyClasses, repository, commit);
+                parseDiffs(suspects, repository, commit);
             }
         }
-        // Si scorrono tutte le entry da entries e si aggiornano quelle che si è scoperto essere buggy
-        var all = new ArrayList<JavaMethod>();
-        for (var e : entries) {
-            var isBuggy = buggyClasses.stream()
-                    .anyMatch(c -> c.getPath().equals(e.getPath()) && e.getRelease().id() == c.getRelease().id());
-            e.setBuggy(isBuggy);
-            all.add(e);
-        }
-        return all;
     }
 
-    private void parseDiffs(List<JavaMethod> classes, List<JavaMethod> buggyClasses, Repository repository, RevCommit commit) throws IOException {
+    /**
+     * parseDiffs
+     * @param suspects     - metodi che sono potenzialmente interessati dal commit
+     * @param repository   - git repository dove effettuare il parsing del commit
+     * @param commit       - commit di cui si vuole effettuare il parsing
+     */
+    private void parseDiffs(List<JavaMethod> suspects, Repository repository, RevCommit commit) throws IOException {
         var df = new DiffFormatter(DisabledOutputStream.INSTANCE);
         df.setRepository(repository);
         df.setDiffComparator(RawTextComparator.DEFAULT);
@@ -102,13 +104,16 @@ public class Labeller {
             // Percorso del file modificato da un commit afferente a issue.
             var file = diff.getNewPath();
             if (file.endsWith(".java")) {
-                var targets = classes.stream()
-                        .filter(c -> file.contains(c.getPath().toString()))
-                        .peek(e -> e.setBuggy(true))
-                        .toList();
-                buggyClasses.addAll(targets);
+                suspects.stream()
+                        .filter(method -> file.contains(method.getPath().toString()))
+                        .filter(method -> isMethodTouched(method, diff))
+                        .forEach(method -> method.setBuggy(true));
             }
         }
+    }
+
+    private boolean isMethodTouched(JavaMethod method, DiffEntry diff) {
+        return false;
     }
 
     // Seleziona un sottoinsieme di issues in funzione dell'intervallo delle release selezionato.

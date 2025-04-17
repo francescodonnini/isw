@@ -2,7 +2,7 @@ package io.github.francescodonnini.data;
 
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.Trees;
-import io.github.francescodonnini.ast.AbstractCounter;
+import io.github.francescodonnini.collectors.ast.AbstractCounter;
 import io.github.francescodonnini.model.JavaClass;
 import io.github.francescodonnini.model.JavaMethod;
 import io.github.francescodonnini.model.Release;

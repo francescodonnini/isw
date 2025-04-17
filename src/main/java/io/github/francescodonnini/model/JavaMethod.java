@@ -1,35 +1,45 @@
 package io.github.francescodonnini.model;
 
-import io.github.francescodonnini.metrics.IntMetric;
-import io.github.francescodonnini.metrics.LongMetric;
-import io.github.francescodonnini.metrics.Metric;
-
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 public class JavaMethod {
     private boolean buggy;
     private final String signature;
     private final JavaClass javaClass;
+    private final LineRange range;
     private String content;
-    private final long startLine;
-    private final long endLine;
-    private final List<Metric> metrics = new ArrayList<>();
+    // lineOfCode
+    // cyclomaticComplexity
+    // parametersCount
+    // statementsCount
+    // locTouched
+    // churn
+    // numOfRevisions
+    // numOfAuthors
+    // locAdded
+    // avgLocAdded
+    // changeSetSize
+    // maxChangeSetSize
+    // avgChangeSetSize
+    private final Metrics metrics;
 
-    public JavaMethod(boolean buggy, JavaClass javaClass, String signature, long startLine, long endLine) {
-        this(buggy, javaClass, signature, startLine, endLine, "");
+
+    public JavaMethod(boolean buggy, JavaClass javaClass, String signature, LineRange range) {
+        this(buggy, javaClass, signature, range, "", new Metrics());
     }
 
-    public JavaMethod(boolean buggy, JavaClass javaClass, String signature, long startLine, long endLine, String content) {
+    public JavaMethod(boolean buggy, JavaClass javaClass, String signature, LineRange range, String content) {
+        this(buggy, javaClass, signature, range, content, new Metrics());
+    }
+
+    public JavaMethod(boolean buggy, JavaClass javaClass, String signature, LineRange range, String content, Metrics metrics) {
         this.buggy = buggy;
         this.signature = signature;
         this.javaClass = javaClass;
-        this.startLine = startLine;
-        this.endLine = endLine;
+        this.range = range;
         this.content = content;
+        this.metrics = metrics;
         javaClass.addMethod(this);
     }
 
@@ -81,27 +91,19 @@ public class JavaMethod {
         return javaClass.getPath();
     }
 
+    public void setPath(Path path) {
+        javaClass.setPath(path);
+    }
+
     public long getStartLine() {
-        return startLine;
+        return range.start();
     }
 
     public long getEndLine() {
-        return endLine;
+        return range.end();
     }
 
-    public void addMetric(String name, int value) {
-        metrics.add(new IntMetric(name, value));
-    }
-
-    public void addMetric(String name, long value) {
-        metrics.add(new LongMetric(name, value));
-    }
-
-    public Optional<Metric> getMetric(String name) {
-        return metrics.stream().filter(metric -> metric.getName().equals(name)).findFirst();
-    }
-
-    public List<Metric> getMetrics() {
+    public Metrics getMetrics() {
         return metrics;
     }
 }

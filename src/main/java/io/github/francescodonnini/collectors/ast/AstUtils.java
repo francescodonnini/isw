@@ -1,4 +1,4 @@
-package io.github.francescodonnini.ast;
+package io.github.francescodonnini.collectors.ast;
 
 import com.sun.source.tree.MethodTree;
 

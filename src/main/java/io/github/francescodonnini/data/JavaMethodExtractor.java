@@ -6,10 +6,11 @@ import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.util.SourcePositions;
 import com.sun.source.util.TreeScanner;
-import io.github.francescodonnini.ast.AbstractCounter;
-import io.github.francescodonnini.ast.AstUtils;
+import io.github.francescodonnini.collectors.ast.AbstractCounter;
+import io.github.francescodonnini.collectors.ast.AstUtils;
 import io.github.francescodonnini.model.JavaClass;
 import io.github.francescodonnini.model.JavaMethod;
+import io.github.francescodonnini.model.LineRange;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -121,10 +122,11 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
             var startPos = sourcePositions.getStartPosition(cu, node);
             var endPos = sourcePositions.getEndPosition(cu, node);
             var lineMap = cu.getLineMap();
-            long startLine = lineMap.getLineNumber(startPos);
-            long endLine = lineMap.getLineNumber(endPos);
-            var m = new JavaMethod(false, currentClass, AstUtils.getSignature(node), startLine, endLine, content);
-            m.addMetric("lineOfCode", loc);
+            var startLine = lineMap.getLineNumber(startPos);
+            var endLine = lineMap.getLineNumber(endPos);
+            var lineRange = new LineRange(startLine, endLine);
+            var m = new JavaMethod(false, currentClass, AstUtils.getSignature(node), lineRange, content);
+            m.getMetrics().setLineOfCode(loc);
             methods.add(m);
         }
         return super.visitMethod(node, unused);

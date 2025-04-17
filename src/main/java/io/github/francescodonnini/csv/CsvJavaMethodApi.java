@@ -6,11 +6,9 @@ import com.opencsv.enums.CSVReaderNullFieldIndicator;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import io.github.francescodonnini.csv.entities.JavaMethodLocalEntity;
-import io.github.francescodonnini.metrics.IntMetric;
-import io.github.francescodonnini.metrics.LongMetric;
-import io.github.francescodonnini.metrics.Metric;
 import io.github.francescodonnini.model.JavaClass;
 import io.github.francescodonnini.model.JavaMethod;
+import io.github.francescodonnini.model.LineRange;
 import io.github.francescodonnini.utils.FileUtils;
 
 import java.io.FileNotFoundException;
@@ -58,17 +56,16 @@ public class CsvJavaMethodApi {
                         bean.isBuggy(),
                         clazz,
                         bean.getSignature(),
-                        bean.getLineStart(),
-                        bean.getLineEnd())));
+                        new LineRange(bean.getLineStart(), bean.getLineEnd()))));
         o.ifPresent(m -> addMetrics(m, bean));
         return o;
     }
 
     private void addMetrics(JavaMethod m, JavaMethodLocalEntity bean) {
-        m.addMetric("lineOfCode", bean.getLineOfCode());
-        m.addMetric("cyclomaticComplexity", bean.getCyclomaticComplexity());
-        m.addMetric("parametersCount", bean.getParametersCount());
-        m.addMetric("statementsCount", bean.getStatementsCount());
+        m.getMetrics().setLineOfCode(bean.getLineOfCode());
+        m.getMetrics().setCyclomaticComplexity(bean.getCyclomaticComplexity());
+        m.getMetrics().setParametersCount(bean.getParametersCount());
+        m.getMetrics().setStatementsCount(bean.getStatementsCount());
     }
 
     private boolean filter(JavaClass clazz, JavaMethodLocalEntity bean) {
@@ -103,24 +100,10 @@ public class CsvJavaMethodApi {
         bean.setReleaseId(model.getRelease().id());
         bean.setLineStart(model.getStartLine());
         bean.setLineEnd(model.getEndLine());
-        model.getMetric("lineOfCode").flatMap(this::getLongMetric).ifPresent(bean::setLineOfCode);
-        model.getMetric("cyclomaticComplexity").flatMap(this::getIntMetric).ifPresent(bean::setCyclomaticComplexity);
-        model.getMetric("parametersCount").flatMap(this::getIntMetric).ifPresent(bean::setParametersCount);
-        model.getMetric("statementsCount").flatMap(this::getLongMetric).ifPresent(bean::setStatementsCount);
+        bean.setLineOfCode(model.getMetrics().getLineOfCode());
+        bean.setCyclomaticComplexity(model.getMetrics().getCyclomaticComplexity());
+        bean.setParametersCount(model.getMetrics().getParametersCount());
+        bean.setStatementsCount(model.getMetrics().getStatementsCount());
         return bean;
-    }
-
-    private Optional<Integer> getIntMetric(Metric m) {
-        if (m instanceof IntMetric im) {
-            return Optional.of(im.getValue());
-        }
-        return Optional.empty();
-    }
-
-    private Optional<Long> getLongMetric(Metric m) {
-        if (m instanceof LongMetric lm) {
-            return Optional.of(lm.getValue());
-        }
-        return Optional.empty();
     }
 }
