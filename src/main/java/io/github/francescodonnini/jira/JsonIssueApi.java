@@ -41,7 +41,7 @@ public class JsonIssueApi  {
      * - IV <= OV
      * - OV <= FV
      */
-    public List<Issue> getRemoteIssues() {
+    public List<Issue> getIssues() {
         try {
             // Ordino le releases in ordine crescente rispetto alla data di creazione
             var releases = releaseApi.getReleases().stream()
@@ -138,7 +138,7 @@ public class JsonIssueApi  {
         for (var commit : git.getAll()) {
             var matcher = p.matcher(commit.getFullMessage());
             if (matcher.find()) {
-                mapping.computeIfAbsent(matcher.group(), v -> new ArrayList<>()).add(commit);
+                mapping.computeIfAbsent(matcher.group(), _ -> new ArrayList<>()).add(commit);
             }
         }
         return mapping;

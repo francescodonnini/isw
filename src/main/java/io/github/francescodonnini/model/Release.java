@@ -19,6 +19,11 @@ public record Release(
         return Objects.hash(id, name, releaseDate);
     }
 
+    @Override
+    public String toString() {
+        return "(%s, %s, %s)".formatted(id, name, releaseDate);
+    }
+
     public boolean isBefore(Release release) {
         return releaseDate.isBefore(release.releaseDate);
     }

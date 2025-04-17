@@ -15,7 +15,7 @@ public class JsonVersionApi {
         this.restApi = restApi;
     }
 
-    public List<Version> getRemoteVersions() {
+    public List<Version> getVersions() {
         try {
             return restApi.getReleaseInfo(projectName).getVersions().stream()
                     .map(JsonVersionApi::fromVersionNetworkEntity)

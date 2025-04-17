@@ -109,20 +109,24 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
 
     @Override
     public Void visitMethod(MethodTree node, Void unused) {
+        long loc;
         var content = "";
-        if (getContent) {
-            var o = getContent(node);
-            if (o.isPresent()) {
+        var o = getContent(node);
+        if (o.isPresent()) {
+            if (getContent) {
                 content = o.get();
             }
+            var locCounter = new LineNumberCounter(o.get());
+            loc = locCounter.count();
+            var startPos = sourcePositions.getStartPosition(cu, node);
+            var endPos = sourcePositions.getEndPosition(cu, node);
+            var lineMap = cu.getLineMap();
+            long startLine = lineMap.getLineNumber(startPos);
+            long endLine = lineMap.getLineNumber(endPos);
+            var m = new JavaMethod(false, currentClass, AstUtils.getSignature(node), startLine, endLine, content);
+            m.addMetric("lineOfCode", loc);
+            methods.add(m);
         }
-        var startPos = sourcePositions.getStartPosition(cu, node);
-        var endPos = sourcePositions.getEndPosition(cu, node);
-        var lineMap = cu.getLineMap();
-        long startLine = lineMap.getLineNumber(startPos);
-        long endLine = lineMap.getLineNumber(endPos);
-        var m = new JavaMethod(false, currentClass, AstUtils.getSignature(node), startLine, endLine, content);
-        methods.add(m);
         return super.visitMethod(node, unused);
     }
 
@@ -137,5 +141,4 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
         }
         return Optional.empty();
     }
-
 }

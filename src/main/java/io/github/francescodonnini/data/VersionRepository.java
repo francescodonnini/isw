@@ -14,28 +14,48 @@ import java.util.logging.Logger;
 
 public class VersionRepository implements VersionApi {
     private final Logger logger = Logger.getLogger(VersionRepository.class.getName());
-    private final JsonVersionApi remoteDataSource;
-    private final CsvVersionApi localDataSource;
+    private final JsonVersionApi remoteSource;
+    private final CsvVersionApi localSource;
+    private final boolean useCache;
 
-    public VersionRepository(JsonVersionApi remoteDataSource, CsvVersionApi localDataSource) {
-        this.remoteDataSource = remoteDataSource;
-        this.localDataSource = localDataSource;
+    public VersionRepository(JsonVersionApi remoteSource, CsvVersionApi localSource, boolean useCache) {
+        this.remoteSource = remoteSource;
+        this.localSource = localSource;
+        this.useCache = useCache;
     }
 
     @Override
     public List<Version> getVersions() {
-        try {
-            return localDataSource.getLocal();
-        } catch (FileNotFoundException e) {
-            var data = remoteDataSource.getRemoteVersions();
-            saveLocal(data);
-            return data;
+        if (useCache) {
+            return tryGetCache();
+        } else {
+            return tryGetFreshData();
         }
+    }
+
+    private List<Version> tryGetCache() {
+        try {
+            var versions = localSource.getLocal();
+            if (versions.isEmpty()) {
+                versions = remoteSource.getVersions();
+                saveLocal(versions);
+            }
+            return versions;
+        } catch (FileNotFoundException e) {
+            logger.log(Level.SEVERE, e.getMessage());
+            return tryGetFreshData();
+        }
+    }
+
+    private List<Version> tryGetFreshData() {
+        var data = remoteSource.getVersions();
+        saveLocal(data);
+        return data;
     }
 
     private void saveLocal(List<Version> versions) {
         try {
-            localDataSource.saveLocal(versions);
+            localSource.saveLocal(versions);
         } catch (CsvRequiredFieldEmptyException | CsvDataTypeMismatchException | IOException e) {
             logger.log(Level.INFO, e.getMessage());
         }

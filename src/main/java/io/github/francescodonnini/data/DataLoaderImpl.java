@@ -40,7 +40,6 @@ public class DataLoaderImpl implements DataLoader {
         this.extractor = new JavaMethodExtractor(counters, getContent);
     }
 
-
     @Override
     public List<JavaClass> getClasses() {
         lazyLoading();
@@ -90,7 +89,7 @@ public class DataLoaderImpl implements DataLoader {
 
     // Si vogliono selezionare solamente i file .java che non sono file di test.
     private boolean isValidPath(Path path) {
-        return isJavaNonTestFile(path.toString());
+        return isJavaFile(path.toString());
     }
 
     private static List<Path> listAllFiles(Path basePath) throws IOException {
@@ -99,14 +98,13 @@ public class DataLoaderImpl implements DataLoader {
         var files = new ArrayList<Path>();
         while (!paths.isEmpty()) {
             var path = paths.removeLast();
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(path))
-            {
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
                 for (Path entry : stream) {
                     if (Files.isDirectory(entry)) {
                         if (!Files.isHidden(entry)) {
                             paths.add(entry);
                         }
-                    } else if (isJavaNonTestFile(entry.toString())) {
+                    } else if (isJavaFile(entry.toString())) {
                         files.add(basePath.relativize(entry));
                     }
                 }
@@ -115,16 +113,9 @@ public class DataLoaderImpl implements DataLoader {
         return files;
     }
 
-    private static boolean isJavaNonTestFile(String path) {
-        return isJavaFile(path) && isNonTestFile(path);
-    }
 
     private static boolean isJavaFile(String path) {
         return path.endsWith(".java") && !path.endsWith("package-info.java");
-    }
-
-    private static boolean isNonTestFile(String path) {
-        return path.contains("src" + File.separator + "main");
     }
 
     // createEntry legge un file in path afferente a release (si assume che quando invocato il metodo è stato fatto

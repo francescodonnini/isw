@@ -15,14 +15,24 @@ public class JavaClassRepository implements JavaClassApi {
     private final Logger logger = Logger.getLogger(JavaClassRepository.class.getName());
     private final CsvJavaClassApi localSource;
     private final DataLoader factory;
+    private final boolean useCache;
 
-    public JavaClassRepository(DataLoader factory, CsvJavaClassApi localSource) {
+    public JavaClassRepository(DataLoader factory, CsvJavaClassApi localSource, boolean useCache) {
         this.localSource = localSource;
         this.factory = factory;
+        this.useCache = useCache;
     }
 
     @Override
     public List<JavaClass> getClasses() {
+        if (useCache) {
+            return tryGetCache();
+        } else {
+            return tryGetFreshData();
+        }
+    }
+
+    private List<JavaClass> tryGetCache() {
         try {
             var classes = localSource.getLocal();
             if (classes.isEmpty()) {
@@ -31,18 +41,22 @@ public class JavaClassRepository implements JavaClassApi {
             }
             return classes;
         } catch (FileNotFoundException e) {
-            logger.log(Level.SEVERE, e.getMessage(), e);
-            var data = factory.getClasses();
-            saveLocal(data);
-            return data;
+            logger.log(Level.SEVERE, e.getMessage());
+            return tryGetFreshData();
         }
+    }
+
+    private List<JavaClass> tryGetFreshData() {
+        var data = factory.getClasses();
+        saveLocal(data);
+        return data;
     }
 
     private void saveLocal(List<JavaClass> classes) {
         try {
             localSource.saveLocal(classes);
         } catch (CsvRequiredFieldEmptyException | CsvDataTypeMismatchException | IOException e) {
-            logger.log(Level.INFO, e.getMessage(), e);
+            logger.log(Level.INFO, e.getMessage());
         }
     }
 }

@@ -14,28 +14,48 @@ import java.util.logging.Logger;
 
 public class IssueRepository implements IssueApi {
     private final Logger logger = Logger.getLogger(IssueRepository.class.getName());
-    private final JsonIssueApi remoteDataSource;
-    private final CsvIssueApi localDataSource;
+    private final JsonIssueApi remoteSource;
+    private final CsvIssueApi localSource;
+    private final boolean useCache;
 
-    public IssueRepository(JsonIssueApi remoteDataSource, CsvIssueApi localDataSource) {
-        this.remoteDataSource = remoteDataSource;
-        this.localDataSource = localDataSource;
+    public IssueRepository(JsonIssueApi remoteSource, CsvIssueApi localSource, boolean useCache) {
+        this.remoteSource = remoteSource;
+        this.localSource = localSource;
+        this.useCache = useCache;
     }
 
     @Override
     public List<Issue> getIssues() {
-        try {
-            return localDataSource.getLocal();
-        } catch (FileNotFoundException e) {
-            var data = remoteDataSource.getRemoteIssues();
-            saveLocal(data);
-            return data;
+        if (useCache) {
+            return tryGetCache();
+        } else {
+            return tryGetFreshData();
         }
+    }
+
+    private List<Issue> tryGetCache() {
+        try {
+            var issues = localSource.getLocal();
+            if (issues.isEmpty()) {
+                issues = remoteSource.getIssues();
+                saveLocal(issues);
+            }
+            return issues;
+        } catch (FileNotFoundException e) {
+            logger.log(Level.SEVERE, e.getMessage());
+            return tryGetFreshData();
+        }
+    }
+
+    private List<Issue> tryGetFreshData() {
+        var data = remoteSource.getIssues();
+        saveLocal(data);
+        return data;
     }
 
     private void saveLocal(List<Issue> issues) {
         try {
-            localDataSource.saveLocal(issues);
+            localSource.saveLocal(issues);
         } catch (CsvRequiredFieldEmptyException | CsvDataTypeMismatchException | IOException e) {
             logger.log(Level.INFO, e.getMessage());
         }

@@ -15,14 +15,24 @@ public class JavaMethodRepository implements JavaMethodApi {
     private final Logger logger = Logger.getLogger(JavaMethodRepository.class.getName());
     private final CsvJavaMethodApi localSource;
     private final DataLoader factory;
+    private final boolean useCache;
 
-    public JavaMethodRepository(DataLoader factory, CsvJavaMethodApi localSource) {
+    public JavaMethodRepository(DataLoader factory, CsvJavaMethodApi localSource, boolean useCache) {
         this.factory = factory;
         this.localSource = localSource;
+        this.useCache = useCache;
     }
 
     @Override
     public List<JavaMethod> getMethods() {
+        if (useCache) {
+            return tryGetCache();
+        } else {
+            return tryGetFreshData();
+        }
+    }
+
+    private List<JavaMethod> tryGetCache() {
         try {
             var methods = localSource.getLocal();
             if (methods.isEmpty()) {
@@ -30,19 +40,23 @@ public class JavaMethodRepository implements JavaMethodApi {
                 saveLocal(methods);
             }
             return methods;
-        } catch (DataLoaderException | FileNotFoundException e) {
-            logger.log(Level.SEVERE, e.getMessage(), e);
-            var data = factory.getMethods();
-            saveLocal(data);
-            return data;
+        } catch (FileNotFoundException e) {
+            logger.log(Level.SEVERE, e.getMessage());
+            return tryGetFreshData();
         }
+    }
+
+    private List<JavaMethod> tryGetFreshData() {
+        var data = factory.getMethods();
+        saveLocal(data);
+        return data;
     }
 
     private void saveLocal(List<JavaMethod> classes) {
         try {
             localSource.saveLocal(classes);
         } catch (CsvRequiredFieldEmptyException | CsvDataTypeMismatchException | IOException e) {
-            logger.log(Level.INFO, e.getMessage(), e);
+            logger.log(Level.INFO, e.getMessage());
         }
     }
 }
