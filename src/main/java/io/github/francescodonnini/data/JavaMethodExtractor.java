@@ -116,7 +116,12 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
                 content = o.get();
             }
         }
-        var m = new JavaMethod(false, currentClass, AstUtils.getSignature(node), 0L, -1L, content);
+        var startPos = sourcePositions.getStartPosition(cu, node);
+        var endPos = sourcePositions.getEndPosition(cu, node);
+        var lineMap = cu.getLineMap();
+        long startLine = lineMap.getLineNumber(startPos);
+        long endLine = lineMap.getLineNumber(endPos);
+        var m = new JavaMethod(false, currentClass, AstUtils.getSignature(node), startLine, endLine, content);
         methods.add(m);
         return super.visitMethod(node, unused);
     }
