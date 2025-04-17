@@ -103,6 +103,10 @@ public class JavaMethod {
         return range.end();
     }
 
+    public LineRange getLineRange() {
+        return range;
+    }
+
     public Metrics getMetrics() {
         return metrics;
     }

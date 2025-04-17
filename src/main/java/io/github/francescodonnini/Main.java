@@ -29,7 +29,7 @@ public class Main {
         var projectName = args[1].toUpperCase();
         // regex "<project name>-d+" ("%s-\\d+") è presente in tutti i commit che chiudono un ticket di JIRA
         var settings = new IniSettings(args[0]);
-        var useCache = settings.getBool("useCache");
+        var useCache = true;
         var restApi = new RestApi();
         var projectPath = Path.of(settings.getString("gitBasePath"), projectName.toLowerCase()).toString();
         var path = Path.of(settings.getString("dataPath"), projectName).toString();
@@ -54,16 +54,8 @@ public class Main {
         var localMethodApi = new CsvJavaMethodApi(Path.of(path, "methods.csv").toString(), classes);
         var methodApi = new JavaMethodRepository(factory, localMethodApi, useCache);
         var methods = methodApi.getMethods();
-        System.out.printf("#classes=%d\t#methods=%d\n", classes.size(), methods.size());
-        methods.forEach(Main::printMetrics);
         var gitPath = Path.of(settings.getString("gitBasePath"), projectName.toLowerCase(), ".git");
         var vscCollector = new VcsCollector(releaseRange, gitPath);
         vscCollector.calculate(methods);
     }
-
-    private static void printMetrics(JavaMethod m) {
-        System.out.println(m.getSignature());
-        System.out.println(m.getMetrics());
-    }
-
 }

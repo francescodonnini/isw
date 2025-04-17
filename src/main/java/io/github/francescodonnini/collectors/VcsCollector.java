@@ -1,6 +1,7 @@
 package io.github.francescodonnini.collectors;
 
 import io.github.francescodonnini.model.JavaMethod;
+import io.github.francescodonnini.model.LineRange;
 import io.github.francescodonnini.model.Release;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -133,6 +134,8 @@ public class VcsCollector {
         var del = 0;
         var add = 0;
         for (var edit : df.toFileHeader(diff).toEditList()) {
+            edit.extendA();
+            edit.extendB();
             del += edit.getEndA() - edit.getBeginA();
             add += edit.getEndB() - edit.getBeginB();
         }
