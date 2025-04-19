@@ -18,6 +18,8 @@ public class JavaClassLocalEntity {
     private String path;
     @CsvBindByName(column = "parent", required = true)
     private String parent;
+    @CsvBindByName(column = "name", required = true)
+    private String name;
     @CsvCustomBindByName(column = "time", required = true, converter = LocalDateTimeConverter.class)
     private LocalDateTime time;
 
@@ -64,6 +66,14 @@ public class JavaClassLocalEntity {
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public LocalDateTime getTime() {

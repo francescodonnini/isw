@@ -17,6 +17,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -52,7 +54,7 @@ public class DataLoaderImpl implements DataLoader {
     public List<JavaClass> getClasses() throws DataLoaderException {
         try {
             lazyDataLoading();
-            return classes;
+            return new ArrayList<>(classes);
         } catch (GitAPIException | IOException e) {
             throw new DataLoaderException(e);
         }
@@ -76,17 +78,26 @@ public class DataLoaderImpl implements DataLoader {
 
     private void loadData() throws IOException, GitAPIException {
         var head = git.getRepository().getBranch();
-        var commits = StreamSupport.stream(git.log().call().spliterator(), false)
+        var commits = StreamSupport
+                .stream(git.log().call().spliterator(), false)
+                .sorted(Comparator.comparingInt(RevCommit::getCommitTime))
                 .toList();
+        logger.log(Level.INFO, "total commits: {0}", commits.size());
+        int progress = 0;
         for (var commit : commits) {
+            ++progress;
+            if (progress % 100 == 0) {
+                logger.log(Level.INFO, "%d/%d (%f%%)".formatted(progress, commits.size(), progress * 100. / commits.size()));
+            }
             checkout(git, commit.getName());
+            var susceptibles = getTouchedFiles(commit);
             try {
                 var files = listAllFiles(Path.of(projectPath)).stream()
                         .filter(this::isValidPath)
-                        .toList();
-                for (var path : files) {
-                    parseFile(path, commit);
-                }
+                        .collect(Collectors.toSet());
+                files.stream()
+                        .filter(path -> susceptibles.contains(path.toString()))
+                        .forEach(path -> parseFile(path, commit));
             } catch (IOException e) {
                 checkout(git, head);
             }
@@ -95,21 +106,46 @@ public class DataLoaderImpl implements DataLoader {
         dataLoaded = true;
     }
 
+    private List<String> getTouchedFiles(RevCommit commit) throws IOException {
+        var df = new DiffFormatter(DisabledOutputStream.INSTANCE);
+        df.setRepository(git.getRepository());
+        df.setDetectRenames(true);
+        var o = getParent(commit);
+        if (o.isEmpty()) {
+            return List.of();
+        }
+        var touchedFiles = new ArrayList<String>();
+        var diffs = df.scan(o.get().getTree(), commit.getTree());
+        for (var diff : diffs) {
+            var path = diff.getNewPath();
+            // Se il percorso del file modificato non è un file .java allora non è necessario analizzare
+            // la modifica.
+            if (path.endsWith(".java")) {
+                touchedFiles.add(path);
+            }
+        }
+        return touchedFiles;
+    }
+
     private void checkout(Git git, String branch) throws GitAPIException {
         git.checkout().setName(branch).call();
     }
 
-    private static List<Path> listAllFiles(Path basePath) throws IOException {
-        var paths = new ArrayList<Path>();
-        paths.add(basePath);
+    private List<Path> listAllFiles(Path basePath) throws IOException {
+        var remainingDirectories = new ArrayList<Path>();
+        remainingDirectories.add(basePath);
         var files = new ArrayList<Path>();
-        while (!paths.isEmpty()) {
-            var path = paths.removeLast();
+        while (!remainingDirectories.isEmpty()) {
+            var path = remainingDirectories.removeLast();
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
                 for (Path entry : stream) {
                     if (Files.isDirectory(entry)) {
-                        if (!Files.isHidden(entry)) {
-                            paths.add(entry);
+                        try {
+                            if (!Files.isHidden(entry)) {
+                                remainingDirectories.add(entry);
+                            }
+                        } catch (IOException e) {
+                            logger.log(Level.INFO, "error reading file %s".formatted(entry), e);
                         }
                     } else if (isJavaFile(entry.toString())) {
                         files.add(basePath.relativize(entry));
@@ -133,12 +169,12 @@ public class DataLoaderImpl implements DataLoader {
     private void parseFile(Path file, RevCommit commit) {
         try {
             // clazz è l'entry point del file,
-            var clazz = new JavaClass(commit.getName(), Path.of(projectPath), file, getCommitTime(commit));
-            extractor.setClass(clazz);
-            var classList = parseClass(clazz);
+            var ctx = new ParseContext(commit.getName(), Path.of(projectPath), file, getCommitTime(commit));
+            var classList = parseClass(ctx);
             // Raccoglie informazioni sui metodi modificati dal commit 'commit'
             parseCommit(classList, commit);
             classList.forEach(c -> methods.addAll(c.getMethods()));
+            classes.addAll(classList);
         } catch (IOException e) {
             logger.log(Level.INFO, e.getMessage());
         }
@@ -148,10 +184,11 @@ public class DataLoaderImpl implements DataLoader {
         return commit.getAuthorIdent().getWhenAsInstant().atZone(commit.getAuthorIdent().getZoneId()).toLocalDateTime();
     }
 
-    private List<JavaClass> parseClass(JavaClass clazz) throws IOException {
+
+
+    public List<JavaClass> parseClass(ParseContext ctx) throws IOException {
         try {
-            extractor.setClass(clazz);
-            extractor.parse();
+            extractor.parse(ctx);
             return extractor.getClasses();
         } finally {
             extractor.reset();
@@ -167,8 +204,7 @@ public class DataLoaderImpl implements DataLoader {
             return;
         }
         var index = classList.stream()
-                .map(c -> Map.entry(c.getPath().toString(), c))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .collect(Collectors.groupingBy(c -> c.getPath().toString()));
         var diffs = df.scan(o.get().getTree(), commit.getTree());
         for (var diff : diffs) {
             var oldPath = diff.getOldPath();
@@ -176,10 +212,9 @@ public class DataLoaderImpl implements DataLoader {
             // Se il percorso del file modificato non è un file .java allora non è necessario analizzare
             // la modifica.
             if (path.endsWith(".java") && index.containsKey(path)) {
-                getAuthor(commit).ifPresent(author -> index.get(path).setAuthor(author));
+                getAuthor(commit).ifPresent(author -> index.get(path).forEach(c -> c.setAuthor(author)));
                 if (!oldPath.equals("/dev/null") && !oldPath.equals(path)) {
-                    index.get(path).setOldPath(Path.of(oldPath));
-                    logger.log(Level.INFO, "%s > %s".formatted(oldPath, path));
+                    index.get(path).forEach(c -> c.setOldPath(Path.of(oldPath)));
                 }
             }
         }

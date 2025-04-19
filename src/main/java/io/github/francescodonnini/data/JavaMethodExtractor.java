@@ -1,9 +1,6 @@
 package io.github.francescodonnini.data;
 
-import com.sun.source.tree.ClassTree;
-import com.sun.source.tree.CompilationUnitTree;
-import com.sun.source.tree.MethodTree;
-import com.sun.source.tree.Tree;
+import com.sun.source.tree.*;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.SourcePositions;
 import com.sun.source.util.TreeScanner;
@@ -17,10 +14,10 @@ import io.github.francescodonnini.model.LineRange;
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class JavaMethodExtractor extends TreeScanner<Void, Void> {
@@ -30,8 +27,9 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     private SourcePositions sourcePositions;
     private final List<JavaMethod> methods = new ArrayList<>();
     private final List<JavaClass> classes = new ArrayList<>();
+    private ParseContext context;
     private JavaClass currentClass;
-    private int anonymousClassCounter = -1;
+    private int anonymousClassCounter = 0;
     private final List<AbstractCounter> counters;
 
     public JavaMethodExtractor(List<AbstractCounter> counters) {
@@ -39,27 +37,25 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     }
 
     public void reset() {
+        anonymousClassCounter = 0;
         classes.clear();
         methods.clear();
     }
 
     public List<JavaClass> getClasses() {
-        return classes;
-    }
-
-    public List<JavaMethod> getMethods() {
-        return methods;
+        return new ArrayList<>(classes);
     }
 
     public void setClass(JavaClass clazz) {
         currentClass = clazz;
-        anonymousClassCounter = -1;
+        anonymousClassCounter = 0;
     }
 
-    public void parse() throws IOException {
+    public void parse(ParseContext context) throws IOException {
+        this.context = context;
         var units = compiler
                 .getStandardFileManager(null, null, null)
-                .getJavaFileObjects(currentClass.getRealPath());
+                .getJavaFileObjects(context.getAbsolutePath());
         var task = (JavacTask) compiler.getTask(null, null, null, null, null, units);
         setSourcePositions(Trees.instance(task).getSourcePositions());
         for (var cu : task.parse()) {
@@ -77,43 +73,61 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     }
 
     @Override
-    public Void visitClass(ClassTree node, Void unused) {
-        ++anonymousClassCounter;
-        if (anonymousClassCounter > 0) {
+    public Void visitNewClass(NewClassTree node, Void unused) {
+        if (isAnonymousClass(node)) {
+            ++anonymousClassCounter;
             var parent = currentClass;
-            var o = createInnerClass(node);
-            if (o.isPresent()) {
-                currentClass = o.get();
-                classes.add(currentClass);
-                var rv = super.visitClass(node, unused);
-                counters.forEach(c -> c.visitClass(node, currentClass));
-                classes.add(currentClass);
-                currentClass = parent;
-                return rv;
-            }
+            currentClass = createAnonymousClass();
+            var rv = super.visitNewClass(node, unused);
+            counters.forEach(c -> c.visitNewClass(node, currentClass));
+            classes.add(currentClass);
+            currentClass = parent;
+            return rv;
         }
-        var rv = super.visitClass(node, unused);
-        classes.add(currentClass);
-        counters.forEach(c -> c.visitClass(node, currentClass));
-        return rv;
+        return super.visitNewClass(node, unused);
     }
 
-    private Optional<JavaClass> createInnerClass(ClassTree innerNode) {
-        return Optional.of(new JavaClass(
+    private boolean isAnonymousClass(NewClassTree node) {
+        return node.getClassBody() != null;
+    }
+
+    @Override
+    public Void visitClass(ClassTree node, Void unused) {
+        if (isNamedClass(node)) {
+            setNamedClass(node);
+            var r = super.visitClass(node, unused);
+            classes.add(currentClass);
+            collectMetrics(node, currentClass);
+            return r;
+        }
+        return null;
+    }
+
+    private void setNamedClass(ClassTree currentClass) {
+        this.currentClass = new JavaClass(
+                context.commit(),
+                context.parent(),
+                context.path(),
+                currentClass.getSimpleName().toString(),
+                context.time()
+        );
+    }
+
+    private boolean isNamedClass(ClassTree node) {
+        return node.getSimpleName() != null && !node.getSimpleName().isEmpty();
+    }
+
+    private void collectMetrics(ClassTree node, JavaClass clazz) {
+        counters.forEach(c -> c.visitClass(node, clazz));
+    }
+
+    private JavaClass createAnonymousClass() {
+        return new JavaClass(
                 currentClass.getCommit(),
                 currentClass.getParent(),
-                innerClassPath(currentClass, innerNode),
-                currentClass.getTime()));
-    }
-
-    private Path innerClassPath(JavaClass container, ClassTree innerNode) {
-        var s = container.getPath().toString().replace(".java", "");
-        var name = innerNode.getSimpleName().toString();
-        if (!name.isEmpty()) {
-            s += "#" + name;
-        }
-        s += "#" + anonymousClassCounter + ".java";
-        return Path.of(s);
+                currentClass.getPath(),
+                "#" + anonymousClassCounter,
+                currentClass.getTime());
     }
 
     @Override

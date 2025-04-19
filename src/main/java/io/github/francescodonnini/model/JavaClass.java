@@ -13,19 +13,21 @@ public class JavaClass {
     private Path oldPath;
     private Path parent;
     private Path path;
+    private String name;
     private LocalDateTime time;
     private final List<JavaMethod> methods = new ArrayList<>();
 
-    public JavaClass(String commit, Path parent, Path path, LocalDateTime time) {
-        this(null, commit, null, parent, path, time);
+    public JavaClass(String commit, Path parent, Path path, String name, LocalDateTime time) {
+        this(null, commit, null, parent, path, name, time);
     }
 
-    public JavaClass(String author, String commit, Path oldPath, Path parent, Path path, LocalDateTime time) {
+    public JavaClass(String author, String commit, Path oldPath, Path parent, Path path, String name, LocalDateTime time) {
         this.author = author;
         this.commit = commit;
         this.oldPath = oldPath;
         this.parent = parent;
         this.path = path;
+        this.name = name;
         this.time = time;
     }
 
@@ -36,17 +38,18 @@ public class JavaClass {
                 && Objects.equals(commit, javaClass.commit)
                 && Objects.equals(parent, javaClass.parent)
                 && Objects.equals(path, javaClass.path)
+                && Objects.equals(name, javaClass.name)
                 && Objects.equals(time, javaClass.time);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(author, commit, parent, path, time);
+        return Objects.hash(author, commit, parent, path, name, time);
     }
 
     @Override
     public String toString() {
-        return "(%s %s %s)".formatted(author, commit, path);
+        return "(%s %s %s %s)".formatted(author, commit, path, name);
     }
 
     public void addMethod(JavaMethod method) {
@@ -86,7 +89,7 @@ public class JavaClass {
     }
 
     public Optional<String> getAuthor() {
-        return Optional.of(author);
+        return Optional.ofNullable(author);
     }
 
     public void setAuthor(String author) {
@@ -107,5 +110,9 @@ public class JavaClass {
 
     public void setOldPath(Path oldPath) {
         this.oldPath = oldPath;
+    }
+
+    public String getName() {
+        return name;
     }
 }

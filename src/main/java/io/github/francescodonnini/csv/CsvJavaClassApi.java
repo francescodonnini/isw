@@ -45,15 +45,22 @@ public class CsvJavaClassApi {
     }
 
     private Optional<JavaClass> fromCsv(JavaClassLocalEntity bean) {
+        var o = bean.getOldPath();
+        Path oldPath = null;
+        if (o.isPresent()) {
+            oldPath = Path.of(o.get());
+        }
         var clazz = new JavaClass(
-                bean.getAuthor().orElse(""),
+                bean.getAuthor().orElse(null),
+                bean.getCommit(),
+                oldPath,
                 Path.of(bean.getParent()),
                 Path.of(bean.getPath()),
+                bean.getName(),
                 bean.getTime());
         bean.getOldPath().ifPresent(p -> clazz.setOldPath(Path.of(p)));
         return Optional.of(clazz);
     }
-
 
     public void saveLocal(List<JavaClass> entries, String path) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
         save(entries, path);
@@ -76,10 +83,12 @@ public class CsvJavaClassApi {
 
     private JavaClassLocalEntity toCsv(JavaClass model) {
         var bean = new JavaClassLocalEntity();
+        bean.setCommit(model.getCommit());
         bean.setTime(model.getTime());
         model.getOldPath().ifPresent(model::setOldPath);
         bean.setPath(model.getPath().toString());
         bean.setParent(model.getParent().toString());
+        bean.setName(model.getName());
         model.getAuthor().ifPresent(bean::setAuthor);
         return bean;
     }

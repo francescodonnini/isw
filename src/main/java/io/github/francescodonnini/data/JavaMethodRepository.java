@@ -57,9 +57,9 @@ public class JavaMethodRepository implements JavaMethodApi {
         saveLocal(methods);
     }
 
-    private void saveLocal(List<JavaMethod> classes) {
+    private void saveLocal(List<JavaMethod> methods) {
         try {
-            localSource.saveLocal(classes);
+            localSource.saveLocal(methods);
         } catch (CsvRequiredFieldEmptyException | CsvDataTypeMismatchException | IOException e) {
             logger.log(Level.INFO, e.getMessage());
         }
