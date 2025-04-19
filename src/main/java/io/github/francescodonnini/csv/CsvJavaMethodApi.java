@@ -70,7 +70,7 @@ public class CsvJavaMethodApi {
 
     private boolean filter(JavaClass clazz, JavaMethodLocalEntity bean) {
         return clazz.getPath().equals(Path.of(bean.getClassPath()))
-                && clazz.getRelease().id().equals(bean.getReleaseId());
+                && clazz.getCommit().equals(bean.getCommit());
     }
 
     public void saveLocal(List<JavaMethod> entries, String path) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
@@ -97,7 +97,7 @@ public class CsvJavaMethodApi {
         bean.setBuggy(model.isBuggy());
         bean.setClassPath(model.getPath().toString());
         bean.setSignature(model.getSignature());
-        bean.setReleaseId(model.getRelease().id());
+        bean.setCommit(model.getJavaClass().getCommit());
         bean.setLineStart(model.getStartLine());
         bean.setLineEnd(model.getEndLine());
         bean.setLineOfCode(model.getMetrics().getLineOfCode());

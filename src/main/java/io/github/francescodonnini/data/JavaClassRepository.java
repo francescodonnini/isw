@@ -52,6 +52,11 @@ public class JavaClassRepository implements JavaClassApi {
         return data;
     }
 
+    @Override
+    public void save(List<JavaClass> classes) {
+        saveLocal(classes);
+    }
+
     private void saveLocal(List<JavaClass> classes) {
         try {
             localSource.saveLocal(classes);

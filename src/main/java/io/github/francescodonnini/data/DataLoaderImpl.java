@@ -1,95 +1,102 @@
 package io.github.francescodonnini.data;
 
-import com.sun.source.util.JavacTask;
-import com.sun.source.util.Trees;
 import io.github.francescodonnini.collectors.ast.AbstractCounter;
 import io.github.francescodonnini.model.JavaClass;
 import io.github.francescodonnini.model.JavaMethod;
-import io.github.francescodonnini.model.Release;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.diff.DiffFormatter;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.util.io.DisabledOutputStream;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class DataLoaderImpl implements DataLoader {
     private final Logger logger = Logger.getLogger(DataLoaderImpl.class.getName());
     // repositoryPath è il percorso delle repository dove leggere i file da cui creare le entry per il dataset.
     private final String projectPath;
+    private final Git git;
     // releases è la lista delle release da cui selezionare i file per le entry.
-    private final List<Release> releases;
+    private final JavaMethodExtractor extractor;
     private final List<JavaClass> classes = new ArrayList<>();
     private final List<JavaMethod> methods = new ArrayList<>();
-    private final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-    private final JavaMethodExtractor extractor;
+    private boolean dataLoaded = false;
 
-    public DataLoaderImpl(String projectPath, List<Release> releases, List<AbstractCounter> counters, boolean getContent) {
+    public DataLoaderImpl(
+            String projectPath,
+            List<AbstractCounter> counters) throws IOException {
         this.projectPath = projectPath;
-        this.releases = releases;
-        this.extractor = new JavaMethodExtractor(counters, getContent);
+        this.git = createGit(projectPath);
+        this.extractor = new JavaMethodExtractor(counters);
     }
 
-    @Override
-    public List<JavaClass> getClasses() {
-        lazyLoading();
-        return classes;
-    }
-
-    @Override
-    public List<JavaMethod> getMethods() {
-        lazyLoading();
-        return methods;
-    }
-
-    private void lazyLoading() {
-        if (classes.isEmpty()) {
-            try {
-                createEntries();
-            } catch (IOException | GitAPIException e) {
-                logger.log(Level.SEVERE, "error creating entries from file", e);
-            }
-        }
-    }
-
-    // createEntries crea una lista di entry partendo da repositoryPath e da una lista di release selezionate da Jira.
-    // Ci si aspetta che il naming delle release scelte da Jira sia consistente con il naming dei tag su github.
-    private void createEntries() throws IOException, GitAPIException {
+    private Git createGit(String projectPath) throws IOException {
         var repository = new FileRepositoryBuilder()
                 .setGitDir(new File(projectPath, ".git"))
                 .build();
-        var git = new Git(repository);
-        var current = repository.getBranch();
-        var tags = git.tagList().call().stream().map(Ref::getName).toList();
-        for (var tag : tags) {
-            var o = releases.stream().filter(r -> tag.endsWith(r.name())).findFirst();
-            // Non è stata trovata la release indicata nei tag di github tra le release selezionate da Jira quindi
-            // si scarta il tag.
-            if (o.isEmpty()) {
-                continue;
-            }
-            var release = o.get();
-            git.checkout().setName(tag).call();
-            listAllFiles(Path.of(projectPath)).stream()
-                    .filter(this::isValidPath).forEach(f -> createEntry(f, release));
-        }
-        // Si reimposta la repository locale di git a quella iniziale.
-        git.checkout().setName(current).call();
+        return new Git(repository);
     }
 
-    // Si vogliono selezionare solamente i file .java che non sono file di test.
-    private boolean isValidPath(Path path) {
-        return isJavaFile(path.toString());
+    @Override
+    public List<JavaClass> getClasses() throws DataLoaderException {
+        try {
+            lazyDataLoading();
+            return classes;
+        } catch (GitAPIException | IOException e) {
+            throw new DataLoaderException(e);
+        }
+    }
+
+    @Override
+    public List<JavaMethod> getMethods() throws DataLoaderException {
+        try {
+            lazyDataLoading();
+            return methods;
+        } catch (GitAPIException | IOException e) {
+            throw new DataLoaderException(e);
+        }
+    }
+
+    private void lazyDataLoading() throws GitAPIException, IOException {
+        if (!dataLoaded) {
+            loadData();
+        }
+    }
+
+    private void loadData() throws IOException, GitAPIException {
+        var head = git.getRepository().getBranch();
+        var commits = StreamSupport.stream(git.log().call().spliterator(), false)
+                .toList();
+        for (var commit : commits) {
+            checkout(git, commit.getName());
+            try {
+                var files = listAllFiles(Path.of(projectPath)).stream()
+                        .filter(this::isValidPath)
+                        .toList();
+                for (var path : files) {
+                    parseFile(path, commit);
+                }
+            } catch (IOException e) {
+                checkout(git, head);
+            }
+        }
+        checkout(git, head);
+        dataLoaded = true;
+    }
+
+    private void checkout(Git git, String branch) throws GitAPIException {
+        git.checkout().setName(branch).call();
     }
 
     private static List<Path> listAllFiles(Path basePath) throws IOException {
@@ -113,46 +120,85 @@ public class DataLoaderImpl implements DataLoader {
         return files;
     }
 
+    // Si vogliono selezionare solamente i file .java che non sono file di test.
+    private boolean isValidPath(Path path) {
+        return isJavaFile(path.toString());
+    }
+
 
     private static boolean isJavaFile(String path) {
         return path.endsWith(".java") && !path.endsWith("package-info.java");
     }
 
-    // createEntry legge un file in path afferente a release (si assume che quando invocato il metodo è stato fatto
-    // checkout allo snapshot della repository indicato da release).
-    // createEntry inizializza i campi path, buggy, content e release della classe relativa a path
-    // e non a un file. In Java sebbene sia la norma che un file coincide con una classe, può capitare che ci siano
-    // classi nidificate.
-    private void createEntry(Path path, Release release) {
-        var realPath = Path.of(projectPath, path.toString());
+    private void parseFile(Path file, RevCommit commit) {
         try {
-            // Non sempre ci si sposta alla fine del file invocando skip con il valore dell'intero massimo, potrebbe
-            // essere necessario effettuare più invocazioni.
-            // buggy inizialmente viene impostato come false, perché l'etichettatura viene fatta in un secondo momento.
-            var clazz = new JavaClass(projectPath, path.toString(), release, Files.readString(realPath));
-            classes.add(clazz);
+            // clazz è l'entry point del file,
+            var clazz = new JavaClass(commit.getName(), Path.of(projectPath), file, getCommitTime(commit));
             extractor.setClass(clazz);
-            parseMethods(clazz);
+            var classList = parseClass(clazz);
+            // Raccoglie informazioni sui metodi modificati dal commit 'commit'
+            parseCommit(classList, commit);
+            classList.forEach(c -> methods.addAll(c.getMethods()));
         } catch (IOException e) {
-            logger.log(Level.INFO, "Release = %s, file not found: %s".formatted(release.name(), path));
+            logger.log(Level.INFO, e.getMessage());
         }
     }
 
-    private void parseMethods(JavaClass clazz) throws IOException {
-        var units = compiler
-                .getStandardFileManager(null, null, null)
-                .getJavaFileObjects(clazz.getRealPath());
-        var task = (JavacTask) compiler.getTask(null, null, null, null, null, units);
-        extractor.setSourcePositions(Trees.instance(task).getSourcePositions());
-        for (var cu : task.parse()) {
-            extractor.setCompilationUnit(cu);
-            cu.accept(extractor, null);
-            methods.addAll(extractor.getMethods());
-            var innerClasses = extractor.getInnerClasses();
-            if (!innerClasses.isEmpty()) {
-                classes.addAll(extractor.getInnerClasses());
-            }
+    private LocalDateTime getCommitTime(RevCommit commit) {
+        return commit.getAuthorIdent().getWhenAsInstant().atZone(commit.getAuthorIdent().getZoneId()).toLocalDateTime();
+    }
+
+    private List<JavaClass> parseClass(JavaClass clazz) throws IOException {
+        try {
+            extractor.setClass(clazz);
+            extractor.parse();
+            return extractor.getClasses();
+        } finally {
             extractor.reset();
         }
+    }
+
+    private void parseCommit(List<JavaClass> classList, RevCommit commit) throws IOException {
+        var df = new DiffFormatter(DisabledOutputStream.INSTANCE);
+        df.setRepository(git.getRepository());
+        df.setDetectRenames(true);
+        var o = getParent(commit);
+        if (o.isEmpty()) {
+            return;
+        }
+        var index = classList.stream()
+                .map(c -> Map.entry(c.getPath().toString(), c))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        var diffs = df.scan(o.get().getTree(), commit.getTree());
+        for (var diff : diffs) {
+            var oldPath = diff.getOldPath();
+            var path = diff.getNewPath();
+            // Se il percorso del file modificato non è un file .java allora non è necessario analizzare
+            // la modifica.
+            if (path.endsWith(".java") && index.containsKey(path)) {
+                getAuthor(commit).ifPresent(author -> index.get(path).setAuthor(author));
+                if (!oldPath.equals("/dev/null") && !oldPath.equals(path)) {
+                    index.get(path).setOldPath(Path.of(oldPath));
+                    logger.log(Level.INFO, "%s > %s".formatted(oldPath, path));
+                }
+            }
+        }
+    }
+
+    private Optional<RevCommit> getParent(RevCommit commit) {
+        try {
+            return Optional.ofNullable(commit.getParent(0));
+        } catch (IndexOutOfBoundsException e) {
+            logger.log(Level.INFO, "Commit %s has no parent".formatted(commit));
+            return Optional.empty();
+        }
+    }
+
+    private Optional<String> getAuthor(RevCommit commit) {
+        var author = commit.getAuthorIdent().getEmailAddress();
+        if (author == null || author.isEmpty() || author.equalsIgnoreCase("unknown@apache.org")) {
+            return Optional.empty();
+        }
+        return Optional.of(author);
     }
 }

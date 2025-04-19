@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface JavaClassApi {
     List<JavaClass> getClasses();
+    void save(List<JavaClass> classes);
 }

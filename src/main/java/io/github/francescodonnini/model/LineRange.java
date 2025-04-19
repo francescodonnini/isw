@@ -7,4 +7,8 @@ public record LineRange(long start, long end) {
                 || start <= other.start && end >= other.end
                 || start >= other.start && end <= other.end;
     }
+
+    public long length() {
+        return end - start;
+    }
 }

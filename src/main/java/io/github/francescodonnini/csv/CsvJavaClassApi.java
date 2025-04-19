@@ -7,24 +7,22 @@ import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import io.github.francescodonnini.csv.entities.JavaClassLocalEntity;
 import io.github.francescodonnini.model.JavaClass;
-import io.github.francescodonnini.model.Release;
 import io.github.francescodonnini.utils.FileUtils;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class CsvJavaClassApi {
     private final String defaultPath;
-    private final List<Release> releases;
 
-    public CsvJavaClassApi(String defaultPath, List<Release> releases) {
+    public CsvJavaClassApi(String defaultPath) {
         this.defaultPath = defaultPath;
-        this.releases = releases;
     }
 
     public List<JavaClass> getLocal(String path) throws FileNotFoundException {
@@ -47,18 +45,15 @@ public class CsvJavaClassApi {
     }
 
     private Optional<JavaClass> fromCsv(JavaClassLocalEntity bean) {
-        return releases.stream()
-                .filter(c -> filter(c, bean))
-                .findFirst()
-                .flatMap(release -> Optional.of(new JavaClass(
-                        bean.getParent(),
-                        bean.getPath(),
-                        release)));
+        var clazz = new JavaClass(
+                bean.getAuthor().orElse(""),
+                Path.of(bean.getParent()),
+                Path.of(bean.getPath()),
+                bean.getTime());
+        bean.getOldPath().ifPresent(p -> clazz.setOldPath(Path.of(p)));
+        return Optional.of(clazz);
     }
 
-    private boolean filter(Release release, JavaClassLocalEntity bean) {
-        return release.id().equals(bean.getReleaseId());
-    }
 
     public void saveLocal(List<JavaClass> entries, String path) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
         save(entries, path);
@@ -81,9 +76,11 @@ public class CsvJavaClassApi {
 
     private JavaClassLocalEntity toCsv(JavaClass model) {
         var bean = new JavaClassLocalEntity();
+        bean.setTime(model.getTime());
+        model.getOldPath().ifPresent(model::setOldPath);
         bean.setPath(model.getPath().toString());
         bean.setParent(model.getParent().toString());
-        bean.setReleaseId(model.getRelease().id());
+        model.getAuthor().ifPresent(bean::setAuthor);
         return bean;
     }
 }

@@ -1,50 +1,52 @@
 package io.github.francescodonnini.model;
 
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class JavaClass {
+    private String author;
+    private String commit;
+    private Path oldPath;
     private Path parent;
     private Path path;
-    private final Release release;
-    private String content;
+    private LocalDateTime time;
     private final List<JavaMethod> methods = new ArrayList<>();
 
-    public JavaClass(String parent, String path, Release release) {
-        this(Path.of(parent), Path.of(path), release, "");
+    public JavaClass(String commit, Path parent, Path path, LocalDateTime time) {
+        this(null, commit, null, parent, path, time);
     }
 
-    public JavaClass(Path parent, Path path, Release release) {
-        this(parent, path, release, "");
-    }
-
-    public JavaClass(String parent, String path, Release release, String content) {
-        this(Path.of(parent), Path.of(path), release, content);
-    }
-
-    public JavaClass(Path parent, Path path, Release release, String content) {
+    public JavaClass(String author, String commit, Path oldPath, Path parent, Path path, LocalDateTime time) {
+        this.author = author;
+        this.commit = commit;
+        this.oldPath = oldPath;
         this.parent = parent;
         this.path = path;
-        this.release = release;
-        this.content = content;
+        this.time = time;
     }
 
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof JavaClass javaClass)) return false;
-        return Objects.equals(parent, javaClass.parent) && Objects.equals(path, javaClass.path) && Objects.equals(release, javaClass.release) && Objects.equals(content, javaClass.content);
+        return Objects.equals(author, javaClass.author)
+                && Objects.equals(commit, javaClass.commit)
+                && Objects.equals(parent, javaClass.parent)
+                && Objects.equals(path, javaClass.path)
+                && Objects.equals(time, javaClass.time);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(parent, path, release, content);
+        return Objects.hash(author, commit, parent, path, time);
     }
 
     @Override
     public String toString() {
-        return "%s %s".formatted(release.id(), path);
+        return "(%s %s %s)".formatted(author, commit, path);
     }
 
     public void addMethod(JavaMethod method) {
@@ -79,15 +81,31 @@ public class JavaClass {
         return parent.resolve(path);
     }
 
-    public Release getRelease() {
-        return release;
+    public LocalDateTime getTime() {
+        return time;
     }
 
-    public String getContent() {
-        return content;
+    public Optional<String> getAuthor() {
+        return Optional.of(author);
     }
 
-    public void setContent(String content) {
-        this.content = content;
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public String getCommit() {
+        return commit;
+    }
+
+    public void setCommit(String commit) {
+        this.commit = commit;
+    }
+
+    public Optional<Path> getOldPath() {
+        return Optional.ofNullable(oldPath);
+    }
+
+    public void setOldPath(Path oldPath) {
+        this.oldPath = oldPath;
     }
 }

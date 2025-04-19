@@ -2,13 +2,13 @@ package io.github.francescodonnini.model;
 
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 
 public class JavaMethod {
     private boolean buggy;
     private final String signature;
     private final JavaClass javaClass;
     private final LineRange range;
-    private String content;
     // lineOfCode
     // cyclomaticComplexity
     // parametersCount
@@ -26,19 +26,14 @@ public class JavaMethod {
 
 
     public JavaMethod(boolean buggy, JavaClass javaClass, String signature, LineRange range) {
-        this(buggy, javaClass, signature, range, "", new Metrics());
+        this(buggy, javaClass, signature, range, new Metrics());
     }
 
-    public JavaMethod(boolean buggy, JavaClass javaClass, String signature, LineRange range, String content) {
-        this(buggy, javaClass, signature, range, content, new Metrics());
-    }
-
-    public JavaMethod(boolean buggy, JavaClass javaClass, String signature, LineRange range, String content, Metrics metrics) {
+    public JavaMethod(boolean buggy, JavaClass javaClass, String signature, LineRange range, Metrics metrics) {
         this.buggy = buggy;
         this.signature = signature;
         this.javaClass = javaClass;
         this.range = range;
-        this.content = content;
         this.metrics = metrics;
         javaClass.addMethod(this);
     }
@@ -46,17 +41,17 @@ public class JavaMethod {
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof JavaMethod that)) return false;
-        return buggy == that.buggy && Objects.equals(signature, that.signature) && Objects.equals(javaClass, that.javaClass) && Objects.equals(content, that.content);
+        return buggy == that.buggy && Objects.equals(signature, that.signature) && Objects.equals(javaClass, that.javaClass);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(buggy, signature, javaClass, content);
+        return Objects.hash(buggy, signature, javaClass);
     }
 
     @Override
     public String toString() {
-        return "(%s, %s)".formatted(javaClass.getRelease().id(), signature);
+        return signature;
     }
 
     public boolean isBuggy() {
@@ -67,24 +62,12 @@ public class JavaMethod {
         this.buggy = buggy;
     }
 
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
     public JavaClass getJavaClass() {
         return javaClass;
     }
 
     public String getSignature() {
         return signature;
-    }
-
-    public Release getRelease() {
-        return javaClass.getRelease();
     }
 
     public Path getPath() {

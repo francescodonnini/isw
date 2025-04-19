@@ -1,40 +1,29 @@
 package io.github.francescodonnini.collectors;
 
+import io.github.francescodonnini.history.FileHistory;
 import io.github.francescodonnini.model.JavaMethod;
-import io.github.francescodonnini.model.LineRange;
-import io.github.francescodonnini.model.Release;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class VcsCollector {
-    private final Logger logger = Logger.getLogger(VcsCollector.class.getName());
+public class GitCollector {
+    private final Logger logger = Logger.getLogger(GitCollector.class.getName());
     private final Git git;
-    private final List<Release> releases;
     private final HashSet<String> changeSet = new HashSet<>();
 
-    public VcsCollector(List<Release> releases, Path repositoryPath) throws IOException {
-        this.releases = new ArrayList<>(releases);
-        this.git = createGit(repositoryPath);
-    }
-
-    private Git createGit(Path path) throws IOException {
-        var repository = new FileRepositoryBuilder()
-                .setGitDir(path.toFile())
-                .build();
-        return new Git(repository);
+    public GitCollector(Git git) {
+        this.git = git;
     }
 
     /*
@@ -52,52 +41,41 @@ public class VcsCollector {
      * - [] Age: età della release.
      * - [] Weighted Age: età della release pesate per il numero di linee toccate.
      */
-    public void calculate(List<JavaMethod> methods) {
+    public void calculate(List<JavaMethod> methods, List<FileHistory> history) {
         // mapping contiene tutte le entries divise per numero di release.
-        var mapping = new HashMap<String, List<JavaMethod>>();
-        methods.forEach(e -> mapping.computeIfAbsent(e.getRelease().id(), _ -> new ArrayList<>()).add(e));
+        var mapping = history.stream()
+                .map(h -> Map.entry(h.getCommitId(), h))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         try {
             // Si prende la lista di tutti i commit e si ordinano per data di pubblicazione.
             var commits = StreamSupport.stream(git.log().call().spliterator(), false)
                     .sorted(Comparator.comparing(this::getCommitTime))
-                    .filter(c -> !afterRelease(releases.getLast(), c))
+                    .filter(c -> mapping.containsKey(c.getName()))
                     .toList();
             for (var commit : commits) {
-                // Si prende la release a cui quel commit appartiene.
-                // Se non esiste una release disponibile si scarta il commit.
-                var o = getReleaseByCommit(commit);
-                if (o.isPresent()) {
-                    var release = o.get();
-                    // Si prende la lista delle entries afferenti a release.
-                    // Queste sono le entries che possono essere influenzate dal commit che si sta analizzando.
-                    // Se non ci sono entries afferenti a release allora si scarta il commit.
-                    var susceptibles = mapping.get(release.id());
-                    updateEntries(methods, susceptibles, commit);
+                if (mapping.containsKey(commit.getName())) {
+                    var h = mapping.get(commit.getName());
+                    updateEntries(methods, commit, h);
                 }
             }
-            calculateAverages(mapping);
         } catch (GitAPIException | IOException e) {
             logger.log(Level.SEVERE, e.getMessage(), e);
         }
     }
 
-    private boolean afterRelease(Release release, RevCommit commit) {
-        return getCommitTime(commit).isAfter(release.releaseDate().atStartOfDay());
-    }
-
-    private void updateEntries(List<JavaMethod> entries, List<JavaMethod> susceptibles, RevCommit commit) throws IOException {
+    private void updateEntries(List<JavaMethod> susceptibles, RevCommit commit, FileHistory h) throws IOException {
         if (susceptibles != null && !susceptibles.isEmpty()) {
             // Un commit è una lista di modifiche fatte a uno o più file, è necessario iterare
             // tra le modifiche (diff) per raccogliere le metriche.
             var optionalParent = getParent(commit);
             if (optionalParent.isPresent()) {
                 var parent = optionalParent.get();
-                parseDiffs(entries, susceptibles, parent, commit);
+                parseDiffs(susceptibles, parent, commit, h);
             }
         }
     }
 
-    private void parseDiffs(List<JavaMethod> entries, List<JavaMethod> susceptibles, RevCommit parent, RevCommit commit) throws IOException {
+    private void parseDiffs(List<JavaMethod> susceptibles, RevCommit parent, RevCommit commit, FileHistory h) throws IOException {
         var df = new DiffFormatter(DisabledOutputStream.INSTANCE);
         df.setRepository(git.getRepository());
         df.setDetectRenames(true);
@@ -111,10 +89,6 @@ public class VcsCollector {
                 // I file potrebbero essere stati rinominati ed è necessario quindi aggiornare tutte le entry che hanno
                 // il vecchio percorso. Bisogna controllare se il vecchio path è diverso da /dev/null dato che in tal caso non è necessario fare alcune
                 // operazione perché significa che il file non esisteva prima di quel commit.
-                var oldPath = diff.getOldPath();
-                if (!oldPath.equals("/dev/null") && !oldPath.equals(path)) {
-                    renameAllEntries(entries, Path.of(oldPath), Path.of(path));
-                }
                 var optionalEntry = susceptibles.stream().filter(it -> it.getPath().endsWith(path)).findFirst();
                 // Se non esiste alcuna entry con quel percorso allora non è necessario analizzare la modifica.
                 if (optionalEntry.isEmpty()) {
@@ -141,6 +115,8 @@ public class VcsCollector {
         }
         changeSet.clear();
     }
+
+
 
     private Optional<RevCommit> getParent(RevCommit commit) {
         try {
@@ -181,34 +157,12 @@ public class VcsCollector {
         }
     }
 
-    // cambia il path di tutte le entry da oldPath a newPath
-    private void renameAllEntries(List<JavaMethod> methods, Path oldPath, Path newPath) {
-        for (var m : methods) {
-            if (m.getPath().equals(oldPath)) {
-                m.setPath(newPath);
-            }
-        }
-    }
-
     private Optional<String> getAuthor(RevCommit commit) {
         var author = commit.getAuthorIdent().getEmailAddress();
         if (author == null || author.isEmpty() || author.equalsIgnoreCase("unknown@apache.org")) {
             return Optional.empty();
         }
         return Optional.of(author);
-    }
-
-    private Optional<Release> getReleaseByCommit(RevCommit commit) {
-        return getReleaseByDate(getCommitTime(commit));
-    }
-
-    private Optional<Release> getReleaseByDate(LocalDateTime commitTime) {
-        for (Release r : releases) {
-            if (r.releaseDate().isAfter(commitTime.toLocalDate())) {
-                return Optional.of(r);
-            }
-        }
-        return Optional.empty();
     }
 
     private LocalDateTime getCommitTime(RevCommit commit) {

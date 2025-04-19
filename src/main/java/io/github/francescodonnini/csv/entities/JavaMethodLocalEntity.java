@@ -9,8 +9,8 @@ public class JavaMethodLocalEntity {
     private String signature;
     @CsvBindByName(column = "classPath", required = true)
     private String classPath;
-    @CsvBindByName(column = "releaseId", required = true)
-    private String releaseId;
+    @CsvBindByName(column = "commit", required = true)
+    private String commit;
     @CsvBindByName(column = "lineStart", required = true)
     private long lineStart;
     @CsvBindByName(column = "lineEnd", required = true)
@@ -48,12 +48,12 @@ public class JavaMethodLocalEntity {
         this.classPath = classPath;
     }
 
-    public String getReleaseId() {
-        return releaseId;
+    public String getCommit() {
+        return commit;
     }
 
-    public void setReleaseId(String releaseId) {
-        this.releaseId = releaseId;
+    public void setCommit(String commit) {
+        this.commit = commit;
     }
 
     public long getLineStart() {

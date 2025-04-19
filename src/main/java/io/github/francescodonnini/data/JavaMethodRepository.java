@@ -52,6 +52,11 @@ public class JavaMethodRepository implements JavaMethodApi {
         return data;
     }
 
+    @Override
+    public void save(List<JavaMethod> methods) {
+        saveLocal(methods);
+    }
+
     private void saveLocal(List<JavaMethod> classes) {
         try {
             localSource.saveLocal(classes);

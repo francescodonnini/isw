@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface JavaMethodApi {
     List<JavaMethod> getMethods();
+    void save(List<JavaMethod> methods);
 }
