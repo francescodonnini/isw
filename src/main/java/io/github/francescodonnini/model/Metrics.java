@@ -20,6 +20,18 @@ public class Metrics {
     private int avgChangeSetSize;
     private final Set<String> authors = new HashSet<>();
 
+    public void addLocAdded(int locAdded) {
+        this.locAdded += locAdded;
+    }
+
+    public void addLocDeleted(int locDeleted) {
+        this.locDeleted += locDeleted;
+    }
+
+    public void addLocTouched(int locTouched) {
+        this.locTouched += locTouched;
+    }
+
     public int getAvgChangeSetSize() {
         return avgChangeSetSize;
     }
