@@ -8,6 +8,7 @@ import io.github.francescodonnini.model.Release;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -49,6 +50,7 @@ public class ReleaseRepository implements ReleaseApi {
 
     private List<Release> tryGetFreshData() {
         var data = remoteSource.getReleases();
+        data.sort(Comparator.comparing(Release::releaseDate));
         saveLocal(data);
         return data;
     }
