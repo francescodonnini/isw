@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class JavaMethodExtractor extends TreeScanner<Void, Void> {
@@ -25,7 +24,6 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     private final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     private CompilationUnitTree compilationUnit;
     private SourcePositions sourcePositions;
-    private final List<JavaMethod> methods = new ArrayList<>();
     private final List<JavaClass> classes = new ArrayList<>();
     private ParseContext context;
     private JavaClass currentClass;
@@ -39,7 +37,6 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     public void reset() {
         anonymousClassCounter = 0;
         classes.clear();
-        methods.clear();
     }
 
     public List<JavaClass> getClasses() {
@@ -140,7 +137,6 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
             var lineRange = getLineRange(node);
             var m = new JavaMethod(false, currentClass, AstUtils.getSignature(node), lineRange);
             m.getMetrics().setLineOfCode(loc);
-            methods.add(m);
         }
         return super.visitMethod(node, unused);
     }

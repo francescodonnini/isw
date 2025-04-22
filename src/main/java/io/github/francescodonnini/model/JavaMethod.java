@@ -2,7 +2,6 @@ package io.github.francescodonnini.model;
 
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.Optional;
 
 public class JavaMethod {
     private boolean buggy;
