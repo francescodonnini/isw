@@ -15,18 +15,23 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class CsvJavaMethodApi {
     private final String defaultPath;
-    private final List<JavaClass> classes;
+    private final Map<String, JavaClass> classMap = new HashMap<>();
 
     public CsvJavaMethodApi(String defaultPath, List<JavaClass> classes) {
         this.defaultPath = defaultPath;
-        this.classes = classes;
+        classes.forEach(c -> classMap.put(key(c), c));
+    }
+
+    private String key(JavaClass clazz) {
+        return String.format("%s%s", clazz.getPath(), clazz.getCommit());
+    }
+
+    private String key(JavaMethodLocalEntity clazz) {
+        return String.format("%s%s", clazz.getClassPath(), clazz.getCommit());
     }
 
     public List<JavaMethod> getLocal(String path) throws FileNotFoundException {
@@ -49,16 +54,21 @@ public class CsvJavaMethodApi {
     }
 
     private Optional<JavaMethod> fromCsv(JavaMethodLocalEntity bean) {
-        var o = classes.stream()
-                .filter(c -> filter(c, bean))
-                .findFirst()
-                .flatMap(clazz -> Optional.of(new JavaMethod(
-                        bean.isBuggy(),
-                        clazz,
-                        bean.getSignature(),
-                        new LineRange(bean.getLineStart(), bean.getLineEnd()))));
-        o.ifPresent(m -> addMetrics(m, bean));
-        return o;
+        var o = getJavaClass(bean);
+        if (o.isEmpty()) {
+            return Optional.empty();
+        }
+        var m = new JavaMethod(
+            bean.isBuggy(),
+            o.get(),
+            bean.getSignature(),
+            new LineRange(bean.getLineStart(), bean.getLineEnd()));
+        addMetrics(m, bean);
+        return Optional.of(m);
+    }
+
+    private Optional<JavaClass> getJavaClass(JavaMethodLocalEntity bean) {
+        return Optional.ofNullable(classMap.get(key(bean)));
     }
 
     private void addMetrics(JavaMethod m, JavaMethodLocalEntity bean) {
@@ -66,11 +76,6 @@ public class CsvJavaMethodApi {
         m.getMetrics().setCyclomaticComplexity(bean.getCyclomaticComplexity());
         m.getMetrics().setParametersCount(bean.getParametersCount());
         m.getMetrics().setStatementsCount(bean.getStatementsCount());
-    }
-
-    private boolean filter(JavaClass clazz, JavaMethodLocalEntity bean) {
-        return clazz.getPath().equals(Path.of(bean.getClassPath()))
-                && clazz.getCommit().equals(bean.getCommit());
     }
 
     public void saveLocal(List<JavaMethod> entries, String path) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
