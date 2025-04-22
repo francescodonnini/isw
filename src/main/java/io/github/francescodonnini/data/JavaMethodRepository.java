@@ -14,10 +14,10 @@ import java.util.logging.Logger;
 public class JavaMethodRepository implements JavaMethodApi {
     private final Logger logger = Logger.getLogger(JavaMethodRepository.class.getName());
     private final CsvJavaMethodApi localSource;
-    private final DataLoader factory;
+    private final MethodDataLoader factory;
     private final boolean useCache;
 
-    public JavaMethodRepository(DataLoader factory, CsvJavaMethodApi localSource, boolean useCache) {
+    public JavaMethodRepository(MethodDataLoader factory, CsvJavaMethodApi localSource, boolean useCache) {
         this.factory = factory;
         this.localSource = localSource;
         this.useCache = useCache;

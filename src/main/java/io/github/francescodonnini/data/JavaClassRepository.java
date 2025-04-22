@@ -14,10 +14,10 @@ import java.util.logging.Logger;
 public class JavaClassRepository implements JavaClassApi {
     private final Logger logger = Logger.getLogger(JavaClassRepository.class.getName());
     private final CsvJavaClassApi localSource;
-    private final DataLoader factory;
+    private final ClassDataLoader factory;
     private final boolean useCache;
 
-    public JavaClassRepository(DataLoader factory, CsvJavaClassApi localSource, boolean useCache) {
+    public JavaClassRepository(ClassDataLoader factory, CsvJavaClassApi localSource, boolean useCache) {
         this.localSource = localSource;
         this.factory = factory;
         this.useCache = useCache;

@@ -1,6 +1,6 @@
 package io.github.francescodonnini.data;
 
-import io.github.francescodonnini.collectors.ast.AbstractCounter;
+import io.github.francescodonnini.collectors.ast.*;
 import io.github.francescodonnini.model.JavaClass;
 import io.github.francescodonnini.model.JavaMethod;
 import org.eclipse.jgit.api.Git;
@@ -15,32 +15,34 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class DataLoaderImpl implements DataLoader {
+public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
+    private static final String JAVA_FILE_EXT= ".java";
     private final Logger logger = Logger.getLogger(DataLoaderImpl.class.getName());
     // repositoryPath è il percorso delle repository dove leggere i file da cui creare le entry per il dataset.
     private final String projectPath;
     private final Git git;
-    // releases è la lista delle release da cui selezionare i file per le entry.
-    private final JavaMethodExtractor extractor;
+    private final LocalDate endTime;
     private final List<JavaClass> classes = new ArrayList<>();
     private final List<JavaMethod> methods = new ArrayList<>();
+    private final JavaMethodExtractor extractor;
     private boolean dataLoaded = false;
 
     public DataLoaderImpl(
             String projectPath,
-            List<AbstractCounter> counters) throws IOException {
+            AbstractCounterFactoryImpl factory,
+            LocalDate endTime) throws IOException {
         this.projectPath = projectPath;
         this.git = createGit(projectPath);
-        this.extractor = new JavaMethodExtractor(counters);
+        this.endTime = endTime;
+        extractor = new JavaMethodExtractor(createCounters(factory));
     }
 
     private Git createGit(String projectPath) throws IOException {
@@ -48,6 +50,13 @@ public class DataLoaderImpl implements DataLoader {
                 .setGitDir(new File(projectPath, ".git"))
                 .build();
         return new Git(repository);
+    }
+
+    private List<AbstractCounter> createCounters(AbstractCounterFactoryImpl factory) {
+        return List.of(
+                factory.build(CyclomaticComplexityCounter.class),
+                factory.build(InputParametersCounter.class),
+                factory.build(StatementsCounter.class));
     }
 
     @Override
@@ -80,24 +89,21 @@ public class DataLoaderImpl implements DataLoader {
         var head = git.getRepository().getBranch();
         var commits = StreamSupport
                 .stream(git.log().call().spliterator(), false)
+                .filter(c -> !endTime.isAfter(getCommitDate(c)))
                 .sorted(Comparator.comparingInt(RevCommit::getCommitTime))
                 .toList();
         logger.log(Level.INFO, "total commits: {0}", commits.size());
         int progress = 0;
         for (var commit : commits) {
             ++progress;
-            if (progress % 100 == 0) {
-                logger.log(Level.INFO, "%d/%d (%f%%)".formatted(progress, commits.size(), progress * 100. / commits.size()));
-            }
+            logProgress(progress, commits.size());
             checkout(git, commit.getName());
             var susceptibles = getTouchedFiles(commit);
             try {
-                var files = listAllFiles(Path.of(projectPath)).stream()
+                listAllFiles(Path.of(projectPath)).stream()
                         .filter(this::isValidPath)
-                        .collect(Collectors.toSet());
-                files.stream()
-                        .filter(path -> susceptibles.contains(path.toString()))
-                        .forEach(path -> parseFile(path, commit));
+                        .filter(p -> susceptibles.contains(p.toString()))
+                        .forEach(p -> parseFile(p, commit));
             } catch (IOException e) {
                 checkout(git, head);
             }
@@ -106,21 +112,27 @@ public class DataLoaderImpl implements DataLoader {
         dataLoaded = true;
     }
 
-    private List<String> getTouchedFiles(RevCommit commit) throws IOException {
+    private void logProgress(int progress, int total) {
+        if (progress % 100 == 0) {
+            logger.log(Level.INFO, () -> "%d/%d (%f%%)".formatted(progress, total, progress * 100. / total));
+        }
+    }
+
+    private Set<String> getTouchedFiles(RevCommit commit) throws IOException {
         var df = new DiffFormatter(DisabledOutputStream.INSTANCE);
         df.setRepository(git.getRepository());
         df.setDetectRenames(true);
         var o = getParent(commit);
         if (o.isEmpty()) {
-            return List.of();
+            return HashSet.newHashSet(0);
         }
-        var touchedFiles = new ArrayList<String>();
+        var touchedFiles = new HashSet<String>();
         var diffs = df.scan(o.get().getTree(), commit.getTree());
         for (var diff : diffs) {
             var path = diff.getNewPath();
             // Se il percorso del file modificato non è un file .java allora non è necessario analizzare
             // la modifica.
-            if (path.endsWith(".java")) {
+            if (path.endsWith(JAVA_FILE_EXT)) {
                 touchedFiles.add(path);
             }
         }
@@ -163,7 +175,7 @@ public class DataLoaderImpl implements DataLoader {
 
 
     private static boolean isJavaFile(String path) {
-        return path.endsWith(".java") && !path.endsWith("package-info.java");
+        return path.endsWith(JAVA_FILE_EXT) && !path.endsWith("package-info.java");
     }
 
     private void parseFile(Path file, RevCommit commit) {
@@ -180,11 +192,13 @@ public class DataLoaderImpl implements DataLoader {
         }
     }
 
+    private LocalDate getCommitDate(RevCommit commit) {
+        return getCommitTime(commit).toLocalDate();
+    }
+
     private LocalDateTime getCommitTime(RevCommit commit) {
         return commit.getAuthorIdent().getWhenAsInstant().atZone(commit.getAuthorIdent().getZoneId()).toLocalDateTime();
     }
-
-
 
     public List<JavaClass> parseClass(ParseContext ctx) throws IOException {
         try {
@@ -211,7 +225,7 @@ public class DataLoaderImpl implements DataLoader {
             var path = diff.getNewPath();
             // Se il percorso del file modificato non è un file .java allora non è necessario analizzare
             // la modifica.
-            if (path.endsWith(".java") && index.containsKey(path)) {
+            if (path.endsWith(JAVA_FILE_EXT) && index.containsKey(path)) {
                 getAuthor(commit).ifPresent(author -> index.get(path).forEach(c -> c.setAuthor(author)));
                 if (!oldPath.equals("/dev/null") && !oldPath.equals(path)) {
                     index.get(path).forEach(c -> c.setOldPath(Path.of(oldPath)));

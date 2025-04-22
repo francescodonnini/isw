@@ -1,8 +1,6 @@
 package io.github.francescodonnini;
 
-import io.github.francescodonnini.collectors.ast.CyclomaticComplexityCounter;
-import io.github.francescodonnini.collectors.ast.InputParametersCounter;
-import io.github.francescodonnini.collectors.ast.StatementsCounter;
+import io.github.francescodonnini.collectors.ast.AbstractCounterFactoryImpl;
 import io.github.francescodonnini.config.IniSettings;
 import io.github.francescodonnini.csv.CsvJavaClassApi;
 import io.github.francescodonnini.csv.CsvJavaMethodApi;
@@ -16,7 +14,6 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 
 public class Main {
     public static void main(String[] args) throws ConfigurationException, IOException {
@@ -38,13 +35,7 @@ public class Main {
         var releaseApi = new ReleaseRepository(remoteReleaseApi, localReleaseApi, useCache);
         var releases = releaseApi.getReleases();
         var lastRelease = releases.size() / 3;
-        var counters = List.of(
-                new CyclomaticComplexityCounter(),
-                new InputParametersCounter(),
-                new StatementsCounter()
-        );
-        var releaseRange = releases.subList(0, lastRelease);
-        var factory = new DataLoaderImpl(projectPath, counters);
+        var factory = new DataLoaderImpl(projectPath, new AbstractCounterFactoryImpl(), releases.get(lastRelease).releaseDate());
         var localClassApi = new CsvJavaClassApi(Path.of(path, "classes.csv").toString());
         var classApi = new JavaClassRepository(factory, localClassApi, useCache);
         var classes = classApi.getClasses();
