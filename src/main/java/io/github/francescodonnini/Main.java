@@ -1,5 +1,7 @@
 package io.github.francescodonnini;
 
+import com.opencsv.exceptions.CsvDataTypeMismatchException;
+import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import io.github.francescodonnini.collectors.DiffCollector;
 import io.github.francescodonnini.collectors.ast.AbstractCounterFactoryImpl;
 import io.github.francescodonnini.config.IniSettings;
@@ -17,7 +19,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public class Main {
-    public static void main(String[] args) throws ConfigurationException, IOException {
+    public static void main(String[] args) throws ConfigurationException, IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {
         if (args.length != 2) {
             System.exit(-1);
         }
@@ -42,7 +44,8 @@ public class Main {
         var classes = classApi.getClasses();
         var localMethodApi = new CsvJavaMethodApi(Path.of(path, "methods.csv").toString(), classes);
         var methodApi = new JavaMethodRepository(factory, localMethodApi, useCache);
-        var diff = new DiffCollector(releases, methodApi.getMethods());
-        var diffed = diff.collect();
+        var methods = methodApi.getMethods();
+        var diff = new DiffCollector(releases, methods);
+        localMethodApi.saveLocal(diff.collect(), String.valueOf(Path.of(path, "methods_complete.csv")));
     }
 }

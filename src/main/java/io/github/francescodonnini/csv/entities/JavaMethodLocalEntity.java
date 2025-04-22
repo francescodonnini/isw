@@ -12,21 +12,102 @@ public class JavaMethodLocalEntity {
     @CsvBindByName(column = "commit", required = true)
     private String commit;
     @CsvBindByName(column = "lineStart", required = true)
-    private long lineStart;
+    private int lineStart;
     @CsvBindByName(column = "lineEnd", required = true)
-    private long lineEnd;
+    private int lineEnd;
     @CsvBindByName(column = "lineOfCode", required = true)
-    private long lineOfCode;
+    private int lineOfCode;
     @CsvBindByName(column = "cyclomaticComplexity", required = true)
     int cyclomaticComplexity;
     @CsvBindByName(column = "parametersCount", required = true)
     int parametersCount;
     @CsvBindByName(column = "statementsCount", required = true)
-    long statementsCount;
+    int statementsCount;
     @CsvBindByName(column = "elseCount", required = true)
     int elseCount;
     @CsvBindByName(column = "nestingDepth", required = true)
     int nestingDepth;
+
+    public int getLocAdded() {
+        return locAdded;
+    }
+
+    public void setLocAdded(int locAdded) {
+        this.locAdded = locAdded;
+    }
+
+    public int getLocDeleted() {
+        return locDeleted;
+    }
+
+    public void setLocDeleted(int locDeleted) {
+        this.locDeleted = locDeleted;
+    }
+
+    public int getElseAdded() {
+        return elseAdded;
+    }
+
+    public void setElseAdded(int elseAdded) {
+        this.elseAdded = elseAdded;
+    }
+
+    public int getElseDeleted() {
+        return elseDeleted;
+    }
+
+    public void setElseDeleted(int elseDeleted) {
+        this.elseDeleted = elseDeleted;
+    }
+
+    public int getChurn() {
+        return churn;
+    }
+
+    public void setChurn(int churn) {
+        this.churn = churn;
+    }
+
+    public double getAvgChurn() {
+        return avgChurn;
+    }
+
+    public void setAvgChurn(double avgChurn) {
+        this.avgChurn = avgChurn;
+    }
+
+    public int getStatementsAdded() {
+        return statementsAdded;
+    }
+
+    public void setStatementsAdded(int statementsAdded) {
+        this.statementsAdded = statementsAdded;
+    }
+
+    public int getStatementsDeleted() {
+        return statementsDeleted;
+    }
+
+    public void setStatementsDeleted(int statementsDeleted) {
+        this.statementsDeleted = statementsDeleted;
+    }
+
+    @CsvBindByName(column = "locAdded")
+    int locAdded;
+    @CsvBindByName(column = "locDeleted")
+    int locDeleted;
+    @CsvBindByName(column = "elseAdded")
+    int elseAdded;
+    @CsvBindByName(column = "elseDeleted")
+    int elseDeleted;
+    @CsvBindByName(column = "churn")
+    int churn;
+    @CsvBindByName(column = "avgChurn")
+    double avgChurn;
+    @CsvBindByName(column = "statementsAdded")
+    int statementsAdded;
+    @CsvBindByName(column = "statementsDeleted")
+    int statementsDeleted;
 
     public boolean isBuggy() {
         return buggy;
@@ -60,27 +141,27 @@ public class JavaMethodLocalEntity {
         this.commit = commit;
     }
 
-    public long getLineStart() {
+    public int getLineStart() {
         return lineStart;
     }
 
-    public void setLineStart(long lineStart) {
+    public void setLineStart(int lineStart) {
         this.lineStart = lineStart;
     }
 
-    public long getLineEnd() {
+    public int getLineEnd() {
         return lineEnd;
     }
 
-    public void setLineEnd(long lineEnd) {
+    public void setLineEnd(int lineEnd) {
         this.lineEnd = lineEnd;
     }
 
-    public long getLineOfCode() {
+    public int getLineOfCode() {
         return lineOfCode;
     }
 
-    public void setLineOfCode(long lineOfCode) {
+    public void setLineOfCode(int lineOfCode) {
         this.lineOfCode = lineOfCode;
     }
 
@@ -100,11 +181,11 @@ public class JavaMethodLocalEntity {
         this.parametersCount = parametersCount;
     }
 
-    public long getStatementsCount() {
+    public int getStatementsCount() {
         return statementsCount;
     }
 
-    public void setStatementsCount(long statementsCount) {
+    public void setStatementsCount(int statementsCount) {
         this.statementsCount = statementsCount;
     }
 

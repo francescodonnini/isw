@@ -77,11 +77,11 @@ public class JavaMethod {
         javaClass.setPath(path);
     }
 
-    public long getStartLine() {
+    public int getStartLine() {
         return range.start();
     }
 
-    public long getEndLine() {
+    public int getEndLine() {
         return range.end();
     }
 

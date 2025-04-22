@@ -1,75 +1,42 @@
 package io.github.francescodonnini.model;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class Metrics {
-    private long lineOfCode;
     private int cyclomaticComplexity;
-    private int parametersCount;
-    private long statementsCount;
-    private int locTouched;
-    private int nestingDepth;
-    private int elseCount;
-    private int elseAdded;
-    private int elseDeleted;
-    private int churn;
-    private int numOfRevisions;
-    private int numOfAuthors;
+    private int lineOfCode;
+    private final List<Integer> locHistory = new ArrayList<>();
     private int locAdded;
     private int locDeleted;
-    private int avgLocAdded;
-    private int changeSetSize;
-    private int maxChangeSetSize;
-    private int avgChangeSetSize;
+    private int parametersCount;
+    private int statementsCount;
+    private final List<Integer> statementHistory = new ArrayList<>();
+    private int statementsAdded;
+    private int statementsDeleted;
+    private int churn;
+    private double avgChurn;
+    private int nestingDepth;
+    private int elseCount;
+    private final List<Integer> elseHistory = new ArrayList<>();
+    private int elseAdded;
+    private int elseDeleted;
     private final Set<String> authors = new HashSet<>();
 
-    public void addLocAdded(int locAdded) {
-        this.locAdded += locAdded;
-    }
-
-    public void addLocDeleted(int locDeleted) {
-        this.locDeleted += locDeleted;
-    }
-
-    public void addLocTouched(int locTouched) {
-        this.locTouched += locTouched;
-    }
-
-    public int getAvgChangeSetSize() {
-        return avgChangeSetSize;
-    }
-
-    public void setAvgChangeSetSize(int avgChangeSetSize) {
-        this.avgChangeSetSize = avgChangeSetSize;
-    }
-
-    public int getAvgLocAdded() {
-        return avgLocAdded;
-    }
-
-    public void setAvgLocAdded(int avgLocAdded) {
-        this.avgLocAdded = avgLocAdded;
-    }
-
-    public int getChangeSetSize() {
-        return changeSetSize;
-    }
-
-    public void setChangeSetSize(int changeSetSize) {
-        this.changeSetSize = changeSetSize;
-    }
-
-    public void addChurn(int churn) {
-        this.churn += churn;
-    }
-
-    public int getChurn() {
-        return churn;
-    }
-
-    public void setChurn(int churn) {
-        this.churn = churn;
+    @Override
+    public String toString() {
+        return "Metrics{" +
+                "cyclomaticComplexity=" + cyclomaticComplexity +
+                "lineOfCode=" + lineOfCode +
+                ", parametersCount=" + parametersCount +
+                ", statementsCount=" + statementsCount +
+                ", elseCount=" + elseCount +
+                ", nestingDepth=" + nestingDepth +
+                ", authorsCount=" + authors.size() +
+                ", authors=" + String.join(",", authors) +
+                '}';
     }
 
     public int getCyclomaticComplexity() {
@@ -80,15 +47,17 @@ public class Metrics {
         this.cyclomaticComplexity = cyclomaticComplexity;
     }
 
-    public long getLineOfCode() {
+    public void addLoc(int loc) {
+        locHistory.add(loc);
+    }
+
+    public int getLineOfCode() {
         return lineOfCode;
     }
 
-    public void setLineOfCode(long lineOfCode) {
-        this.lineOfCode = lineOfCode;
-    }
-
     public int getLocAdded() {
+        if (!locHistory.isEmpty())
+            locAdded = getAdded(locHistory);
         return locAdded;
     }
 
@@ -96,36 +65,18 @@ public class Metrics {
         this.locAdded = locAdded;
     }
 
-    public int getLocTouched() {
-        return locTouched;
+    public int getLocDeleted() {
+        if (!locHistory.isEmpty())
+            locDeleted = getDeleted(locHistory);
+        return locDeleted;
     }
 
-    public void setLocTouched(int locTouched) {
-        this.locTouched = locTouched;
+    public void setLocDeleted(int locDeleted) {
+        this.locDeleted = locDeleted;
     }
 
-    public int getMaxChangeSetSize() {
-        return maxChangeSetSize;
-    }
-
-    public void setMaxChangeSetSize(int maxChangeSetSize) {
-        this.maxChangeSetSize = maxChangeSetSize;
-    }
-
-    public int getNumOfAuthors() {
-        return numOfAuthors;
-    }
-
-    public void setNumOfAuthors(int numOfAuthors) {
-        this.numOfAuthors = numOfAuthors;
-    }
-
-    public int getNumOfRevisions() {
-        return numOfRevisions;
-    }
-
-    public void setNumOfRevisions(int numOfRevisions) {
-        this.numOfRevisions = numOfRevisions;
+    public void setLineOfCode(int lineOfCode) {
+        this.lineOfCode = lineOfCode;
     }
 
     public int getParametersCount() {
@@ -136,51 +87,70 @@ public class Metrics {
         this.parametersCount = parametersCount;
     }
 
-    public long getStatementsCount() {
+    public void addStatementCount(int statementCount) {
+        statementHistory.add(statementCount);
+    }
+
+    public int getStatementsCount() {
         return statementsCount;
     }
 
-    public void setStatementsCount(long statementsCount) {
+    public double getAvgChurn() {
+        if (!statementHistory.isEmpty())
+            avgChurn = getAvgChangeSetSize(statementHistory);
+        return avgChurn;
+    }
+
+    public void setAvgChurn(double avgChurn) {
+        this.avgChurn = avgChurn;
+    }
+
+    public int getChurn() {
+        if (!statementHistory.isEmpty())
+            churn = getDiff(statementHistory)
+                .stream()
+                .reduce(0, Integer::sum);
+        return churn;
+    }
+
+    public void setChurn(int churn) {
+        this.churn = churn;
+    }
+
+    public int getStatementsAdded() {
+        if (!statementHistory.isEmpty())
+            statementsAdded = getAdded(statementHistory);
+        return statementsAdded;
+    }
+
+    public void setStatementsAdded(int statementsAdded) {
+        this.statementsAdded = statementsAdded;
+    }
+
+    public int getStatementsDeleted() {
+        if (!statementHistory.isEmpty())
+            statementsDeleted = getDeleted(statementHistory);
+        return statementsDeleted;
+    }
+
+    public void setStatementsDeleted(int statementsDeleted) {
+        this.statementsDeleted = statementsDeleted;
+    }
+
+    public void setStatementsCount(int statementsCount) {
         this.statementsCount = statementsCount;
-    }
-
-    public int getLocDeleted() {
-        return locDeleted;
-    }
-
-    public void setLocDeleted(int locDeleted) {
-        this.locDeleted = locDeleted;
-    }
-
-    public Set<String> getAuthors() {
-        return authors;
     }
 
     public void addAuthor(String author) {
         authors.add(author);
     }
 
-    @Override
-    public String toString() {
-        return "Metrics{" +
-                "avgChangeSetSize=" + avgChangeSetSize +
-                ", lineOfCode=" + lineOfCode +
-                ", cyclomaticComplexity=" + cyclomaticComplexity +
-                ", parametersCount=" + parametersCount +
-                ", statementsCount=" + statementsCount +
-                ", elseCount=" + elseCount +
-                ", nestingDepth=" + nestingDepth +
-                ", locTouched=" + locTouched +
-                ", churn=" + churn +
-                ", numOfRevisions=" + numOfRevisions +
-                ", numOfAuthors=" + numOfAuthors +
-                ", locAdded=" + locAdded +
-                ", locDeleted=" + locDeleted +
-                ", avgLocAdded=" + avgLocAdded +
-                ", changeSetSize=" + changeSetSize +
-                ", maxChangeSetSize=" + maxChangeSetSize +
-                ", authors=" + String.join(",", authors) +
-                '}';
+    public Set<String> getAuthors() {
+        return authors;
+    }
+
+    public int getAuthorsCount() {
+        return authors.size();
     }
 
     public int getNestingDepth() {
@@ -191,19 +161,17 @@ public class Metrics {
         this.nestingDepth = nestingDepth;
     }
 
+    public void addElseCount(int elseCount) {
+        elseHistory.add(elseCount);
+    }
+
     public int getElseCount() {
         return elseCount;
     }
 
-    public void setElseCount(int elseCount) {
-        this.elseCount = elseCount;
-    }
-
-    public void addElseAdded(int elseAdded) {
-        this.elseAdded += elseAdded;
-    }
-
     public int getElseAdded() {
+        if (!elseHistory.isEmpty())
+            elseAdded = getAdded(elseHistory);
         return elseAdded;
     }
 
@@ -211,15 +179,53 @@ public class Metrics {
         this.elseAdded = elseAdded;
     }
 
-    public void addElseDeleted(int elseDeleted) {
-        this.elseDeleted += elseDeleted;
-    }
-
     public int getElseDeleted() {
+        if (!elseHistory.isEmpty())
+            elseDeleted = getDeleted(elseHistory);
         return elseDeleted;
     }
 
     public void setElseDeleted(int elseDeleted) {
         this.elseDeleted = elseDeleted;
+    }
+
+    public void setElseCount(int elseCount) {
+        this.elseCount = elseCount;
+    }
+
+    private List<Integer> getDiff(List<Integer> history) {
+        if (history.isEmpty()) {
+            return List.of();
+        }
+        var diff = new ArrayList<Integer>();
+        var prev = history.getFirst();
+        for (var curr : history.subList(1, history.size())) {
+            diff.add(curr - prev);
+        }
+        return diff;
+    }
+
+    private int getAdded(List<Integer> history) {
+        return getDiff(history).stream()
+                .filter(i -> i > 0)
+                .reduce(0, Integer::sum);
+    }
+
+    private double getAvgChangeSetSize(List<Integer> history) {
+        return getDiff(history).stream()
+                .map(Integer::doubleValue)
+                .reduce(0.0, Double::sum) / history.size();
+    }
+
+    private int getDeleted(List<Integer> history) {
+        return getDiff(history).stream()
+                .filter(i -> i < 0)
+                .reduce(0, Integer::sum);
+    }
+
+    private int getMaxChangeSetSize(List<Integer> history) {
+        return getDiff(history).stream()
+                .max(Integer::compare)
+                .orElse(0);
     }
 }

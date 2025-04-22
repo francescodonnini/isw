@@ -129,7 +129,7 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
 
     @Override
     public Void visitMethod(MethodTree node, Void unused) {
-        long loc;
+        int loc;
         var o = getContent(node);
         if (o.isPresent()) {
             var locCounter = new LineNumberCounter(o.get());
@@ -145,8 +145,8 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
         var startPos = sourcePositions.getStartPosition(compilationUnit, node);
         var endPos = sourcePositions.getEndPosition(compilationUnit, node);
         var lineMap = compilationUnit.getLineMap();
-        var startLine = lineMap.getLineNumber(startPos);
-        var endLine = lineMap.getLineNumber(endPos);
+        var startLine = (int) lineMap.getLineNumber(startPos);
+        var endLine = (int) lineMap.getLineNumber(endPos);
         return new LineRange(startLine, endLine);
     }
 

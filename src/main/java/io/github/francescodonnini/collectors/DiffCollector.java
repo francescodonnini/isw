@@ -54,51 +54,18 @@ public class DiffCollector {
     }
 
     private Optional<JavaMethod> diff(List<JavaMethod> methods) {
-        var last = methods.getLast();
-        var prev = 0;
-        for (var curr = 1; curr < methods.size(); curr++) {
-            var prevMethod = methods.get(prev);
-            var currMethod = methods.get(curr);
-            diff(last, prevMethod, currMethod);
-            getAuthor(currMethod).ifPresent(a -> prevMethod.getMetrics().addAuthor(a));
-            prev = curr;
+        if (methods.isEmpty()) {
+            return Optional.empty();
         }
-        getAuthor(last).ifPresent(a -> last.getMetrics().addAuthor(a));
+        var last = methods.getLast();
+        methods.forEach(m -> addToHistory(last, m));
         return Optional.ofNullable(last);
     }
 
-    private Optional<String> getAuthor(JavaMethod m) {
-        return m.getJavaClass().getAuthor();
-    }
-
-    private void diff(JavaMethod m, JavaMethod prev, JavaMethod curr) {
-        diffLoc(m, prev, curr);
-        diffElseCount(m, prev, curr);
-    }
-
-    private void diffLoc(JavaMethod m, JavaMethod prev, JavaMethod curr) {
-        var prevLoc = prev.getLineRange().length();
-        var currLoc = curr.getLineRange().length();
-        if (prevLoc < currLoc) {
-            var locAdded = (int) (currLoc - prevLoc);
-            m.getMetrics().addLocAdded(locAdded);
-            m.getMetrics().addLocTouched(locAdded);
-        } else if (prevLoc > currLoc) {
-            var locDeleted = (int) (prevLoc - currLoc);
-            m.getMetrics().addLocDeleted(locDeleted);
-            m.getMetrics().addLocTouched(locDeleted);
-        }
-    }
-
-    private void diffElseCount(JavaMethod m, JavaMethod prev, JavaMethod curr) {
-        var prevElse = prev.getMetrics().getElseCount();
-        var currElse = curr.getMetrics().getElseCount();
-        if (prevElse < currElse) {
-            var elseAdded = (int) (currElse - prevElse);
-            m.getMetrics().addElseAdded(elseAdded);
-        } else if (prevElse > currElse) {
-            var elseDeleted = (int) (prevElse - currElse);
-            m.getMetrics().addElseDeleted(elseDeleted);
-        }
+    private void addToHistory(JavaMethod to, JavaMethod from) {
+        from.getJavaClass().getAuthor().ifPresent(a -> to.getMetrics().addAuthor(a));
+        to.getMetrics().addElseCount(from.getMetrics().getElseCount());
+        to.getMetrics().addLoc(from.getMetrics().getLineOfCode());
+        to.getMetrics().addStatementCount(from.getMetrics().getStatementsCount());
     }
 }

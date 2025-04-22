@@ -26,8 +26,8 @@ public class LineNumberCounter {
         return 0;
     }
 
-    public long count() {
-        long count = 1;
+    public int count() {
+        var count = 1;
         while (notEof()) {
             if (current == '/') {
                 nextChar();

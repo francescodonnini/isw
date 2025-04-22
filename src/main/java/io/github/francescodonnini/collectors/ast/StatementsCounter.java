@@ -17,12 +17,12 @@ import io.github.francescodonnini.model.JavaClass;
  * - branching: break, continue, return.
  */
 public class StatementsCounter extends AbstractCounter {
-    private long counter = 0L;
+    private int counter = 0;
 
     @Override
     public Void visitMethod(MethodTree node, JavaClass unused) {
         var oldCounter = counter;
-        counter = 0L;
+        counter = 0;
         var rv = super.visitMethod(node, unused);
         update(AstUtils.getSignature(node), m -> {
             m.setStatementsCount(counter);

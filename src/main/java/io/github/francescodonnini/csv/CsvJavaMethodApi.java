@@ -78,6 +78,14 @@ public class CsvJavaMethodApi {
         m.getMetrics().setStatementsCount(bean.getStatementsCount());
         m.getMetrics().setStatementsCount(bean.getStatementsCount());
         m.getMetrics().setNestingDepth(bean.getNestingDepth());
+        m.getMetrics().setLocAdded(bean.getLocAdded());
+        m.getMetrics().setLocDeleted(bean.getLocDeleted());
+        m.getMetrics().setAvgChurn(bean.getAvgChurn());
+        m.getMetrics().setChurn(bean.getChurn());
+        m.getMetrics().setElseAdded(bean.getElseAdded());
+        m.getMetrics().setElseDeleted(bean.getElseDeleted());
+        m.getMetrics().setStatementsAdded(bean.getStatementsAdded());
+        m.getMetrics().setStatementsDeleted(bean.getStatementsDeleted());
     }
 
     public void saveLocal(List<JavaMethod> entries, String path) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
@@ -113,6 +121,12 @@ public class CsvJavaMethodApi {
         bean.setStatementsCount(model.getMetrics().getStatementsCount());
         bean.setElseCount(model.getMetrics().getElseCount());
         bean.setNestingDepth(model.getMetrics().getNestingDepth());
+        bean.setElseAdded(model.getMetrics().getElseAdded());
+        bean.setElseDeleted(model.getMetrics().getElseDeleted());
+        bean.setStatementsAdded(model.getMetrics().getStatementsAdded());
+        bean.setStatementsDeleted(model.getMetrics().getStatementsDeleted());
+        bean.setChurn(model.getMetrics().getChurn());
+        bean.setAvgChurn(model.getMetrics().getAvgChurn());
         return bean;
     }
 }
