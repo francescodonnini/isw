@@ -8,6 +8,10 @@ public class AbstractCounterFactoryImpl implements AbstractCounterFactory {
             return new InputParametersCounter();
         } else if (kind == StatementsCounter.class) {
             return new StatementsCounter();
+        } else if (kind == ElseCounter.class) {
+            return new ElseCounter();
+        } else if (kind == NestingDepth.class) {
+            return new NestingDepth();
         } else {
             throw new IllegalArgumentException("unknown kind: " + kind);
         }

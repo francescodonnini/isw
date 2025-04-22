@@ -23,6 +23,10 @@ public class JavaMethodLocalEntity {
     int parametersCount;
     @CsvBindByName(column = "statementsCount", required = true)
     long statementsCount;
+    @CsvBindByName(column = "elseCount", required = true)
+    int elseCount;
+    @CsvBindByName(column = "nestingDepth", required = true)
+    int nestingDepth;
 
     public boolean isBuggy() {
         return buggy;
@@ -102,5 +106,21 @@ public class JavaMethodLocalEntity {
 
     public void setStatementsCount(long statementsCount) {
         this.statementsCount = statementsCount;
+    }
+
+    public int getElseCount() {
+        return elseCount;
+    }
+
+    public void setElseCount(int elseCount) {
+        this.elseCount = elseCount;
+    }
+
+    public int getNestingDepth() {
+        return nestingDepth;
+    }
+
+    public void setNestingDepth(int nestingDepth) {
+        this.nestingDepth = nestingDepth;
     }
 }

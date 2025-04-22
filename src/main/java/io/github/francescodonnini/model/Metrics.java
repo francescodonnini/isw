@@ -9,6 +9,10 @@ public class Metrics {
     private int parametersCount;
     private long statementsCount;
     private int locTouched;
+    private int nestingDepth;
+    private int elseCount;
+    private int elseAdded;
+    private int elseDeleted;
     private int churn;
     private int numOfRevisions;
     private int numOfAuthors;
@@ -164,6 +168,8 @@ public class Metrics {
                 ", cyclomaticComplexity=" + cyclomaticComplexity +
                 ", parametersCount=" + parametersCount +
                 ", statementsCount=" + statementsCount +
+                ", elseCount=" + elseCount +
+                ", nestingDepth=" + nestingDepth +
                 ", locTouched=" + locTouched +
                 ", churn=" + churn +
                 ", numOfRevisions=" + numOfRevisions +
@@ -175,5 +181,45 @@ public class Metrics {
                 ", maxChangeSetSize=" + maxChangeSetSize +
                 ", authors=" + String.join(",", authors) +
                 '}';
+    }
+
+    public int getNestingDepth() {
+        return nestingDepth;
+    }
+
+    public void setNestingDepth(int nestingDepth) {
+        this.nestingDepth = nestingDepth;
+    }
+
+    public int getElseCount() {
+        return elseCount;
+    }
+
+    public void setElseCount(int elseCount) {
+        this.elseCount = elseCount;
+    }
+
+    public void addElseAdded(int elseAdded) {
+        this.elseAdded += elseAdded;
+    }
+
+    public int getElseAdded() {
+        return elseAdded;
+    }
+
+    public void setElseAdded(int elseAdded) {
+        this.elseAdded = elseAdded;
+    }
+
+    public void addElseDeleted(int elseDeleted) {
+        this.elseDeleted += elseDeleted;
+    }
+
+    public int getElseDeleted() {
+        return elseDeleted;
+    }
+
+    public void setElseDeleted(int elseDeleted) {
+        this.elseDeleted = elseDeleted;
     }
 }

@@ -56,7 +56,9 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         return List.of(
                 factory.build(CyclomaticComplexityCounter.class),
                 factory.build(InputParametersCounter.class),
-                factory.build(StatementsCounter.class));
+                factory.build(StatementsCounter.class),
+                factory.build(ElseCounter.class),
+                factory.build(NestingDepth.class));
     }
 
     @Override
@@ -89,7 +91,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         var head = git.getRepository().getBranch();
         var commits = StreamSupport
                 .stream(git.log().call().spliterator(), false)
-                .filter(c -> !endTime.isAfter(getCommitDate(c)))
+                .filter(c -> !getCommitDate(c).isAfter(endTime))
                 .sorted(Comparator.comparingInt(RevCommit::getCommitTime))
                 .toList();
         logger.log(Level.INFO, "total commits: {0}", commits.size());
@@ -114,7 +116,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
 
     private void logProgress(int progress, int total) {
         if (progress % 100 == 0) {
-            logger.log(Level.INFO, () -> "%d/%d (%f%%)".formatted(progress, total, progress * 100. / total));
+            logger.log(Level.INFO, () -> "%d/%d (%.2f%%)".formatted(progress, total, progress * 100. / total));
         }
     }
 

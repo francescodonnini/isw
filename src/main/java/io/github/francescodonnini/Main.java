@@ -1,5 +1,6 @@
 package io.github.francescodonnini;
 
+import io.github.francescodonnini.collectors.DiffCollector;
 import io.github.francescodonnini.collectors.ast.AbstractCounterFactoryImpl;
 import io.github.francescodonnini.config.IniSettings;
 import io.github.francescodonnini.csv.CsvJavaClassApi;
@@ -23,7 +24,7 @@ public class Main {
         var projectName = args[1].toUpperCase();
         // regex "<project name>-d+" ("%s-\\d+") è presente in tutti i commit che chiudono un ticket di JIRA
         var settings = new IniSettings(args[0]);
-        var useCache = false;
+        var useCache = true;
         var restApi = new RestApi();
         var projectPath = Path.of(settings.getString("gitBasePath"), projectName.toLowerCase()).toString();
         var path = Path.of(settings.getString("dataPath"), projectName).toString();
@@ -41,6 +42,7 @@ public class Main {
         var classes = classApi.getClasses();
         var localMethodApi = new CsvJavaMethodApi(Path.of(path, "methods.csv").toString(), classes);
         var methodApi = new JavaMethodRepository(factory, localMethodApi, useCache);
-        methodApi.save(methodApi.getMethods());
+        var diff = new DiffCollector(releases, methodApi.getMethods());
+        var diffed = diff.collect();
     }
 }

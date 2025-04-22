@@ -76,6 +76,8 @@ public class CsvJavaMethodApi {
         m.getMetrics().setCyclomaticComplexity(bean.getCyclomaticComplexity());
         m.getMetrics().setParametersCount(bean.getParametersCount());
         m.getMetrics().setStatementsCount(bean.getStatementsCount());
+        m.getMetrics().setStatementsCount(bean.getStatementsCount());
+        m.getMetrics().setNestingDepth(bean.getNestingDepth());
     }
 
     public void saveLocal(List<JavaMethod> entries, String path) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
@@ -109,6 +111,8 @@ public class CsvJavaMethodApi {
         bean.setCyclomaticComplexity(model.getMetrics().getCyclomaticComplexity());
         bean.setParametersCount(model.getMetrics().getParametersCount());
         bean.setStatementsCount(model.getMetrics().getStatementsCount());
+        bean.setElseCount(model.getMetrics().getElseCount());
+        bean.setNestingDepth(model.getMetrics().getNestingDepth());
         return bean;
     }
 }
