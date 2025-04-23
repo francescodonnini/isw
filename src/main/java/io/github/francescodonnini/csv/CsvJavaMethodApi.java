@@ -76,7 +76,6 @@ public class CsvJavaMethodApi {
         m.getMetrics().setCyclomaticComplexity(bean.getCyclomaticComplexity());
         m.getMetrics().setParametersCount(bean.getParametersCount());
         m.getMetrics().setStatementsCount(bean.getStatementsCount());
-        m.getMetrics().setStatementsCount(bean.getStatementsCount());
         m.getMetrics().setNestingDepth(bean.getNestingDepth());
         m.getMetrics().setLocAdded(bean.getLocAdded());
         m.getMetrics().setLocDeleted(bean.getLocDeleted());
@@ -84,8 +83,10 @@ public class CsvJavaMethodApi {
         m.getMetrics().setChurn(bean.getChurn());
         m.getMetrics().setElseAdded(bean.getElseAdded());
         m.getMetrics().setElseDeleted(bean.getElseDeleted());
+        m.getMetrics().setElseCount(bean.getElseCount());
         m.getMetrics().setStatementsAdded(bean.getStatementsAdded());
         m.getMetrics().setStatementsDeleted(bean.getStatementsDeleted());
+        bean.getAuthors().forEach(a -> m.getMetrics().addAuthor(a));
     }
 
     public void saveLocal(List<JavaMethod> entries, String path) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
@@ -116,6 +117,8 @@ public class CsvJavaMethodApi {
         bean.setLineStart(model.getStartLine());
         bean.setLineEnd(model.getEndLine());
         bean.setLineOfCode(model.getMetrics().getLineOfCode());
+        bean.setLocAdded(model.getMetrics().getLocAdded());
+        bean.setLocDeleted(model.getMetrics().getLocDeleted());
         bean.setCyclomaticComplexity(model.getMetrics().getCyclomaticComplexity());
         bean.setParametersCount(model.getMetrics().getParametersCount());
         bean.setStatementsCount(model.getMetrics().getStatementsCount());
@@ -127,6 +130,7 @@ public class CsvJavaMethodApi {
         bean.setStatementsDeleted(model.getMetrics().getStatementsDeleted());
         bean.setChurn(model.getMetrics().getChurn());
         bean.setAvgChurn(model.getMetrics().getAvgChurn());
+        bean.setAuthors(new ArrayList<>(model.getMetrics().getAuthors()));
         return bean;
     }
 }

@@ -1,6 +1,9 @@
 package io.github.francescodonnini.csv.entities;
 
+import com.opencsv.bean.CsvBindAndSplitByName;
 import com.opencsv.bean.CsvBindByName;
+
+import java.util.List;
 
 public class JavaMethodLocalEntity {
     @CsvBindByName(column = "buggy", required = true)
@@ -27,6 +30,8 @@ public class JavaMethodLocalEntity {
     int elseCount;
     @CsvBindByName(column = "nestingDepth", required = true)
     int nestingDepth;
+    @CsvBindAndSplitByName(column = "authors", elementType = String.class, splitOn = ",", writeDelimiter = ",", collectionType = List.class)
+    List<String> authors;
 
     public int getLocAdded() {
         return locAdded;
@@ -203,5 +208,13 @@ public class JavaMethodLocalEntity {
 
     public void setNestingDepth(int nestingDepth) {
         this.nestingDepth = nestingDepth;
+    }
+
+    public List<String> getAuthors() {
+        return authors;
+    }
+
+    public void setAuthors(List<String> authors) {
+        this.authors = authors;
     }
 }

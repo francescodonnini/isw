@@ -198,9 +198,9 @@ public class Metrics {
             return List.of();
         }
         var diff = new ArrayList<Integer>();
-        var prev = history.getFirst();
-        for (var curr : history.subList(1, history.size())) {
-            diff.add(curr - prev);
+        for (var i = 1; i < history.size(); i++) {
+            var prev = history.get(i - 1);
+            diff.add(history.get(i) - prev);
         }
         return diff;
     }

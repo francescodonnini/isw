@@ -75,17 +75,30 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
             ++anonymousClassCounter;
             var parent = currentClass;
             currentClass = createAnonymousClass();
-            var rv = super.visitNewClass(node, unused);
-            counters.forEach(c -> c.visitNewClass(node, currentClass));
+            var r = super.visitNewClass(node, unused);
             classes.add(currentClass);
+            collectMetrics(node, currentClass);
             currentClass = parent;
-            return rv;
+            return r;
         }
         return super.visitNewClass(node, unused);
     }
 
     private boolean isAnonymousClass(NewClassTree node) {
         return node.getClassBody() != null;
+    }
+
+    private JavaClass createAnonymousClass() {
+        return new JavaClass(
+                currentClass.getCommit(),
+                currentClass.getParent(),
+                currentClass.getPath(),
+                "#" + anonymousClassCounter,
+                currentClass.getTime());
+    }
+
+    private void collectMetrics(NewClassTree node, JavaClass clazz) {
+        counters.forEach(c -> c.visitNewClass(node, clazz));
     }
 
     @Override
@@ -116,15 +129,6 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
 
     private void collectMetrics(ClassTree node, JavaClass clazz) {
         counters.forEach(c -> c.visitClass(node, clazz));
-    }
-
-    private JavaClass createAnonymousClass() {
-        return new JavaClass(
-                currentClass.getCommit(),
-                currentClass.getParent(),
-                currentClass.getPath(),
-                "#" + anonymousClassCounter,
-                currentClass.getTime());
     }
 
     @Override
