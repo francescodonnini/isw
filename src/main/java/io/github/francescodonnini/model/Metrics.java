@@ -29,7 +29,7 @@ public class Metrics {
     public String toString() {
         return "Metrics{" +
                 "cyclomaticComplexity=" + cyclomaticComplexity +
-                "lineOfCode=" + lineOfCode +
+                ", lineOfCode=" + lineOfCode +
                 ", parametersCount=" + parametersCount +
                 ", statementsCount=" + statementsCount +
                 ", elseCount=" + elseCount +
