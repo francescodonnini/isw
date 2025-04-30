@@ -8,6 +8,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
 
@@ -124,16 +125,18 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         }
     }
 
+    /**
+     * Prende l'insieme dei file modificati da un commit
+     * @param commit di cui si vuole sapere i file che ha modificato
+     * @return una collezione di percorsi dei file toccati dal commit
+     * @throws IOException se non è possibile recuperare l'insieme delle differenze tra due commit
+     */
     private Set<String> getTouchedFiles(RevCommit commit) throws IOException {
         var df = new DiffFormatter(DisabledOutputStream.INSTANCE);
         df.setRepository(git.getRepository());
         df.setDetectRenames(true);
-        var o = getParent(commit);
-        if (o.isEmpty()) {
-            return HashSet.newHashSet(0);
-        }
         var touchedFiles = new HashSet<String>();
-        var diffs = df.scan(o.get().getTree(), commit.getTree());
+        var diffs = df.scan(getParent(commit), commit.getTree());
         for (var diff : diffs) {
             var path = diff.getNewPath();
             // Se il percorso del file modificato non è un file .java allora non è necessario analizzare
@@ -219,14 +222,9 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         var df = new DiffFormatter(DisabledOutputStream.INSTANCE);
         df.setRepository(git.getRepository());
         df.setDetectRenames(true);
-        var o = getParent(commit);
-        if (o.isEmpty()) {
-            return;
-        }
         var index = classList.stream()
                 .collect(Collectors.groupingBy(c -> c.getPath().toString()));
-        var parent = o.get();
-        var diffs = df.scan(parent.getTree(), commit.getTree());
+        var diffs = df.scan(getParent(commit), commit.getTree());
         for (var diff : diffs) {
             var oldPath = diff.getOldPath();
             var path = diff.getNewPath();
@@ -241,12 +239,12 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         }
     }
 
-    private Optional<RevCommit> getParent(RevCommit commit) {
+    private RevTree getParent(RevCommit commit) {
         try {
-            return Optional.ofNullable(commit.getParent(0));
+            return commit.getParent(0).getTree();
         } catch (IndexOutOfBoundsException e) {
-            logger.log(Level.INFO, "Commit %s has no parent".formatted(commit));
-            return Optional.empty();
+            logger.log(Level.INFO, "commit %s has no parent".formatted(commit));
+            return null;
         }
     }
 
