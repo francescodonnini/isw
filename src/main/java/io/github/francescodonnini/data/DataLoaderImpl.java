@@ -5,6 +5,7 @@ import io.github.francescodonnini.model.JavaClass;
 import io.github.francescodonnini.model.JavaMethod;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
-    private static final String JAVA_FILE_EXT= ".java";
+    private static final String JAVA_FILE_EXT = ".java";
     private final Logger logger = Logger.getLogger(DataLoaderImpl.class.getName());
     // repositoryPath è il percorso delle repository dove leggere i file da cui creare le entry per il dataset.
     private final String projectPath;
@@ -89,29 +90,32 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
 
     private void loadData() throws IOException, GitAPIException {
         var head = git.getRepository().getBranch();
-        var commits = StreamSupport
-                .stream(git.log().call().spliterator(), false)
-                .filter(c -> !getCommitDate(c).isAfter(endTime))
-                .sorted(Comparator.comparingInt(RevCommit::getCommitTime))
-                .toList();
-        logger.log(Level.INFO, "total commits: {0}", commits.size());
-        int progress = 0;
-        for (var commit : commits) {
-            ++progress;
-            logProgress(progress, commits.size());
-            checkout(git, commit.getName());
-            var susceptibles = getTouchedFiles(commit);
-            try {
-                listAllFiles(Path.of(projectPath)).stream()
-                        .filter(this::isValidPath)
-                        .filter(p -> susceptibles.contains(p.toString()))
-                        .forEach(p -> parseFile(p, commit));
-            } catch (IOException e) {
-                checkout(git, head);
+        try {
+            var commits = StreamSupport
+                    .stream(git.log().call().spliterator(), false)
+                    .filter(c -> !getCommitDate(c).isAfter(endTime))
+                    .sorted(Comparator.comparingInt(RevCommit::getCommitTime))
+                    .toList();
+            logger.log(Level.INFO, "total commits: {0}", commits.size());
+            int progress = 0;
+            for (var commit : commits) {
+                ++progress;
+                logProgress(progress, commits.size());
+                checkout(git, commit.getName());
+                var susceptibles = getTouchedFiles(commit);
+                try {
+                    listAllFiles(Path.of(projectPath)).stream()
+                            .filter(this::isValidPath)
+                            .filter(p -> susceptibles.contains(p.toString()))
+                            .forEach(p -> parseFile(p, commit));
+                } catch (IOException e) {
+                    logger.info(e.getMessage());
+                }
             }
+            dataLoaded = true;
+        } finally {
+            checkout(git, head);
         }
-        checkout(git, head);
-        dataLoaded = true;
     }
 
     private void logProgress(int progress, int total) {
@@ -221,7 +225,8 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         }
         var index = classList.stream()
                 .collect(Collectors.groupingBy(c -> c.getPath().toString()));
-        var diffs = df.scan(o.get().getTree(), commit.getTree());
+        var parent = o.get();
+        var diffs = df.scan(parent.getTree(), commit.getTree());
         for (var diff : diffs) {
             var oldPath = diff.getOldPath();
             var path = diff.getNewPath();
