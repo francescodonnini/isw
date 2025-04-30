@@ -3,49 +3,71 @@ package io.github.francescodonnini.collectors;
 import io.github.francescodonnini.model.JavaMethod;
 import io.github.francescodonnini.model.Release;
 
+import java.time.LocalDate;
 import java.util.*;
 
 public class DiffCollector {
     private final List<Release> releases;
     private final List<JavaMethod> methods;
     private final Map<String, List<JavaMethod>> history = new HashMap<>();
+    private final List<JavaMethod> snapshots = new ArrayList<>();
+    private final boolean fromStart;
 
     public DiffCollector(List<Release> releases, List<JavaMethod> methods) {
+        this(releases, methods, false);
+    }
+
+    /**
+     * DiffCollector colleziona le metriche relative al cambiamento di un metodo nel tempo
+     * @param releases lista delle release di un progetto
+     * @param methods lista degli snapshot dei metodi in un certo istante nel tempo (revision)
+     */
+    public DiffCollector(List<Release> releases, List<JavaMethod> methods, boolean fromStart) {
         this.releases = releases;
         this.methods = methods;
+        this.fromStart = fromStart;
     }
 
+    /**
+     * collect calcola le metriche relative al cambiamento di un metodo nel tempo
+     * @return una lista di snapshot di un metodo in una certa release
+     */
     public List<JavaMethod> collect() {
-        var list = new ArrayList<JavaMethod>();
-        for (var release : releases) {
-            var target = methods.stream()
-                    .filter(m -> !isAfter(m, release))
-                    .toList();
-            list.addAll(collect(target));
-            methods.removeAll(target);
+        createMapping();
+        var result = new ArrayList<JavaMethod>();
+        var start = LocalDate.MIN;
+        for (var end : releases.stream().map(Release::releaseDate).toList()) {
+            result.addAll(collect(start, end));
+            start = end;
         }
-        return list;
+        return snapshots;
     }
 
-    private boolean isAfter(JavaMethod m, Release r) {
-        return m.getJavaClass().getTime().toLocalDate().isAfter(r.releaseDate());
+    private void createMapping() {
+        methods.stream()
+                .filter(m -> isBetween(m, LocalDate.MIN, releases.getLast().releaseDate()))
+                .forEach(m -> history.computeIfAbsent(key(m), _ -> new ArrayList<>()).add(m));
     }
 
-    private List<JavaMethod> collect(List<JavaMethod> methods) {
-        if (methods.isEmpty()) {
-            return List.of();
-        }
-        // mapping permette di tenere traccia delle revision di un metodo all'interno di una release.
-        methods.forEach(m -> history.computeIfAbsent(key(m), _ -> new ArrayList<>()).add(m));
-        var list = new ArrayList<JavaMethod>();
-        for (var entry : history.entrySet()) {
-            diff(entry.getValue()).ifPresent(list::add);
-        }
-        return list;
+    private boolean isBetween(JavaMethod m, LocalDate start, LocalDate end) {
+        var date = m.getJavaClass().getTime().toLocalDate();
+        return !date.isBefore(start) && !date.isAfter(end);
     }
+
 
     private String key(JavaMethod method) {
-        return "%s%s".formatted(method.getPath(), method.getSignature());
+        return "%s#%s".formatted(method.getPath(), method.getSignature());
+    }
+
+    private List<JavaMethod> collect(LocalDate start, LocalDate end) {
+        var result = new ArrayList<JavaMethod>();
+        for (var e : history.entrySet()) {
+            var revisions = e.getValue().stream()
+                    .filter(m -> isBetween(m, start, end))
+                    .toList();
+            diff(revisions).ifPresent(result::add);
+        }
+        return result;
     }
 
     private Optional<JavaMethod> diff(List<JavaMethod> methods) {
