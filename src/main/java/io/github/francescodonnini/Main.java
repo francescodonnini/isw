@@ -37,7 +37,7 @@ public class Main {
         var localReleaseApi = new CsvReleaseApi(Path.of(path, "releases.csv").toString());
         var releaseApi = new ReleaseRepository(remoteReleaseApi, localReleaseApi, useCache);
         var releases = releaseApi.getReleases();
-        var lastRelease = releases.size() / 3;
+        var lastRelease = (int) (releases.size() * .05);
         var factory = new DataLoaderImpl(projectPath, new AbstractCounterFactoryImpl(), releases.get(lastRelease).releaseDate());
         var localClassApi = new CsvJavaClassApi(Path.of(path, "classes.csv").toString());
         var classApi = new JavaClassRepository(factory, localClassApi, useCache);
@@ -46,6 +46,7 @@ public class Main {
         var methodApi = new JavaMethodRepository(factory, localMethodApi, useCache);
         var methods = methodApi.getMethods();
         var diff = new DiffCollector(releases, methods);
-        localMethodApi.saveLocal(diff.collect(), String.valueOf(Path.of(path, "methods_complete.csv")));
+        methods = diff.collect();
+        System.out.printf("collected %d methods%n", methods.size());
     }
 }
