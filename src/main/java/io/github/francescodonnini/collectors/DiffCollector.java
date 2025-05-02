@@ -10,7 +10,6 @@ public class DiffCollector {
     private final List<Release> releases;
     private final List<JavaMethod> methods;
     private final Map<String, List<JavaMethod>> history = new HashMap<>();
-    private final List<JavaMethod> snapshots = new ArrayList<>();
     private final boolean fromStart;
 
     public DiffCollector(List<Release> releases, List<JavaMethod> methods) {
@@ -38,13 +37,16 @@ public class DiffCollector {
         var start = LocalDate.MIN;
         for (var end : releases.stream().map(Release::releaseDate).toList()) {
             result.addAll(collect(start, end));
-            start = end;
+            if (!fromStart) {
+                start = end;
+            }
         }
-        return snapshots;
+        return result;
     }
 
     private void createMapping() {
         methods.stream()
+                .sorted(Comparator.comparing(a -> a.getJavaClass().getTime()))
                 .filter(m -> isBetween(m, LocalDate.MIN, releases.getLast().releaseDate()))
                 .forEach(m -> history.computeIfAbsent(key(m), _ -> new ArrayList<>()).add(m));
     }
@@ -70,12 +72,12 @@ public class DiffCollector {
         return result;
     }
 
-    private Optional<JavaMethod> diff(List<JavaMethod> methods) {
-        if (methods.isEmpty()) {
+    private Optional<JavaMethod> diff(List<JavaMethod> revisions) {
+        if (revisions.isEmpty()) {
             return Optional.empty();
         }
-        var last = methods.getLast();
-        methods.forEach(m -> addToHistory(last, m));
+        var last = revisions.getLast();
+        revisions.forEach(m -> addToHistory(last, m));
         return Optional.ofNullable(last);
     }
 

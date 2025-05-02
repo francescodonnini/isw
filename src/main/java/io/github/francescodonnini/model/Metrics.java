@@ -4,19 +4,29 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class Metrics {
     private int cyclomaticComplexity;
+    private int parametersCount;
     private int lineOfCode;
     private final List<Integer> locHistory = new ArrayList<>();
     private int locAdded;
+    private int maxLocAdded;
+    private double avgLocAdded;
     private int locDeleted;
-    private int parametersCount;
+    private int maxLocDeleted;
+    private double avgLocDeleted;
     private int statementsCount;
     private final List<Integer> statementHistory = new ArrayList<>();
     private int statementsAdded;
+    private int maxStatementsAdded;
+    private double avgStatementsAdded;
     private int statementsDeleted;
+    private int maxStatementsDeleted;
+    private double avgStatementsDeleted;
     private int churn;
+    private int maxChurn;
     private double avgChurn;
     private int nestingDepth;
     private int elseCount;
@@ -56,8 +66,9 @@ public class Metrics {
     }
 
     public int getLocAdded() {
-        if (!locHistory.isEmpty())
+        if (!locHistory.isEmpty()) {
             locAdded = getAdded(locHistory);
+        }
         return locAdded;
     }
 
@@ -65,14 +76,59 @@ public class Metrics {
         this.locAdded = locAdded;
     }
 
+    public int getMaxLocAdded() {
+        if (!locHistory.isEmpty()) {
+            maxLocAdded = getMaxPositiveChangeSetSize(locHistory);
+        }
+        return maxLocAdded;
+    }
+
+    public void setMaxLocAdded(int maxLocAdded) {
+        this.maxLocAdded = maxLocAdded;
+    }
+
+    public double getAvgLocAdded() {
+        if (!locHistory.isEmpty()) {
+            avgLocAdded = getAvgPositiveChangeSetSize(locHistory);
+        }
+        return avgLocAdded;
+    }
+
+    public void setAvgLocAdded(double avgLocAdded) {
+        this.avgLocAdded = avgLocAdded;
+    }
+
     public int getLocDeleted() {
-        if (!locHistory.isEmpty())
+        if (!locHistory.isEmpty()) {
             locDeleted = getDeleted(locHistory);
+        }
         return locDeleted;
     }
 
     public void setLocDeleted(int locDeleted) {
         this.locDeleted = locDeleted;
+    }
+
+    public int getMaxLocDeleted() {
+        if (!locHistory.isEmpty()) {
+            maxLocDeleted = getMaxNegativeChangeSetSize(locHistory);
+        }
+        return maxLocDeleted;
+    }
+
+    public void setMaxLocDeleted(int maxLocDeleted) {
+        this.maxLocDeleted = maxLocDeleted;
+    }
+
+    public double getAvgLocDeleted() {
+        if (!locHistory.isEmpty()) {
+            avgLocDeleted = getAvgNegativeChangeSetSize(locHistory);
+        }
+        return avgLocDeleted;
+    }
+
+    public void setAvgLocDeleted(double avgLocDeleted) {
+        this.avgLocDeleted = avgLocDeleted;
     }
 
     public void setLineOfCode(int lineOfCode) {
@@ -95,6 +151,89 @@ public class Metrics {
         return statementsCount;
     }
 
+    public void setStatementsCount(int statementsCount) {
+        this.statementsCount = statementsCount;
+    }
+
+    public int getStatementsAdded() {
+        if (!statementHistory.isEmpty()) {
+            statementsAdded = getAdded(statementHistory);
+        }
+        return statementsAdded;
+    }
+
+    public void setStatementsAdded(int statementsAdded) {
+        this.statementsAdded = statementsAdded;
+    }
+
+    public int getMaxStatementsAdded() {
+        if (!statementHistory.isEmpty()) {
+            maxStatementsAdded = getMaxPositiveChangeSetSize(statementHistory);
+        }
+        return maxStatementsAdded;
+    }
+
+    public void setMaxStatementsAdded(int maxStatementsAdded) {
+        this.maxStatementsAdded = maxStatementsAdded;
+    }
+
+    public double getAvgStatementsAdded() {
+        if (!statementHistory.isEmpty()) {
+            avgStatementsAdded = getAvgChangeSetSize(statementHistory);
+        }
+        return avgStatementsAdded;
+    }
+
+    public void setAvgStatementsAdded(double avgStatementsAdded) {
+        this.avgStatementsAdded = avgStatementsAdded;
+    }
+
+    public int getStatementsDeleted() {
+        if (!statementHistory.isEmpty()) {
+            statementsDeleted = getDeleted(statementHistory);
+        }
+        return statementsDeleted;
+    }
+
+    public void setStatementsDeleted(int statementsDeleted) {
+        this.statementsDeleted = statementsDeleted;
+    }
+
+    public double getAvgStatementsDeleted() {
+        if (!statementHistory.isEmpty()) {
+            avgStatementsDeleted = getAvgNegativeChangeSetSize(statementHistory);
+        }
+        return avgStatementsDeleted;
+    }
+
+    public void setAvgStatementsDeleted(double avgStatementsDeleted) {
+        this.avgStatementsDeleted = avgStatementsDeleted;
+    }
+
+    public int getMaxStatementsDeleted() {
+        if (!statementHistory.isEmpty()) {
+            maxStatementsDeleted = getMaxNegativeChangeSetSize(statementHistory);
+        }
+        return maxStatementsDeleted;
+    }
+
+    public void setMaxStatementsDeleted(int maxStatementsDeleted) {
+        this.maxStatementsDeleted = maxStatementsDeleted;
+    }
+
+    public int getChurn() {
+        if (!statementHistory.isEmpty()) {
+            churn = getDiff(statementHistory)
+                    .stream()
+                    .reduce(0, Integer::sum);
+        }
+        return churn;
+    }
+
+    public void setChurn(int churn) {
+        this.churn = churn;
+    }
+
     public double getAvgChurn() {
         if (!statementHistory.isEmpty())
             avgChurn = getAvgChangeSetSize(statementHistory);
@@ -105,40 +244,15 @@ public class Metrics {
         this.avgChurn = avgChurn;
     }
 
-    public int getChurn() {
-        if (!statementHistory.isEmpty())
-            churn = getDiff(statementHistory)
-                .stream()
-                .reduce(0, Integer::sum);
-        return churn;
+    public int getMaxChurn() {
+        if (!statementHistory.isEmpty()) {
+            maxChurn = getMaxChangeSetSize(statementHistory);
+        }
+        return maxChurn;
     }
 
-    public void setChurn(int churn) {
-        this.churn = churn;
-    }
-
-    public int getStatementsAdded() {
-        if (!statementHistory.isEmpty())
-            statementsAdded = getAdded(statementHistory);
-        return statementsAdded;
-    }
-
-    public void setStatementsAdded(int statementsAdded) {
-        this.statementsAdded = statementsAdded;
-    }
-
-    public int getStatementsDeleted() {
-        if (!statementHistory.isEmpty())
-            statementsDeleted = getDeleted(statementHistory);
-        return statementsDeleted;
-    }
-
-    public void setStatementsDeleted(int statementsDeleted) {
-        this.statementsDeleted = statementsDeleted;
-    }
-
-    public void setStatementsCount(int statementsCount) {
-        this.statementsCount = statementsCount;
+    public void setMaxChurn(int maxChurn) {
+        this.maxChurn = maxChurn;
     }
 
     public void addAuthor(String author) {
@@ -170,8 +284,9 @@ public class Metrics {
     }
 
     public int getElseAdded() {
-        if (!elseHistory.isEmpty())
+        if (!elseHistory.isEmpty()) {
             elseAdded = getAdded(elseHistory);
+        }
         return elseAdded;
     }
 
@@ -180,8 +295,9 @@ public class Metrics {
     }
 
     public int getElseDeleted() {
-        if (!elseHistory.isEmpty())
+        if (!elseHistory.isEmpty()) {
             elseDeleted = getDeleted(elseHistory);
+        }
         return elseDeleted;
     }
 
@@ -206,26 +322,58 @@ public class Metrics {
     }
 
     private int getAdded(List<Integer> history) {
-        return getDiff(history).stream()
-                .filter(i -> i > 0)
-                .reduce(0, Integer::sum);
+        return Math.max(delta(history), 0);
+    }
+
+    private int getDeleted(List<Integer> history) {
+        return Math.abs(Math.min(delta(history), 0));
+    }
+
+    private double getAvgPositiveChangeSetSize(List<Integer> history) {
+        return getAvgChangeSetSize(history, i -> i > 0);
+    }
+
+    private double getAvgNegativeChangeSetSize(List<Integer> history) {
+        return getAvgChangeSetSize(history, i -> i < 0);
     }
 
     private double getAvgChangeSetSize(List<Integer> history) {
+        return getAvgChangeSetSize(history, _ -> true);
+    }
+
+    private double getAvgChangeSetSize(List<Integer> history, Predicate<Integer> filter) {
         return getDiff(history).stream()
+                .filter(filter)
                 .map(Integer::doubleValue)
                 .reduce(0.0, Double::sum) / history.size();
     }
 
-    private int getDeleted(List<Integer> history) {
-        return getDiff(history).stream()
-                .filter(i -> i < 0)
-                .reduce(0, Integer::sum);
+    private int delta(List<Integer> history) {
+        if (history.isEmpty()) {
+            return 0;
+        } else if (history.size() == 1) {
+            return history.getFirst();
+        }
+        return history.getLast() - history.getFirst();
+    }
+
+    private int getMaxNegativeChangeSetSize(List<Integer> history) {
+        return getMaxChangeSetSize(history, i -> i < 0);
+    }
+
+    private int getMaxPositiveChangeSetSize(List<Integer> history) {
+        return getMaxChangeSetSize(history, i -> i > 0);
     }
 
     private int getMaxChangeSetSize(List<Integer> history) {
+        return getMaxChangeSetSize(history, _ -> true);
+    }
+
+    private int getMaxChangeSetSize(List<Integer> history, Predicate<Integer> filter) {
         return getDiff(history).stream()
-                .max(Integer::compare)
+                .filter(filter)
+                .mapToInt(Math::abs)
+                .max()
                 .orElse(0);
     }
 }

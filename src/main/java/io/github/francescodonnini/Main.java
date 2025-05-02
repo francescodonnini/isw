@@ -26,7 +26,7 @@ public class Main {
         var projectName = args[1].toUpperCase();
         // regex "<project name>-d+" ("%s-\\d+") è presente in tutti i commit che chiudono un ticket di JIRA
         var settings = new IniSettings(args[0]);
-        var useCache = true;
+        var useCache = false;
         var restApi = new RestApi();
         var projectPath = Path.of(settings.getString("gitBasePath"), projectName.toLowerCase()).toString();
         var path = Path.of(settings.getString("dataPath"), projectName).toString();
@@ -37,7 +37,7 @@ public class Main {
         var localReleaseApi = new CsvReleaseApi(Path.of(path, "releases.csv").toString());
         var releaseApi = new ReleaseRepository(remoteReleaseApi, localReleaseApi, useCache);
         var releases = releaseApi.getReleases();
-        var lastRelease = (int) (releases.size() * .05);
+        var lastRelease = Math.min((releases.size() / 3) + 1, releases.size());
         var factory = new DataLoaderImpl(projectPath, new AbstractCounterFactoryImpl(), releases.get(lastRelease).releaseDate());
         var localClassApi = new CsvJavaClassApi(Path.of(path, "classes.csv").toString());
         var classApi = new JavaClassRepository(factory, localClassApi, useCache);
@@ -45,8 +45,10 @@ public class Main {
         var localMethodApi = new CsvJavaMethodApi(Path.of(path, "methods.csv").toString(), classes);
         var methodApi = new JavaMethodRepository(factory, localMethodApi, useCache);
         var methods = methodApi.getMethods();
-        var diff = new DiffCollector(releases, methods);
-        methods = diff.collect();
-        System.out.printf("collected %d methods%n", methods.size());
+        System.out.printf("retrieved %d methods%n", methods.size());
+        var diff = new DiffCollector(releases.subList(0, lastRelease), methods);
+        var diffed = diff.collect();
+        System.out.printf("collected %d methods%n", diffed.size());
+        localMethodApi.saveLocal(diffed, Path.of(path, "diffed_methods.csv").toString());
     }
 }

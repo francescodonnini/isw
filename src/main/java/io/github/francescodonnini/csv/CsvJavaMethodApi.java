@@ -72,10 +72,22 @@ public class CsvJavaMethodApi {
     }
 
     private void addMetrics(JavaMethod m, JavaMethodLocalEntity bean) {
-        m.getMetrics().setLineOfCode(bean.getLineOfCode());
         m.getMetrics().setCyclomaticComplexity(bean.getCyclomaticComplexity());
         m.getMetrics().setParametersCount(bean.getParametersCount());
+        m.getMetrics().setLineOfCode(bean.getLineOfCode());
+        m.getMetrics().setLocAdded(bean.getLocAdded());
+        m.getMetrics().setMaxLocAdded(bean.getMaxLocAdded());
+        m.getMetrics().setAvgLocAdded(bean.getAvgLocAdded());
+        m.getMetrics().setLocDeleted(bean.getLocDeleted());
+        m.getMetrics().setAvgLocDeleted(bean.getAvgLocDeleted());
+        m.getMetrics().setMaxLocDeleted(bean.getMaxLocDeleted());
         m.getMetrics().setStatementsCount(bean.getStatementsCount());
+        m.getMetrics().setStatementsAdded(bean.getStatementsAdded());
+        m.getMetrics().setAvgStatementsAdded(bean.getAvgStatementsAdded());
+        m.getMetrics().setMaxStatementsAdded(bean.getMaxStatementsAdded());
+        m.getMetrics().setStatementsDeleted(bean.getStatementsDeleted());
+        m.getMetrics().setAvgStatementsDeleted(bean.getAvgStatementsDeleted());
+        m.getMetrics().setMaxStatementsDeleted(bean.getMaxStatementsDeleted());
         m.getMetrics().setNestingDepth(bean.getNestingDepth());
         m.getMetrics().setLocAdded(bean.getLocAdded());
         m.getMetrics().setLocDeleted(bean.getLocDeleted());
@@ -86,6 +98,7 @@ public class CsvJavaMethodApi {
         m.getMetrics().setElseCount(bean.getElseCount());
         m.getMetrics().setStatementsAdded(bean.getStatementsAdded());
         m.getMetrics().setStatementsDeleted(bean.getStatementsDeleted());
+        m.getMetrics().setMaxChurn(bean.getMaxChurn());
         bean.getAuthors().forEach(a -> m.getMetrics().addAuthor(a));
     }
 
@@ -116,6 +129,15 @@ public class CsvJavaMethodApi {
         bean.setCommit(model.getJavaClass().getCommit());
         bean.setLineStart(model.getStartLine());
         bean.setLineEnd(model.getEndLine());
+        bean.setAvgLocAdded(model.getMetrics().getAvgLocAdded());
+        bean.setMaxLocAdded(model.getMetrics().getMaxLocAdded());
+        bean.setAvgLocDeleted(model.getMetrics().getAvgLocDeleted());
+        bean.setMaxLocDeleted(model.getMetrics().getMaxLocDeleted());
+        bean.setAvgStatementsAdded(model.getMetrics().getAvgStatementsAdded());
+        bean.setMaxStatementsAdded(model.getMetrics().getMaxStatementsAdded());
+        bean.setMaxStatementsDeleted(model.getMetrics().getMaxStatementsDeleted());
+        bean.setAvgStatementsDeleted(model.getMetrics().getAvgStatementsDeleted());
+        bean.setMaxChurn(model.getMetrics().getMaxChurn());
         bean.setLineOfCode(model.getMetrics().getLineOfCode());
         bean.setLocAdded(model.getMetrics().getLocAdded());
         bean.setLocDeleted(model.getMetrics().getLocDeleted());

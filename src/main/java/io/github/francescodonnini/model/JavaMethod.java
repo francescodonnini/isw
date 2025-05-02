@@ -1,6 +1,7 @@
 package io.github.francescodonnini.model;
 
 import java.nio.file.Path;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 public class JavaMethod {
@@ -8,19 +9,6 @@ public class JavaMethod {
     private final String signature;
     private final JavaClass javaClass;
     private final LineRange range;
-    // lineOfCode
-    // cyclomaticComplexity
-    // parametersCount
-    // statementsCount
-    // locTouched
-    // churn
-    // numOfRevisions
-    // numOfAuthors
-    // locAdded
-    // avgLocAdded
-    // changeSetSize
-    // maxChangeSetSize
-    // avgChangeSetSize
     private final Metrics metrics;
 
 
@@ -50,7 +38,7 @@ public class JavaMethod {
 
     @Override
     public String toString() {
-        return signature;
+        return "%s on %s".formatted(signature, javaClass.getTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
     }
 
     public boolean isBuggy() {
@@ -83,10 +71,6 @@ public class JavaMethod {
 
     public int getEndLine() {
         return range.end();
-    }
-
-    public LineRange getLineRange() {
-        return range;
     }
 
     public Metrics getMetrics() {

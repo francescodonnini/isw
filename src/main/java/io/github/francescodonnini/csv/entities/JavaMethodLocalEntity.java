@@ -20,18 +20,124 @@ public class JavaMethodLocalEntity {
     private int lineEnd;
     @CsvBindByName(column = "lineOfCode", required = true)
     private int lineOfCode;
+    @CsvBindByName(column = "avgLocAdded", required = true)
+    private double avgLocAdded;
+    @CsvBindByName(column = "maxLocAdded", required = true)
+    private int maxLocAdded;
+    @CsvBindByName(column = "avgLocDeleted", required = true)
+    private double avgLocDeleted;
+    @CsvBindByName(column = "maxLocDeleted", required = true)
+    private int maxLocDeleted;
     @CsvBindByName(column = "cyclomaticComplexity", required = true)
     int cyclomaticComplexity;
     @CsvBindByName(column = "parametersCount", required = true)
     int parametersCount;
     @CsvBindByName(column = "statementsCount", required = true)
     int statementsCount;
+    @CsvBindByName(column = "statementsAdded", required = true)
+    private int statementsAdded;
+    @CsvBindByName(column = "avgStatementsAdded", required = true)
+    private double avgStatementsAdded;
+    @CsvBindByName(column = "maxStatementsAdded", required = true)
+    private int maxStatementsAdded;
+    @CsvBindByName(column = "statementsDeleted", required = true)
+    private int statementsDeleted;
+    @CsvBindByName(column = "avgStatementsDeleted", required = true)
+    private double avgStatementsDeleted;
+    @CsvBindByName(column = "maxStatementsDeleted", required = true)
+    private int maxStatementsDeleted;
+    @CsvBindByName(column = "churn", required = true)
+    private int churn;
+    @CsvBindByName(column = "avgChurn", required = true)
+    private double avgChurn;
+    @CsvBindByName(column = "maxChurn", required = true)
+    private int maxChurn;
     @CsvBindByName(column = "elseCount", required = true)
     int elseCount;
     @CsvBindByName(column = "nestingDepth", required = true)
     int nestingDepth;
+    @CsvBindByName(column = "locAdded")
+    int locAdded;
+    @CsvBindByName(column = "locDeleted")
+    int locDeleted;
+    @CsvBindByName(column = "elseAdded")
+    int elseAdded;
+    @CsvBindByName(column = "elseDeleted")
+    int elseDeleted;
     @CsvBindAndSplitByName(column = "authors", elementType = String.class, splitOn = ",", writeDelimiter = ",", collectionType = List.class)
     List<String> authors;
+
+    public double getAvgLocAdded() {
+        return avgLocAdded;
+    }
+
+    public void setAvgLocAdded(double avgLocAdded) {
+        this.avgLocAdded = avgLocAdded;
+    }
+
+    public int getMaxLocAdded() {
+        return maxLocAdded;
+    }
+
+    public void setMaxLocAdded(int maxLocAdded) {
+        this.maxLocAdded = maxLocAdded;
+    }
+
+    public double getAvgLocDeleted() {
+        return avgLocDeleted;
+    }
+
+    public void setAvgLocDeleted(double avgLocDeleted) {
+        this.avgLocDeleted = avgLocDeleted;
+    }
+
+    public int getMaxLocDeleted() {
+        return maxLocDeleted;
+    }
+
+    public void setMaxLocDeleted(int maxLocDeleted) {
+        this.maxLocDeleted = maxLocDeleted;
+    }
+
+    public double getAvgStatementsAdded() {
+        return avgStatementsAdded;
+    }
+
+    public void setAvgStatementsAdded(double avgStatementsAdded) {
+        this.avgStatementsAdded = avgStatementsAdded;
+    }
+
+    public int getMaxStatementsAdded() {
+        return maxStatementsAdded;
+    }
+
+    public void setMaxStatementsAdded(int maxStatementsAdded) {
+        this.maxStatementsAdded = maxStatementsAdded;
+    }
+
+    public double getAvgStatementsDeleted() {
+        return avgStatementsDeleted;
+    }
+
+    public void setAvgStatementsDeleted(double avgStatementsDeleted) {
+        this.avgStatementsDeleted = avgStatementsDeleted;
+    }
+
+    public int getMaxStatementsDeleted() {
+        return maxStatementsDeleted;
+    }
+
+    public void setMaxStatementsDeleted(int maxStatementsDeleted) {
+        this.maxStatementsDeleted = maxStatementsDeleted;
+    }
+
+    public int getMaxChurn() {
+        return maxChurn;
+    }
+
+    public void setMaxChurn(int maxChurn) {
+        this.maxChurn = maxChurn;
+    }
 
     public int getLocAdded() {
         return locAdded;
@@ -96,23 +202,6 @@ public class JavaMethodLocalEntity {
     public void setStatementsDeleted(int statementsDeleted) {
         this.statementsDeleted = statementsDeleted;
     }
-
-    @CsvBindByName(column = "locAdded")
-    int locAdded;
-    @CsvBindByName(column = "locDeleted")
-    int locDeleted;
-    @CsvBindByName(column = "elseAdded")
-    int elseAdded;
-    @CsvBindByName(column = "elseDeleted")
-    int elseDeleted;
-    @CsvBindByName(column = "churn")
-    int churn;
-    @CsvBindByName(column = "avgChurn")
-    double avgChurn;
-    @CsvBindByName(column = "statementsAdded")
-    int statementsAdded;
-    @CsvBindByName(column = "statementsDeleted")
-    int statementsDeleted;
 
     public boolean isBuggy() {
         return buggy;
