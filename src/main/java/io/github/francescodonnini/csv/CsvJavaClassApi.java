@@ -85,7 +85,7 @@ public class CsvJavaClassApi {
         var bean = new JavaClassLocalEntity();
         bean.setCommit(model.getCommit());
         bean.setTime(model.getTime());
-        model.getOldPath().ifPresent(model::setOldPath);
+        model.getOldPath().ifPresent(p -> bean.setOldPath(p.toString()));
         bean.setPath(model.getPath().toString());
         bean.setParent(model.getParent().toString());
         bean.setName(model.getName());
