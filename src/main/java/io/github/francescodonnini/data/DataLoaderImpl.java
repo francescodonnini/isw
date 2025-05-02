@@ -5,7 +5,6 @@ import io.github.francescodonnini.model.JavaClass;
 import io.github.francescodonnini.model.JavaMethod;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
@@ -103,11 +102,11 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
                 ++progress;
                 logProgress(progress, commits.size());
                 checkout(git, commit.getName());
-                var susceptibles = getTouchedFiles(commit);
+                var susceptible = getTouchedFiles(commit);
                 try {
                     listAllFiles(Path.of(projectPath)).stream()
                             .filter(this::isValidPath)
-                            .filter(p -> susceptibles.contains(p.toString()))
+                            .filter(p -> susceptible.contains(p.toString()))
                             .forEach(p -> parseFile(p, commit));
                 } catch (IOException e) {
                     logger.info(e.getMessage());
@@ -233,16 +232,31 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
             if (path.endsWith(JAVA_FILE_EXT) && index.containsKey(path)) {
                 getAuthor(commit).ifPresent(author -> index.get(path).forEach(c -> c.setAuthor(author)));
                 if (!oldPath.equals("/dev/null") && !oldPath.equals(path)) {
-                    index.get(path).forEach(c -> c.setOldPath(Path.of(oldPath)));
+                    renameOldEntries(index, oldPath, path);
                 }
             }
         }
     }
 
+    private void renameOldEntries(Map<String, List<JavaClass>> index, String oldPath, String path) {
+        var oldEntries = index.getOrDefault(oldPath, List.of());
+        if (oldEntries.isEmpty()) {
+            return;
+        }
+        var newEntries = index.getOrDefault(path, List.of());
+        if (newEntries.isEmpty()) {
+            return;
+        }
+        oldEntries.forEach(c -> c.setPath(Path.of(path)));
+        newEntries.forEach(c -> c.setOldPath(Path.of(oldPath)));
+        newEntries.addAll(0, oldEntries);
+    }
+
+
     private RevTree getParent(RevCommit commit) {
         try {
             return commit.getParent(0).getTree();
-        } catch (IndexOutOfBoundsException e) {
+        } catch (IndexOutOfBoundsException _) {
             logger.log(Level.INFO, "commit %s has no parent".formatted(commit));
             return null;
         }
