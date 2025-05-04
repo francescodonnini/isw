@@ -232,26 +232,25 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
             if (path.endsWith(JAVA_FILE_EXT) && index.containsKey(path)) {
                 getAuthor(commit).ifPresent(author -> index.get(path).forEach(c -> c.setAuthor(author)));
                 if (!oldPath.equals("/dev/null") && !oldPath.equals(path)) {
-                    renameOldEntries(index, oldPath, path);
+                    renameOldEntries(oldPath, path);
                 }
             }
         }
     }
 
-    private void renameOldEntries(Map<String, List<JavaClass>> index, String oldPath, String path) {
-        var oldEntries = index.getOrDefault(oldPath, List.of());
-        if (oldEntries.isEmpty()) {
-            return;
-        }
-        var newEntries = index.getOrDefault(path, List.of());
-        if (newEntries.isEmpty()) {
-            return;
-        }
-        oldEntries.forEach(c -> c.setPath(Path.of(path)));
-        newEntries.forEach(c -> c.setOldPath(Path.of(oldPath)));
-        newEntries.addAll(0, oldEntries);
+    private void renameOldEntries(String oldPath, String path) {
+        classes
+                .stream()
+                .filter(c -> c.getPath().toString().equals(oldPath))
+                .forEach(c -> updatePath(c, Path.of(path)));
     }
 
+    private void updatePath(JavaClass c, Path path) {
+        if (c.getOldPath().isEmpty()) {
+            c.setOldPath(c.getPath());
+        }
+        c.setPath(path);
+    }
 
     private RevTree getParent(RevCommit commit) {
         try {
