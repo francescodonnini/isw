@@ -27,7 +27,7 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     private final List<JavaClass> classes = new ArrayList<>();
     private ParseContext context;
     private JavaClass currentClass;
-    private int anonymousClassCounter = 0;
+    private int depth = 0;
     private final List<AbstractCounter> counters;
 
     public JavaMethodExtractor(List<AbstractCounter> counters) {
@@ -35,17 +35,11 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     }
 
     public void reset() {
-        anonymousClassCounter = 0;
         classes.clear();
     }
 
     public List<JavaClass> getClasses() {
         return new ArrayList<>(classes);
-    }
-
-    public void setClass(JavaClass clazz) {
-        currentClass = clazz;
-        anonymousClassCounter = 0;
     }
 
     public void parse(ParseContext context) throws IOException {
@@ -61,24 +55,20 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
         }
     }
 
-    private void setCompilationUnit(CompilationUnitTree cu) {
-        this.compilationUnit = cu;
-    }
-
     private void setSourcePositions(SourcePositions sourcePositions) {
         this.sourcePositions = sourcePositions;
+    }
+
+    private void setCompilationUnit(CompilationUnitTree cu) {
+        this.compilationUnit = cu;
     }
 
     @Override
     public Void visitNewClass(NewClassTree node, Void unused) {
         if (isAnonymousClass(node)) {
-            ++anonymousClassCounter;
-            var parent = currentClass;
-            currentClass = createAnonymousClass();
+            depth++;
             var r = super.visitNewClass(node, unused);
-            classes.add(currentClass);
-            collectMetrics(node, currentClass);
-            currentClass = parent;
+            depth--;
             return r;
         }
         return super.visitNewClass(node, unused);
@@ -86,19 +76,6 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
 
     private boolean isAnonymousClass(NewClassTree node) {
         return node.getClassBody() != null;
-    }
-
-    private JavaClass createAnonymousClass() {
-        return new JavaClass(
-                currentClass.getCommit(),
-                currentClass.getParent(),
-                currentClass.getPath(),
-                "#" + anonymousClassCounter,
-                currentClass.getTime());
-    }
-
-    private void collectMetrics(NewClassTree node, JavaClass clazz) {
-        counters.forEach(c -> c.visitNewClass(node, clazz));
     }
 
     @Override
@@ -133,14 +110,16 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
 
     @Override
     public Void visitMethod(MethodTree node, Void unused) {
-        int loc;
-        var o = getContent(node);
-        if (o.isPresent()) {
-            var locCounter = new LineNumberCounter(o.get());
-            loc = locCounter.count();
-            var lineRange = getLineRange(node);
-            var m = new JavaMethod(false, currentClass, AstUtils.getSignature(node), lineRange);
-            m.getMetrics().setLineOfCode(loc);
+        if (depth == 0) {
+            int loc;
+            var o = getContent(node);
+            if (o.isPresent()) {
+                var locCounter = new LineNumberCounter(o.get());
+                loc = locCounter.count();
+                var lineRange = getLineRange(node);
+                var m = new JavaMethod(false, currentClass, AstUtils.getSignature(node), lineRange);
+                m.getMetrics().setLineOfCode(loc);
+            }
         }
         return super.visitMethod(node, unused);
     }
@@ -162,7 +141,7 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
             return Optional.of(source.subSequence((int) start, (int) end).toString());
         } catch (IOException e) {
             logger.info(e.getMessage());
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 }

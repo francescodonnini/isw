@@ -8,7 +8,6 @@ public class CyclomaticComplexityCounter extends AbstractCounter {
 
     @Override
     public Void visitMethod(MethodTree node, JavaClass unused) {
-        var parent = complexity;
         complexity = 1;
         var body = node.getBody();
         // questo controllo è necessario nel caso in cui il metodo in esame non ha implementazione, cioè è un metodo
@@ -20,7 +19,6 @@ public class CyclomaticComplexityCounter extends AbstractCounter {
             m.setCyclomaticComplexity(complexity);
             return null;
         });
-        complexity = parent;
         return super.visitMethod(node, null);
     }
 

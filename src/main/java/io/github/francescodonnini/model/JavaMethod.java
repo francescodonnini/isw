@@ -65,6 +65,10 @@ public class JavaMethod {
         javaClass.setPath(path);
     }
 
+    public LineRange getRange() {
+        return range;
+    }
+
     public int getStartLine() {
         return range.start();
     }

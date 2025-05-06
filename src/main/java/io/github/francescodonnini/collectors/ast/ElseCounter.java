@@ -9,14 +9,12 @@ public class ElseCounter extends AbstractCounter {
 
     @Override
     public Void visitMethod(MethodTree node, JavaClass javaClass) {
-        var parent = numberOfElse;
         numberOfElse = 0;
         var v = super.visitMethod(node, javaClass);
         update(AstUtils.getSignature(node), m -> {
             m.setElseCount(numberOfElse);
             return null;
         });
-        numberOfElse = parent;
         return v;
     }
 
