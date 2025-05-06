@@ -26,7 +26,7 @@ public class Main {
         var projectName = args[1].toUpperCase();
         // regex "<project name>-d+" ("%s-\\d+") è presente in tutti i commit che chiudono un ticket di JIRA
         var settings = new IniSettings(args[0]);
-        var useCache = false;
+        var useCache = true;
         var restApi = new RestApi();
         var projectPath = Path.of(settings.getString("gitBasePath"), projectName.toLowerCase()).toString();
         var path = Path.of(settings.getString("dataPath"), projectName).toString();
