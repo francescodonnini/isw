@@ -179,7 +179,7 @@ public class Metrics {
 
     public double getAvgStatementsAdded() {
         if (!statementHistory.isEmpty()) {
-            avgStatementsAdded = getAvgChangeSetSize(statementHistory);
+            avgStatementsAdded = getAdded(statementHistory);
         }
         return avgStatementsAdded;
     }
@@ -344,6 +344,7 @@ public class Metrics {
     private double getAvgChangeSetSize(List<Integer> history, Predicate<Integer> filter) {
         return getDiff(history).stream()
                 .filter(filter)
+                .map(Math::abs)
                 .map(Integer::doubleValue)
                 .reduce(0.0, Double::sum) / history.size();
     }
