@@ -9,7 +9,6 @@ import io.github.francescodonnini.csv.entities.IssueLocalEntity;
 import io.github.francescodonnini.model.Issue;
 import io.github.francescodonnini.model.Release;
 import io.github.francescodonnini.utils.FileUtils;
-import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 
 import java.io.FileNotFoundException;
@@ -18,17 +17,21 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.ToIntFunction;
+import java.util.Map;
+import java.util.Optional;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class CsvIssueApi {
+    private final Logger logger = Logger.getLogger(CsvIssueApi.class.getName());
     private final String defaultPath;
-    private final List<Release> releases;
-    private final List<RevCommit> commits;
+    private final Map<String, Release> releases;
+    private final Map<String, RevCommit> commits;
 
     public CsvIssueApi(String defaultPath, List<Release> releases, List<RevCommit> commits) {
         this.defaultPath = defaultPath;
-        this.releases = releases;
-        this.commits = commits;
+        this.releases = releases.stream().collect(Collectors.toMap(Release::id, r -> r));
+        this.commits = commits.stream().collect(Collectors.toMap(c -> c.getId().getName(), c -> c));
     }
 
     public List<Issue> getLocal(String path) throws FileNotFoundException {
@@ -45,7 +48,11 @@ public class CsvIssueApi {
                 .withFieldAsNull(CSVReaderNullFieldIndicator.EMPTY_QUOTES)
                 .build()
                 .parse();
-        return beans.stream().map(this::fromCsv).toList();
+        return beans.stream()
+                .map(this::fromCsv)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
     }
 
     public void saveLocal(List<Issue> issues, String path) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
@@ -79,54 +86,55 @@ public class CsvIssueApi {
         return bean;
     }
 
-    private Issue fromCsv(IssueLocalEntity bean) {
+    private Optional<Issue> fromCsv(IssueLocalEntity bean) {
         List<Release> affectedVersions = new ArrayList<>();
         if (bean.getAffectedVersions() != null) {
-            affectedVersions.addAll(bean.getAffectedVersions().stream().map(this::getReleaseById).toList());
+            affectedVersions.addAll(bean.getAffectedVersions().stream()
+                    .map(this::getReleaseById)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .toList());
         }
         var fixVersion = getReleaseById(bean.getFixVersion());
         var openingVersion = getReleaseById(bean.getOpeningVersion());
+        if (fixVersion.isEmpty() || openingVersion.isEmpty()) {
+            return Optional.empty();
+        }
         var commitList = new ArrayList<RevCommit>();
         if (bean.getCommits() != null) {
-            commitList.addAll(bean.getCommits().stream().map(this::getByObjectId).toList());
+            commitList.addAll(bean.getCommits().stream()
+                    .map(this::getByObjectId)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .toList());
         }
-        return new Issue(
+        if (commitList.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(new Issue(
                 affectedVersions,
                 bean.getCreated(),
-                fixVersion,
-                openingVersion,
+                fixVersion.get(),
+                openingVersion.get(),
                 commitList,
                 bean.getKey(),
                 bean.getProject()
-        );
+        ));
     }
 
-    private RevCommit getByObjectId(String id) {
-        var objectId = ObjectId.fromString(id);
-        return commits.stream().filter(c -> c.getId().equals(objectId)).findFirst().orElse(null);
-    }
-
-    private Release getReleaseById(String id) {
-        return binarySearch(releases, release -> release.id().compareTo(id));
-    }
-
-    private static <T> T binarySearch(List<T> releases, ToIntFunction<T> comparator) {
-        var low = 0;
-        var mid = -1;
-        var high = releases.size() - 1;
-        while (low <= high) {
-            mid = low + high >>> 1;
-            var midVal = releases.get(mid);
-            var cmp = comparator.applyAsInt(midVal);
-            if (cmp < 0) {
-                low = mid + 1;
-            } else {
-                if (cmp == 0) {
-                    return midVal;
-                }
-                high = mid - 1;
-            }
+    private Optional<RevCommit> getByObjectId(String id) {
+        var c = commits.get(id);
+        if (c == null) {
+            logger.info(() -> "cannot retrieve commit with id %s".formatted(id));
         }
-        return null;
+        return Optional.ofNullable(c);
+    }
+
+    private Optional<Release> getReleaseById(String id) {
+        var r = releases.get(id);
+        if (r == null) {
+            logger.info(() -> "cannot retrieve release with id %s".formatted(id));
+        }
+        return Optional.ofNullable(r);
     }
 }
