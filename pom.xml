@@ -46,5 +46,11 @@
             <version>RELEASE</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>dataframe</artifactId>
+            <version>0.15.0</version>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
 </project>
