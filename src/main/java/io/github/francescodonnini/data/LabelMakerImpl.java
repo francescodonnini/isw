@@ -4,16 +4,12 @@ import io.github.francescodonnini.model.Issue;
 import io.github.francescodonnini.model.JavaMethod;
 import io.github.francescodonnini.model.LineRange;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.diff.EditList;
-import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
@@ -35,12 +31,15 @@ public class LabelMakerImpl implements LabelMaker {
     @Override
     public List<JavaMethod> makeLabels() {
         try {
+            var df = new DiffFormatter(DisabledOutputStream.INSTANCE);
+            df.setRepository(git.getRepository());
+            df.setDetectRenames(true);
             var index = methods.stream()
                     .collect(Collectors.groupingBy(m -> m.getJavaClass().getCommit()));
             for (var issue : issues) {
                 for (var commit : issue.commits()) {
                     var susceptibles = index.get(commit.getName());
-                    parseCommit(susceptibles, commit);
+                    parseCommit(df, susceptibles, commit);
                 }
             }
         } catch (IOException e) {
@@ -49,10 +48,7 @@ public class LabelMakerImpl implements LabelMaker {
         return List.of();
     }
 
-    private void parseCommit(List<JavaMethod> susceptibles, RevCommit commit) throws IOException {
-        var df = new DiffFormatter(DisabledOutputStream.INSTANCE);
-        df.setRepository(git.getRepository());
-        df.setDetectRenames(true);
+    private void parseCommit(DiffFormatter df, List<JavaMethod> susceptibles, RevCommit commit) throws IOException {
         var diffList = df.scan(getParent(commit), commit.getTree());
         for (var diff : diffList) {
             var path = diff.getNewPath();
