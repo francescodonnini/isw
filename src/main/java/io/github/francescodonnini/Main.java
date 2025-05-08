@@ -7,7 +7,6 @@ import io.github.francescodonnini.collectors.ast.AbstractCounterFactoryImpl;
 import io.github.francescodonnini.config.IniSettings;
 import io.github.francescodonnini.csv.*;
 import io.github.francescodonnini.data.*;
-import io.github.francescodonnini.git.GitUtils;
 import io.github.francescodonnini.jira.JsonIssueApi;
 import io.github.francescodonnini.jira.JsonReleaseApi;
 import io.github.francescodonnini.jira.JsonVersionApi;
