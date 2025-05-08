@@ -1,12 +1,9 @@
 package io.github.francescodonnini.jira;
 
-import io.github.francescodonnini.data.ReleaseApi;
-import io.github.francescodonnini.git.GitLog;
 import io.github.francescodonnini.jira.json.issue.FixVersion;
 import io.github.francescodonnini.jira.json.issue.IssueNetworkEntity;
 import io.github.francescodonnini.model.Issue;
 import io.github.francescodonnini.model.Release;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.revwalk.RevCommit;
 
 import java.net.URISyntaxException;
@@ -20,16 +17,16 @@ public class JsonIssueApi  {
     private final Logger logger = Logger.getLogger(JsonIssueApi.class.getName());
     private final String projectName;
     private final String pattern;
-    private final GitLog git;
+    private final List<RevCommit> commits;
     private final RestApi restApi;
-    private final ReleaseApi releaseApi;
+    private final List<Release> releases;
 
-    public JsonIssueApi(String projectName, String pattern, GitLog git, RestApi restApi, ReleaseApi releaseApi) {
+    public JsonIssueApi(String projectName, String pattern, RestApi restApi, List<Release> releases, List<RevCommit> commits) {
         this.projectName = projectName;
         this.pattern = pattern;
-        this.git = git;
+        this.commits = commits;
         this.restApi = restApi;
-        this.releaseApi = releaseApi;
+        this.releases = new ArrayList<>(releases);
     }
 
     /**
@@ -44,8 +41,7 @@ public class JsonIssueApi  {
     public List<Issue> getIssues() {
         try {
             // Ordino le releases in ordine crescente rispetto alla data di creazione
-            var releases = releaseApi.getReleases().stream()
-                    .sorted(Comparator.comparing(Release::releaseDate)).toList();
+            releases.sort(Comparator.comparing(Release::releaseDate));
             var mapping = getTicketCommitMapping(pattern);
             var issueNetworkEntities = restApi.getIssues("project='%s' AND type=bug AND (status=closed OR status=resolved) AND resolution=fixed".formatted(projectName))
                     .getIssueList().stream()
@@ -75,7 +71,7 @@ public class JsonIssueApi  {
                 issue.ifPresent(issues::add);
             }
             return issues;
-        } catch (URISyntaxException | GitAPIException e) {
+        } catch (URISyntaxException e) {
             logger.log(Level.SEVERE, e.getMessage());
             return List.of();
         }
@@ -120,7 +116,7 @@ public class JsonIssueApi  {
         try {
             var fixVersion = fixVersions.getFirst();
             return releases.stream().filter(r -> r.id().equals(fixVersion.getId())).findFirst();
-        } catch (NoSuchElementException ignored) {
+        } catch (NoSuchElementException _) {
             return Optional.empty();
         }
     }
@@ -132,10 +128,10 @@ public class JsonIssueApi  {
      *                commit.
      * @return una mappa chiave ticket, commit il cui messaggio contiene la chiave del ticket.
      */
-    private Map<String, List<RevCommit>> getTicketCommitMapping(String pattern) throws GitAPIException {
+    private Map<String, List<RevCommit>> getTicketCommitMapping(String pattern) {
         var p = Pattern.compile(pattern);
         var mapping = new HashMap<String, List<RevCommit>>();
-        for (var commit : git.getAll()) {
+        for (var commit : commits) {
             var matcher = p.matcher(commit.getFullMessage());
             if (matcher.find()) {
                 mapping.computeIfAbsent(matcher.group(), _ -> new ArrayList<>()).add(commit);
