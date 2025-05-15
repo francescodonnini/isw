@@ -32,7 +32,7 @@ public class Main {
         var projectName = args[1].toUpperCase();
         // regex "<project name>-d+" ("%s-\\d+") è presente in tutti i commit che chiudono un ticket di JIRA
         var settings = new IniSettings(args[0]);
-        var useCache = false;
+        var useCache = true;
         var sourcePath = Path.of(settings.getString("gitBasePath"), projectName.toLowerCase());
         try (var git = createGit(Path.of(settings.getString("gitBasePath"), projectName.toLowerCase()))) {
             var restApi = new RestApi();
@@ -49,7 +49,8 @@ public class Main {
             var methodApi = new JavaMethodRepository(factory, localMethodApi, useCache);
             var methods = methodApi.getMethods();
             System.out.printf("retrieved %d methods%n", methods.size());
-            var diff = new DiffCollector(releases.subList(0, lastRelease), methods);
+            var trustedReleases = releases.subList(0, lastRelease + 1);
+            var diff = new DiffCollector(trustedReleases, methods);
             var diffed = diff.collect();
             System.out.printf("collected %d methods%n", diffed.size());
             localMethodApi.saveLocal(diffed, Path.of(dataPath, "diffed_methods.csv").toString());
@@ -60,7 +61,11 @@ public class Main {
             var remoteIssueApi = new JsonIssueApi(projectName, pattern, restApi, releases, commits);
             var issueApi = new IssueRepository(remoteIssueApi, localIssueApi, useCache);
             var issues = issueApi.getIssues();
-            issues.forEach(System.out::println);
+            var labelMaker = new LabelMakerImpl(git, issues, diffed, trustedReleases);
+            var labeledMethods = labelMaker.makeLabels();
+            System.out.printf("labelled %d methods%n", labeledMethods.size());
+            localMethodApi.saveLocal(labeledMethods, Path.of(dataPath, "lbl-methods.csv").toString());
+            System.out.println("number of buggy methods: " + labeledMethods.stream().filter(m -> m.isBuggy()).count());
         }
     }
 
