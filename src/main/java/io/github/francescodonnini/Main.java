@@ -59,8 +59,10 @@ public class Main {
             var localIssueApi = new CsvIssueApi(Path.of(dataPath, "issues.csv").toString(), releases, commits);
             var pattern = "%s-\\d+".formatted(projectName);
             var remoteIssueApi = new JsonIssueApi(projectName, pattern, restApi, releases, commits);
-            var issueApi = new IssueRepository(remoteIssueApi, localIssueApi, useCache);
+            var issueApi = new IssueRepository(remoteIssueApi, localIssueApi, false);
             var issues = issueApi.getIssues();
+            System.out.printf("retrieved %d issues%n", issues.size());
+            System.out.printf("issues with affectedVersions" + issues.stream().filter(i -> i.affectedVersions().size() > 0).count());
             var labelMaker = new LabelMakerImpl(git, issues, diffed, trustedReleases);
             var labeledMethods = labelMaker.makeLabels();
             System.out.printf("labelled %d methods%n", labeledMethods.size());

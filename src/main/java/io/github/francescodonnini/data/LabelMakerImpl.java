@@ -13,8 +13,8 @@ import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -25,12 +25,31 @@ public class LabelMakerImpl implements LabelMaker {
     private final List<Issue> issues;
     private final List<JavaMethod> methods;
     private final List<Release> releases;
+    private final Map<String, HashSet<String>> releaseMethodMap = new HashMap<>();
 
     public LabelMakerImpl(Git git, List<Issue> issues, List<JavaMethod> methods, List<Release> releases) {
         this.issues = issues;
         this.methods = methods;
         this.git = git;
         this.releases = releases;
+        createReleaseMethodMap();
+    }
+
+    private void createReleaseMethodMap() {
+        var prev = LocalDate.MIN;
+        for (var release : releases) {
+            var curr = release.releaseDate();
+            LocalDate finalPrev = prev;
+            methods.stream()
+                    .filter(m -> isBetween(m, finalPrev, curr))
+                    .forEach(m -> releaseMethodMap.computeIfAbsent(release.id(), x -> new HashSet<>()).add(getId(m)));
+            prev = curr;
+        }
+    }
+
+    private boolean isBetween(JavaMethod m, LocalDate a, LocalDate b) {
+        var time = m.getJavaClass().getTime().toLocalDate();
+        return !time.isBefore(a) && !time.isAfter(b);
     }
 
     @Override
@@ -70,33 +89,28 @@ public class LabelMakerImpl implements LabelMaker {
 
     private void setBuggy(JavaMethod m, Issue issue) {
         m.setBuggy(true);
-        methods.stream()
-                .filter(x -> x != m)
-                .filter(x -> getId(m).equals(getId(x)))
-                .filter(x -> isAffected(m, issue.affectedVersions()))
-                .forEach(x -> x.setBuggy(true));
+        backtrack(m, issue.affectedVersions());
     }
 
     private String getId(JavaMethod m) {
         return m.getPath().toString() + m.getSignature();
     }
 
-    private boolean isAffected(JavaMethod m, List<Release> affectedVersions) {
-        for (var r : affectedVersions) {
-            var p = releases.stream()
-                    .filter(x -> x.isBefore(r))
-                    .max((x, y) -> x.releaseDate().compareTo(y.releaseDate()));
-            if (p.isEmpty())
-                return false;
-            else if (isBetween(m, p.get(), r))
-                return true;
-        }
-        return false;
+    private void backtrack(JavaMethod m, List<Release> affectedVersions) {
+        methods.stream()
+                .filter(x -> x != m)
+                .filter(x -> getId(x).equals(getId(m)))
+                .filter(x -> isAffected(x, affectedVersions))
+                .forEach(x -> x.setBuggy(true));
     }
 
-    private boolean isBetween(JavaMethod m, Release p, Release r) {
-        var time = m.getJavaClass().getTime().toLocalDate();
-        return !time.isBefore(p.releaseDate()) && !time.isAfter(r.releaseDate());
+    private boolean isAffected(JavaMethod m, List<Release> affectedVersions) {
+        for (var r : affectedVersions) {
+            if (releaseMethodMap.getOrDefault(r.id(), HashSet.newHashSet(0)).contains(getId(m))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private RevTree getParent(RevCommit commit) {
