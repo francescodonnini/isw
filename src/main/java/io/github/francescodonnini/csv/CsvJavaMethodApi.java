@@ -99,6 +99,7 @@ public class CsvJavaMethodApi {
         m.getMetrics().setStatementsAdded(bean.getStatementsAdded());
         m.getMetrics().setStatementsDeleted(bean.getStatementsDeleted());
         m.getMetrics().setMaxChurn(bean.getMaxChurn());
+        m.getMetrics().setCodeSmells(bean.getCodeSmells());
         bean.getAuthors().forEach(a -> m.getMetrics().addAuthor(a));
     }
 
@@ -153,6 +154,7 @@ public class CsvJavaMethodApi {
         bean.setChurn(model.getMetrics().getChurn());
         bean.setAvgChurn(model.getMetrics().getAvgChurn());
         bean.setAuthors(new ArrayList<>(model.getMetrics().getAuthors()));
+        bean.setCodeSmells(model.getMetrics().getCodeSmells());
         return bean;
     }
 }

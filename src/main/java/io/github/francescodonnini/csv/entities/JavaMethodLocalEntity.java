@@ -66,6 +66,8 @@ public class JavaMethodLocalEntity {
     int elseDeleted;
     @CsvBindAndSplitByName(column = "authors", elementType = String.class, splitOn = ",", writeDelimiter = ",", collectionType = List.class)
     List<String> authors;
+    @CsvBindByName(column = "codeSmells")
+    int codeSmells;
 
     public double getAvgLocAdded() {
         return avgLocAdded;
@@ -305,5 +307,13 @@ public class JavaMethodLocalEntity {
 
     public void setAuthors(List<String> authors) {
         this.authors = authors;
+    }
+
+    public int getCodeSmells() {
+        return codeSmells;
+    }
+
+    public void setCodeSmells(int codeSmells) {
+        this.codeSmells = codeSmells;
     }
 }

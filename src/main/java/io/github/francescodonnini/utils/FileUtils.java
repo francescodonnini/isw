@@ -1,6 +1,8 @@
 package io.github.francescodonnini.utils;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -16,5 +18,20 @@ public class FileUtils {
             message = "directory %s has been created.".formatted(file.getParentFile());
         }
         logger.log(Level.INFO, message);
+    }
+
+    public static boolean createDirectory(String path) {
+        var p = Path.of(path);
+        if (Files.exists(p)) {
+            return false;
+        } else {
+            try {
+                Files.createDirectories(p);
+                return true;
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, e.getMessage());
+                return false;
+            }
+        }
     }
 }

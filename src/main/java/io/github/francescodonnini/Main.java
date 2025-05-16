@@ -12,6 +12,9 @@ import io.github.francescodonnini.jira.JsonReleaseApi;
 import io.github.francescodonnini.jira.JsonVersionApi;
 import io.github.francescodonnini.jira.RestApi;
 import io.github.francescodonnini.model.Release;
+import io.github.francescodonnini.utils.FileUtils;
+import net.sourceforge.pmd.PMDConfiguration;
+import net.sourceforge.pmd.lang.LanguageRegistry;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -32,7 +35,12 @@ public class Main {
         var projectName = args[1].toUpperCase();
         // regex "<project name>-d+" ("%s-\\d+") è presente in tutti i commit che chiudono un ticket di JIRA
         var settings = new IniSettings(args[0]);
-        var useCache = true;
+        var useCache = false;
+        var reportsBaseDir = Path.of(settings.getString("pmdReportsPath"), projectName).toString();
+        var reportsPath = createReportsPath(reportsBaseDir);
+        if (!FileUtils.createDirectory(reportsPath.toString())) {
+            System.exit(1);
+        }
         var sourcePath = Path.of(settings.getString("gitBasePath"), projectName.toLowerCase());
         try (var git = createGit(Path.of(settings.getString("gitBasePath"), projectName.toLowerCase()))) {
             var restApi = new RestApi();
@@ -40,8 +48,8 @@ public class Main {
             var dataPath = Path.of(settings.getString("dataPath"), projectName).toString();
             var releaseApi = getReleaseApi(projectName, restApi, dataPath, useCache);
             var releases = releaseApi.getReleases();
-            var lastRelease = Math.min((releases.size() / 3) + 1, releases.size());
-            var factory = new DataLoaderImpl(projectPath, new AbstractCounterFactoryImpl(), releases.get(lastRelease).releaseDate());
+            var lastRelease = Math.min(((int) (releases.size() * .5)) + 1, releases.size());
+            var factory = new DataLoaderImpl(projectPath, new AbstractCounterFactoryImpl(), releases.get(lastRelease).releaseDate(), reportsPath.toString());
             var localClassApi = new CsvJavaClassApi(Path.of(dataPath, "classes.csv").toString());
             var classApi = new JavaClassRepository(factory, localClassApi, useCache);
             var classes = classApi.getClasses();
@@ -69,6 +77,10 @@ public class Main {
             localMethodApi.saveLocal(labeledMethods, Path.of(dataPath, "lbl-methods.csv").toString());
             System.out.println("number of buggy methods: " + labeledMethods.stream().filter(m -> m.isBuggy()).count());
         }
+    }
+
+    private static Path createReportsPath(String reportsBaseDir) {
+        return Path.of(reportsBaseDir, String.valueOf(System.currentTimeMillis()));
     }
 
     private static Git createGit(Path projectPath) throws IOException {

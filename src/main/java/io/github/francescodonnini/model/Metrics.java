@@ -34,6 +34,7 @@ public class Metrics {
     private int elseAdded;
     private int elseDeleted;
     private final Set<String> authors = new HashSet<>();
+    private int codeSmells;
 
     @Override
     public String toString() {
@@ -376,5 +377,17 @@ public class Metrics {
                 .mapToInt(Math::abs)
                 .max()
                 .orElse(0);
+    }
+
+    public int getCodeSmells() {
+        return codeSmells;
+    }
+
+    public void incCodeSmells() {
+        codeSmells += 1;
+    }
+
+    public void setCodeSmells(int codeSmells) {
+        this.codeSmells = codeSmells;
     }
 }

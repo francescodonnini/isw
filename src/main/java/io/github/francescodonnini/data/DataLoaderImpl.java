@@ -3,6 +3,10 @@ package io.github.francescodonnini.data;
 import io.github.francescodonnini.collectors.ast.*;
 import io.github.francescodonnini.model.JavaClass;
 import io.github.francescodonnini.model.JavaMethod;
+import net.sourceforge.pmd.PMDConfiguration;
+import net.sourceforge.pmd.PmdAnalysis;
+import net.sourceforge.pmd.lang.LanguageRegistry;
+import net.sourceforge.pmd.renderers.CSVRenderer;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffFormatter;
@@ -35,14 +39,17 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
     private final List<JavaMethod> methods = new ArrayList<>();
     private final JavaMethodExtractor extractor;
     private boolean dataLoaded = false;
+    private final String reportsPath;
 
     public DataLoaderImpl(
             String projectPath,
             AbstractCounterFactoryImpl factory,
-            LocalDate endTime) throws IOException {
+            LocalDate endTime,
+            String reportsPath) throws IOException {
         this.projectPath = projectPath;
         this.git = createGit(projectPath);
         this.endTime = endTime;
+        this.reportsPath = reportsPath;
         extractor = new JavaMethodExtractor(createCounters(factory));
     }
 
@@ -91,6 +98,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
     private void loadData() throws IOException, GitAPIException {
         var head = git.getRepository().getBranch();
         try {
+            // lista di commit effettuati non oltre endTime e ordinati rispetto alla data di commit.
             var commits = StreamSupport
                     .stream(git.log().call().spliterator(), false)
                     .filter(c -> !getCommitDate(c).isAfter(endTime))
@@ -103,19 +111,45 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
                 logProgress(progress, commits.size());
                 checkout(git, commit.getName());
                 var susceptible = getTouchedFiles(commit);
-                try {
-                    listAllFiles(Path.of(projectPath)).stream()
+                try (var pmd = createPmdAnalysis(commit.getName())) {
+                    var parent = Path.of(projectPath);
+                    listAllFiles(parent).stream()
                             .filter(this::isValidPath)
                             .filter(p -> susceptible.contains(p.toString()))
-                            .forEach(p -> parseFile(p, commit));
+                            .forEach(p -> {
+                                parseFile(p, commit);
+                                pmd.files().addFile(parent.resolve(p));
+                            });
+                    pmd.performAnalysis();
                 } catch (IOException e) {
                     logger.info(e.getMessage());
                 }
             }
+            var linker = new CsvSmellLinker(reportsPath);
+            linker.link(classes);
             dataLoaded = true;
         } finally {
             checkout(git, head);
         }
+    }
+
+    private PmdAnalysis createPmdAnalysis(String reportName) throws IOException {
+        if (!reportName.endsWith(".csv")) {
+            reportName += ".csv";
+        }
+        var renderer = new CSVRenderer();
+        renderer.setWriter(Files.newBufferedWriter(Path.of(reportsPath, reportName)));
+        var pmd = PmdAnalysis.create(getPmdConfig(reportName));
+        pmd.addRenderer(renderer);
+        return pmd;
+    }
+
+    private PMDConfiguration getPmdConfig(String reportName) {
+        var config = new PMDConfiguration();
+        config.setDefaultLanguageVersion(LanguageRegistry.PMD.getLanguageVersionById("java", "22"));
+        config.setReportFile(Path.of(reportsPath, reportName));
+        config.addRuleSet("rulesets/java/quickstart.xml");
+        return config;
     }
 
     private void logProgress(int progress, int total) {
