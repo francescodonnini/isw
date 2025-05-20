@@ -80,7 +80,7 @@ public class JavaClass {
         this.path = path;
     }
 
-    public Path getRealPath() {
+    public Path getAbsolutePath() {
         return parent.resolve(path);
     }
 
@@ -102,6 +102,14 @@ public class JavaClass {
 
     public void setCommit(String commit) {
         this.commit = commit;
+    }
+
+    public Optional<Path> getAbsoluteOldPath() {
+        if (oldPath == null) {
+            return Optional.empty();
+        } else {
+            return Optional.of(parent.resolve(oldPath));
+        }
     }
 
     public Optional<Path> getOldPath() {

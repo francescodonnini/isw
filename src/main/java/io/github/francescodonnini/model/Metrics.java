@@ -390,4 +390,8 @@ public class Metrics {
     public void setCodeSmells(int codeSmells) {
         this.codeSmells = codeSmells;
     }
+
+    public void addCodeSmells(int codeSmells) {
+        this.codeSmells += codeSmells;
+    }
 }

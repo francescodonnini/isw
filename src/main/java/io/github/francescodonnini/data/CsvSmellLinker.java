@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import java.util.HashMap;
 
 public class CsvSmellLinker implements SmellLinker {
@@ -35,9 +34,7 @@ public class CsvSmellLinker implements SmellLinker {
                     var commit = path.getFileName()
                             .toString()
                             .replace(".csv", "");
-                    parse(path).forEach(e -> {
-                        fillCodeSmells(e, index.getOrDefault(commit, Map.of()));
-                    });
+                    parse(path).forEach(e -> fillCodeSmells(e, index.getOrDefault(commit, Map.of())));
                 }
             }
         } catch (IOException e) {
@@ -58,8 +55,14 @@ public class CsvSmellLinker implements SmellLinker {
     private Map<String, Map<String, JavaClass>> createCommitClassIndex(List<JavaClass> classes) {
         var index = new HashMap<String, Map<String, JavaClass>>();
         for (var c : classes) {
-            index.computeIfAbsent(c.getCommit(), k -> new HashMap<>())
-                    .put(c.getRealPath().toString(), c);
+            var classSet = index.computeIfAbsent(c.getCommit(), k -> new HashMap<>());
+            classSet.put(c.getAbsolutePath().toString(), c);
+            var oldPath = c.getOldPath();
+            if (oldPath.isPresent()) {
+                classSet.put(oldPath.get().toString(), c);
+            } else {
+                classSet.put(c.getAbsolutePath().toString(), c);
+            }
         }
         return index;
     }

@@ -125,8 +125,6 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
                     logger.info(e.getMessage());
                 }
             }
-            var linker = new CsvSmellLinker(reportsPath);
-            linker.link(classes);
             dataLoaded = true;
         } finally {
             checkout(git, head);

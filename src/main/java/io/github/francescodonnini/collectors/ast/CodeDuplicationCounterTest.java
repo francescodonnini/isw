@@ -4,7 +4,6 @@ package io.github.francescodonnini.collectors.ast;
 import com.sun.source.util.JavacTask;
 import io.github.francescodonnini.config.IniSettings;
 import io.github.francescodonnini.csv.CsvJavaClassApi;
-import io.github.francescodonnini.csv.CsvReleaseApi;
 import io.github.francescodonnini.model.JavaClass;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.eclipse.jgit.api.Git;
@@ -59,7 +58,7 @@ public class CodeDuplicationCounterTest {
         try {
             checkout(git, clazz.getCommit());
             var file = Files.createTempFile(null, ".java");
-            try (var fr = new FileReader(clazz.getRealPath().toFile());
+            try (var fr = new FileReader(clazz.getAbsolutePath().toFile());
                  var out = new FileWriter(file.toFile())) {
                 var buffer = new char[4096];
                 while (fr.read(buffer) != -1) {
