@@ -8,10 +8,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class JsonReleaseApi {
+public class JiraReleaseApi {
     private final VersionApi versionApi;
 
-    public JsonReleaseApi(VersionApi versionApi) {
+    public JiraReleaseApi(VersionApi versionApi) {
         this.versionApi = versionApi;
     }
 

@@ -6,11 +6,11 @@ import io.github.francescodonnini.model.Version;
 import java.net.URISyntaxException;
 import java.util.List;
 
-public class JsonVersionApi {
+public class JiraVersionApi {
     private final String projectName;
     private final RestApi restApi;
 
-    public JsonVersionApi(String projectName, RestApi restApi) {
+    public JiraVersionApi(String projectName, RestApi restApi) {
         this.projectName = projectName;
         this.restApi = restApi;
     }
@@ -18,7 +18,7 @@ public class JsonVersionApi {
     public List<Version> getVersions() {
         try {
             return restApi.getReleaseInfo(projectName).getVersions().stream()
-                    .map(JsonVersionApi::fromVersionNetworkEntity)
+                    .map(JiraVersionApi::fromVersionNetworkEntity)
                     .toList();
         } catch (URISyntaxException e) {
             return List.of();

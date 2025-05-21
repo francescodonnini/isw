@@ -13,15 +13,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-public class JsonIssueApi  {
-    private final Logger logger = Logger.getLogger(JsonIssueApi.class.getName());
+public class JiraIssueApi {
+    private final Logger logger = Logger.getLogger(JiraIssueApi.class.getName());
     private final String projectName;
     private final String pattern;
     private final List<RevCommit> commits;
     private final RestApi restApi;
     private final List<Release> releases;
 
-    public JsonIssueApi(String projectName, String pattern, RestApi restApi, List<Release> releases, List<RevCommit> commits) {
+    public JiraIssueApi(String projectName, String pattern, RestApi restApi, List<Release> releases, List<RevCommit> commits) {
         this.projectName = projectName;
         this.pattern = pattern;
         this.commits = commits;
