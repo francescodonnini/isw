@@ -7,21 +7,17 @@ import io.github.francescodonnini.collectors.ast.AbstractCounterFactoryImpl;
 import io.github.francescodonnini.config.IniSettings;
 import io.github.francescodonnini.csv.*;
 import io.github.francescodonnini.data.*;
-import io.github.francescodonnini.jira.JsonIssueApi;
-import io.github.francescodonnini.jira.JsonReleaseApi;
-import io.github.francescodonnini.jira.JsonVersionApi;
+import io.github.francescodonnini.jira.JiraIssueApi;
+import io.github.francescodonnini.jira.JiraReleaseApi;
+import io.github.francescodonnini.jira.JiraVersionApi;
 import io.github.francescodonnini.jira.RestApi;
-import io.github.francescodonnini.model.Release;
 import io.github.francescodonnini.utils.FileUtils;
-import net.sourceforge.pmd.PMDConfiguration;
-import net.sourceforge.pmd.lang.LanguageRegistry;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -36,11 +32,8 @@ public class Main {
         // regex "<project name>-d+" ("%s-\\d+") è presente in tutti i commit che chiudono un ticket di JIRA
         var settings = new IniSettings(args[0]);
         var useCache = false;
-        var reportsBaseDir = Path.of(settings.getString("pmdReportsPath"), projectName).toString();
-        var reportsPath = createReportsPath(reportsBaseDir);
-        if (!FileUtils.createDirectory(reportsPath.toString())) {
-            System.exit(1);
-        }
+        var reportsPath = Path.of(settings.getString("pmdReportsPath"), projectName).toString();
+        FileUtils.createDirectory(reportsPath.toString());
         var sourcePath = Path.of(settings.getString("gitBasePath"), projectName.toLowerCase());
         try (var git = createGit(Path.of(settings.getString("gitBasePath"), projectName.toLowerCase()))) {
             var restApi = new RestApi();
@@ -58,7 +51,6 @@ public class Main {
             var methodApi = new JavaMethodRepository(factory, localMethodApi, useCache);
             var methods = methodApi.getMethods();
             System.out.printf("retrieved %d methods%n", methods.size());
-            System.exit(0);
             var linker = new CsvSmellLinker(reportsPath.toString());
             linker.link(classes);
             var diff = new DiffCollector(trustedReleases, methods);
@@ -69,7 +61,7 @@ public class Main {
             git.log().call().forEach(commits::add);
             var localIssueApi = new CsvIssueApi(Path.of(dataPath, "issues.csv").toString(), releases, commits);
             var pattern = "%s-\\d+".formatted(projectName);
-            var remoteIssueApi = new JsonIssueApi(projectName, pattern, restApi, releases, commits);
+            var remoteIssueApi = new JiraIssueApi(projectName, pattern, restApi, releases, commits);
             var issueApi = new IssueRepository(remoteIssueApi, localIssueApi, useCache);
             var issues = issueApi.getIssues();
             System.out.printf("retrieved %d issues%n", issues.size());
@@ -97,13 +89,13 @@ public class Main {
 
     private static ReleaseApi getReleaseApi(String projectName, RestApi restApi, String localDataPath, boolean useCache) {
         var versionApi = getVersionApi(projectName, restApi, localDataPath, useCache);
-        var remoteReleaseApi = new JsonReleaseApi(versionApi);
+        var remoteReleaseApi = new JiraReleaseApi(versionApi);
         var localReleaseApi = new CsvReleaseApi(Path.of(localDataPath, "releases.csv").toString());
         return new ReleaseRepository(remoteReleaseApi, localReleaseApi, useCache);
     }
 
     private static VersionApi getVersionApi(String projectName, RestApi restApi, String localDataPath, boolean useCache) {
-        var remoteVersionApi = new JsonVersionApi(projectName, restApi);
+        var remoteVersionApi = new JiraVersionApi(projectName, restApi);
         var localVersionApi = new CsvVersionApi(Path.of(localDataPath, "versions.csv").toString());
         return new VersionRepository(remoteVersionApi, localVersionApi, useCache);
     }
