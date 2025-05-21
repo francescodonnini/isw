@@ -9,7 +9,6 @@ import java.time.LocalDate;
 
 @SuppressWarnings("unused")
 public class VersionNetworkEntity {
-
     @Expose
     private Boolean archived;
     @Expose
