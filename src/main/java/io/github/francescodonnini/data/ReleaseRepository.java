@@ -3,7 +3,7 @@ package io.github.francescodonnini.data;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import io.github.francescodonnini.csv.CsvReleaseApi;
-import io.github.francescodonnini.jira.JsonReleaseApi;
+import io.github.francescodonnini.jira.JiraReleaseApi;
 import io.github.francescodonnini.model.Release;
 
 import java.io.FileNotFoundException;
@@ -15,11 +15,11 @@ import java.util.logging.Logger;
 
 public class ReleaseRepository implements ReleaseApi {
     private final Logger logger = Logger.getLogger(ReleaseRepository.class.getName());
-    private final JsonReleaseApi remoteSource;
+    private final JiraReleaseApi remoteSource;
     private final CsvReleaseApi localSource;
     private final boolean useCache;
 
-    public ReleaseRepository(JsonReleaseApi remoteSource, CsvReleaseApi localSource, boolean useCache) {
+    public ReleaseRepository(JiraReleaseApi remoteSource, CsvReleaseApi localSource, boolean useCache) {
         this.remoteSource = remoteSource;
         this.localSource = localSource;
         this.useCache = useCache;

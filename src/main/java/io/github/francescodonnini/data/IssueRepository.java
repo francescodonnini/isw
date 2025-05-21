@@ -3,7 +3,7 @@ package io.github.francescodonnini.data;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import io.github.francescodonnini.csv.CsvIssueApi;
-import io.github.francescodonnini.jira.JsonIssueApi;
+import io.github.francescodonnini.jira.JiraIssueApi;
 import io.github.francescodonnini.model.Issue;
 
 import java.io.FileNotFoundException;
@@ -14,11 +14,11 @@ import java.util.logging.Logger;
 
 public class IssueRepository implements IssueApi {
     private final Logger logger = Logger.getLogger(IssueRepository.class.getName());
-    private final JsonIssueApi remoteSource;
+    private final JiraIssueApi remoteSource;
     private final CsvIssueApi localSource;
     private final boolean useCache;
 
-    public IssueRepository(JsonIssueApi remoteSource, CsvIssueApi localSource, boolean useCache) {
+    public IssueRepository(JiraIssueApi remoteSource, CsvIssueApi localSource, boolean useCache) {
         this.remoteSource = remoteSource;
         this.localSource = localSource;
         this.useCache = useCache;
