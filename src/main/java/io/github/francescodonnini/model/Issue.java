@@ -12,4 +12,8 @@ public record Issue(
         Release openingVersion,
         List<RevCommit> commits,
         String key,
-        String project) {}
+        String project) {
+    public Issue withAffectedVersions(List<Release> affectedVersions) {
+        return new Issue(affectedVersions, created, fixVersion, openingVersion, commits, key, project);
+    }
+}
