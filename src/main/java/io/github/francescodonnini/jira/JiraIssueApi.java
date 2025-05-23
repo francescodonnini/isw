@@ -1,12 +1,12 @@
 package io.github.francescodonnini.jira;
 
-import io.github.francescodonnini.jira.json.issue.FixVersion;
 import io.github.francescodonnini.jira.json.issue.IssueNetworkEntity;
 import io.github.francescodonnini.model.Issue;
 import io.github.francescodonnini.model.Release;
 import org.eclipse.jgit.revwalk.RevCommit;
 
 import java.net.URISyntaxException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Level;
@@ -50,12 +50,12 @@ public class JiraIssueApi {
                     .toList();
             var issues = new ArrayList<Issue>();
             for (var i : issueNetworkEntities) {
-                var affectedVersions = getAffectedVersions(releases, i);
+                var affectedVersions = getAffectedVersions(i);
                 // Al momento sto prendendo come fixVersion la prima release (ordine cronologico) nel campo fixVersions
                 // Un'alternativa potrebbe essere quella di prendere come fixVersion la prima utile che ha data di rilascio
                 // >= alla data di risoluzione.
-                var o1 = getFixVersion(releases, i.getFields().getFixVersions());
-                var o2 = getOpeningVersion(releases, i.getFields().getCreated());
+                var o1 = getFixVersion(mapping, i.getKey());
+                var o2 = getOpeningVersion(i.getFields().getCreated());
                 if (o1.isEmpty() || o2.isEmpty()) continue;
                 // Arrivati a questo punto si sta leggendo un ticket che possiede il campo fixVersions non vuoto.
                 // Si seleziona la release con getFixVersion (attualmente prende la prima release nella lista).
@@ -67,8 +67,7 @@ public class JiraIssueApi {
                 var fixVersion = o1.get();
                 var openingVersion = o2.get();
                 // Non è presente una release con data di pubblicazione >= alla data di creazione del ticket
-                var issue = getIssue(i, mapping, affectedVersions, openingVersion, fixVersion);
-                issue.ifPresent(issues::add);
+                getIssue(i, mapping, affectedVersions, openingVersion, fixVersion).ifPresent(issues::add);
             }
             return issues;
         } catch (URISyntaxException e) {
@@ -77,7 +76,71 @@ public class JiraIssueApi {
         }
     }
 
-    private Optional<Release> getOpeningVersion(List<Release> releases, LocalDateTime created) {
+    /**
+     * getTicketCommitMapping costruisce una mappa la cui chiave è l'identificativo del ticket che viene citato
+     * nel messaggio di un commit (quest'ultimo è il valore della chiave).
+     * @param pattern espressione regolare che descrive come è fatta la chiave del ticket che si cerca nei messaggi dei
+     *                commit.
+     * @return una mappa chiave ticket, commit il cui messaggio contiene la chiave del ticket.
+     */
+    private Map<String, List<RevCommit>> getTicketCommitMapping(String pattern) {
+        var p = Pattern.compile(pattern);
+        var mapping = new HashMap<String, List<RevCommit>>();
+        for (var commit : commits) {
+            var matcher = p.matcher(commit.getFullMessage());
+            if (matcher.find()) {
+                mapping.computeIfAbsent(matcher.group(), _ -> new ArrayList<>()).add(commit);
+            }
+        }
+        return mapping;
+    }
+
+    private List<Release> getAffectedVersions(IssueNetworkEntity issue) {
+        var affectedVersions = new ArrayList<Release>();
+        for (var v : releases) {
+            for (var affectedVersion : issue.getFields().getAffectedVersions()) {
+                if (v.id().equals(affectedVersion.getId())) {
+                    affectedVersions.add(v);
+                }
+            }
+        }
+        return affectedVersions;
+    }
+
+    private Optional<Release> getFixVersion(Map<String, List<RevCommit>> mapping, String key) {
+        var o = getLatestCommitDate(mapping, key);
+        if (o.isEmpty()) {
+            return Optional.empty();
+        }
+        var commitDate = o.get();
+        for (var r : releases) {
+            if (r.releaseDate().isAfter(commitDate)) {
+                return Optional.of(r);
+            }
+        }
+        return releases.stream()
+                .filter(r -> !r.releaseDate().isBefore(commitDate))
+                .findFirst();
+    }
+
+    private Optional<LocalDate> getLatestCommitDate(Map<String, List<RevCommit>> mapping, String key) {
+        var commitList = mapping.get(key);
+        if (commitList == null || commitList.isEmpty()) {
+            return Optional.empty();
+        }
+        return commitList.stream()
+                .map(this::getCommitDate)
+                .max(Comparator.naturalOrder());
+    }
+
+
+    private LocalDate getCommitDate(RevCommit commit) {
+        return commit.getAuthorIdent().getWhen().toInstant()
+                .atZone(commit.getAuthorIdent().getTimeZone().toZoneId())
+                .toLocalDate();
+    }
+
+    private Optional<Release> getOpeningVersion(LocalDateTime created) {
         return releases.stream().filter(r -> r.releaseDate().isAfter(created.toLocalDate())).findFirst();
     }
 
@@ -110,45 +173,5 @@ public class JiraIssueApi {
             return false;
         }
         return !openingVersion.isAfter(fixVersion);
-    }
-
-    private Optional<Release> getFixVersion(List<Release> releases, List<FixVersion> fixVersions) {
-        try {
-            var fixVersion = fixVersions.getFirst();
-            return releases.stream().filter(r -> r.id().equals(fixVersion.getId())).findFirst();
-        } catch (NoSuchElementException _) {
-            return Optional.empty();
-        }
-    }
-
-    /**
-     * getTicketCommitMapping costruisce una mappa la cui chiave è l'identificativo del ticket che viene citato
-     * nel messaggio di un commit (quest'ultimo è il valore della chiave).
-     * @param pattern espressione regolare che descrive come è fatta la chiave del ticket che si cerca nei messaggi dei
-     *                commit.
-     * @return una mappa chiave ticket, commit il cui messaggio contiene la chiave del ticket.
-     */
-    private Map<String, List<RevCommit>> getTicketCommitMapping(String pattern) {
-        var p = Pattern.compile(pattern);
-        var mapping = new HashMap<String, List<RevCommit>>();
-        for (var commit : commits) {
-            var matcher = p.matcher(commit.getFullMessage());
-            if (matcher.find()) {
-                mapping.computeIfAbsent(matcher.group(), _ -> new ArrayList<>()).add(commit);
-            }
-        }
-        return mapping;
-    }
-
-    private List<Release> getAffectedVersions(List<Release> versions, IssueNetworkEntity issue) {
-        var affectedVersions = new ArrayList<Release>();
-        for (var v : versions) {
-            for (var affectedVersion : issue.getFields().getAffectedVersions()) {
-                if (v.id().equals(affectedVersion.getId())) {
-                    affectedVersions.add(v);
-                }
-            }
-        }
-        return affectedVersions;
     }
 }
