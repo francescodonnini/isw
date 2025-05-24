@@ -83,7 +83,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
     public List<JavaMethod> getMethods() throws DataLoaderException {
         try {
             lazyDataLoading();
-            return methods;
+            return new ArrayList<>(methods);
         } catch (GitAPIException | IOException e) {
             throw new DataLoaderException(e);
         }
