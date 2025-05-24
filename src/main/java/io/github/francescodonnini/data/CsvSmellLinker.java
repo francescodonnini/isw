@@ -30,9 +30,9 @@ public class CsvSmellLinker implements SmellLinker {
         var index = createCommitClassIndex(classes);
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(Path.of(reportDirectory))) {
             for (Path path : stream) {
-                if (path.endsWith("csv")) {
-                    var commit = path.getFileName()
-                            .toString()
+                var fileName = path.getFileName().toString();
+                if (fileName.endsWith(".csv")) {
+                    var commit = fileName
                             .replace(".csv", "");
                     parse(path).forEach(e -> fillCodeSmells(e, index.getOrDefault(commit, Map.of())));
                 }
@@ -60,8 +60,6 @@ public class CsvSmellLinker implements SmellLinker {
             var oldPath = c.getOldPath();
             if (oldPath.isPresent()) {
                 classSet.put(oldPath.get().toString(), c);
-            } else {
-                classSet.put(c.getAbsolutePath().toString(), c);
             }
         }
         return index;
