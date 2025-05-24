@@ -11,6 +11,7 @@ import io.github.francescodonnini.jira.JiraIssueApi;
 import io.github.francescodonnini.jira.JiraReleaseApi;
 import io.github.francescodonnini.jira.JiraVersionApi;
 import io.github.francescodonnini.jira.RestApi;
+import io.github.francescodonnini.model.Release;
 import io.github.francescodonnini.proportion.Incremental;
 import io.github.francescodonnini.utils.FileUtils;
 import org.apache.commons.configuration2.ex.ConfigurationException;
@@ -25,6 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
+    private static String dataPath;
+    private static RestApi restApi = new RestApi();
+
     public static void main(String[] args) throws ConfigurationException, IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, GitAPIException {
         if (args.length != 2) {
             System.exit(-1);
@@ -39,21 +43,18 @@ public class Main {
         try (var git = createGit(Path.of(settings.getString("gitBasePath"), projectName.toLowerCase()))) {
             var restApi = new RestApi();
             var projectPath = Path.of(settings.getString("gitBasePath"), projectName.toLowerCase()).toString();
-            var dataPath = Path.of(settings.getString("dataPath"), projectName).toString();
-            var releaseApi = getReleaseApi(projectName, restApi, dataPath, useCache);
-            var releases = releaseApi.getReleases();
-            var lastRelease = Math.min(((int) (releases.size() * .5)) + 1, releases.size());
-            var trustedReleases = releases.subList(0, lastRelease + 1);
-            var factory = new DataLoaderImpl(projectPath, new AbstractCounterFactoryImpl(), trustedReleases.getLast().releaseDate(), reportsPath.toString());
+            dataPath = Path.of(settings.getString("dataPath"), projectName).toString();
+            var releases = getReleases(projectName, 0.5, useCache);
+            var factory = new DataLoaderImpl(projectPath, new AbstractCounterFactoryImpl(), releases.getLast().releaseDate(), reportsPath.toString());
             var localClassApi = new CsvJavaClassApi(Path.of(dataPath, "classes.csv").toString());
             var classApi = new JavaClassRepository(factory, localClassApi, true);
             var classes = classApi.getClasses();
             var localMethodApi = new CsvJavaMethodApi(Path.of(dataPath, "methods.csv").toString(), classes);
             var methods = localMethodApi.getLocal();
             System.out.printf("retrieved %d methods%n", methods.size());
-            var codeSmellLinker = new CsvSmellLinker(Path.of(dataPath, "pmd-reports", projectName).toString());
+            var codeSmellLinker = new CsvSmellLinker(reportsPath.toString());
             codeSmellLinker.link(classes);
-            var diff = new DiffCollector(trustedReleases, methods);
+            var diff = new DiffCollector(releases, methods);
             var diffed = diff.collect();
             var commits = new ArrayList<RevCommit>();
             git.log().call().forEach(commits::add);
@@ -64,10 +65,10 @@ public class Main {
             var issues = issueApi.getIssues();
             System.out.printf("retrieved %d issues%n", issues.size());
             System.out.printf("issues with affectedVersions" + issues.stream().filter(i -> i.affectedVersions().size() > 0).count());
-            var proportion = new Incremental(issues, trustedReleases);
+            var proportion = new Incremental(issues, releases);
             var finalIssues = proportion.makeLabels();
             localIssueApi.saveLocal(finalIssues, Path.of(dataPath, "issues-with-prop.csv").toString());
-            var labelMaker = new LabelMakerImpl(git, finalIssues, diffed, trustedReleases);
+            var labelMaker = new LabelMakerImpl(git, finalIssues, diffed, releases);
             var labeledMethods = labelMaker.makeLabels();
             localMethodApi.saveLocal(labeledMethods, Path.of(dataPath, "lbl-with-prop-methods.csv").toString());
             System.out.println("number of buggy methods: " + labeledMethods.stream().filter(m -> m.isBuggy()).count());
@@ -85,6 +86,13 @@ public class Main {
                 .build()) {
             return new Git(repository);
         }
+    }
+
+    private static List<Release> getReleases(String projectName, double dropFactor, boolean useCache) {
+        var releaseApi = getReleaseApi(projectName, restApi, dataPath, useCache);
+        var releases = releaseApi.getReleases();
+        var lastRelease = Math.min(((int) (releases.size() * dropFactor)) + 1, releases.size());
+        return releases.subList(0, lastRelease + 1);
     }
 
     private static ReleaseApi getReleaseApi(String projectName, RestApi restApi, String localDataPath, boolean useCache) {
