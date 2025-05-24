@@ -47,6 +47,7 @@ public class Metrics {
                 ", nestingDepth=" + nestingDepth +
                 ", authorsCount=" + authors.size() +
                 ", authors=" + String.join(",", authors) +
+                ", codeSmells=" + codeSmells +
                 '}';
     }
 

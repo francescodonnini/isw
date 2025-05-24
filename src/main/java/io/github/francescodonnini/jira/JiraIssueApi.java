@@ -20,6 +20,8 @@ public class JiraIssueApi {
     private final List<RevCommit> commits;
     private final RestApi restApi;
     private final List<Release> releases;
+    private int droppedIssues = 0;
+    private int totalIssues = 0;
 
     public JiraIssueApi(String projectName, String pattern, RestApi restApi, List<Release> releases, List<RevCommit> commits) {
         this.projectName = projectName;
@@ -50,25 +52,25 @@ public class JiraIssueApi {
                     .toList();
             var issues = new ArrayList<Issue>();
             for (var i : issueNetworkEntities) {
+                ++totalIssues;
                 var affectedVersions = getAffectedVersions(i);
-                // Al momento sto prendendo come fixVersion la prima release (ordine cronologico) nel campo fixVersions
-                // Un'alternativa potrebbe essere quella di prendere come fixVersion la prima utile che ha data di rilascio
-                // >= alla data di risoluzione.
+                // La fixVersion è la prima release la cui data è maggiore della data dell'ultimo commit che ha fixato
+                // l'issue
                 var o1 = getFixVersion(mapping, i.getKey());
+                // L'opening version è la release relativa alla data di creazione del ticket.
                 var o2 = getOpeningVersion(i.getFields().getCreated());
                 if (o1.isEmpty() || o2.isEmpty()) continue;
-                // Arrivati a questo punto si sta leggendo un ticket che possiede il campo fixVersions non vuoto.
-                // Si seleziona la release con getFixVersion (attualmente prende la prima release nella lista).
-                // Bisogno controllare che:
+                // Bisogna controllare che:
                 // 1. IV < FV (cioè il bug non viene fixato nella stessa release in cui è stato trovato).
                 // 2. IV <= OV
                 // 3. OV <= FV (il fix del bug deve avvenire almeno nella stessa release (o comunque successiva) alla release in cui è stato scoperto)
                 // Tutti e 3 i vincoli devono essere verificati solamente negli issue che hanno il campo `affectedVersion` non vuoto.
+                // Non è presente una release con data di pubblicazione >= alla data di creazione del ticket
                 var fixVersion = o1.get();
                 var openingVersion = o2.get();
-                // Non è presente una release con data di pubblicazione >= alla data di creazione del ticket
-                getIssue(i, mapping, affectedVersions, openingVersion, fixVersion).ifPresent(issues::add);
+                createIssue(i, mapping, affectedVersions, openingVersion, fixVersion).ifPresent(issues::add);
             }
+            logger.log(Level.INFO, () -> "dropped %d issues of %d".formatted(droppedIssues, totalIssues));
             return issues;
         } catch (URISyntaxException e) {
             logger.log(Level.SEVERE, e.getMessage());
@@ -112,15 +114,9 @@ public class JiraIssueApi {
         if (o.isEmpty()) {
             return Optional.empty();
         }
-        var commitDate = o.get();
-        for (var r : releases) {
-            if (r.releaseDate().isAfter(commitDate)) {
-                return Optional.of(r);
-            }
-        }
         return releases.stream()
-                .filter(r -> !r.releaseDate().isBefore(commitDate))
-                .findFirst();
+                .filter(r -> !r.releaseDate().isBefore(o.get()))
+                .min((x, y) -> Comparator.comparing(Release::releaseDate).compare(x, y));
     }
 
     private Optional<LocalDate> getLatestCommitDate(Map<String, List<RevCommit>> mapping, String key) {
@@ -141,21 +137,25 @@ public class JiraIssueApi {
     }
 
     private Optional<Release> getOpeningVersion(LocalDateTime created) {
-        return releases.stream().filter(r -> r.releaseDate().isAfter(created.toLocalDate())).findFirst();
+        return releases.stream()
+                .filter(r -> r.releaseDate().isAfter(created.toLocalDate()))
+                .min((x, y) -> Comparator.comparing(Release::releaseDate).compare(x, y));
     }
 
-    private Optional<Issue> getIssue(IssueNetworkEntity i, Map<String, List<RevCommit>> commits, List<Release> affectedVersions, Release openingVersion, Release fixVersion) {
+    private Optional<Issue> createIssue(IssueNetworkEntity i, Map<String, List<RevCommit>> commits, List<Release> affectedVersions, Release openingVersion, Release fixVersion) {
         if (!affectedVersions.isEmpty() && !checkForConsistency(affectedVersions, openingVersion, fixVersion)) {
+            ++droppedIssues;
+            logger.log(Level.INFO, () -> "dropping issue %s due to inconsistent versions".formatted(i.getKey()));
             return Optional.empty();
         }
         var issue = new Issue(
-                affectedVersions,
-                i.getFields().getCreated(),
-                fixVersion,
-                openingVersion,
-                commits.get(i.getKey()),
-                i.getKey(),
-                i.getFields().getProject().getName()
+            affectedVersions,
+            i.getFields().getCreated(),
+            fixVersion,
+            openingVersion,
+            commits.get(i.getKey()),
+            i.getKey(),
+            i.getFields().getProject().getName()
         );
         return Optional.of(issue);
     }
@@ -164,14 +164,35 @@ public class JiraIssueApi {
     // 1. IV < FV
     // 2. IV <= OV
     // 3. OV <= FV
+    // 4. AV <= FV
     private boolean checkForConsistency(List<Release> affectedVersions, Release openingVersion, Release fixVersion) {
-        var injected = affectedVersions.getFirst();
+        var o = getInjectedVersion(affectedVersions);
+        if (o.isEmpty()) {
+            logger.log(Level.INFO, () -> "issue has no injected version");
+            return false;
+        }
+        var injected = o.get();
         if (!injected.isBefore(fixVersion)) {
+            logger.log(Level.INFO, () -> "injected version %s is not before fix version %s".formatted(injected.name(), fixVersion.name()));
             return false;
         }
         if (injected.isAfter(openingVersion)) {
+            logger.log(Level.INFO, () -> "injected version %s is after opening version %s".formatted(injected.name(), openingVersion.name()));
             return false;
         }
-        return !openingVersion.isAfter(fixVersion);
+        if (openingVersion.isAfter(fixVersion)) {
+            logger.log(Level.INFO, () -> "opening version %s is after fix version %s".formatted(openingVersion.name(), fixVersion.name()));
+            return false;
+        }
+        if (affectedVersions.stream().anyMatch(r -> !r.isBefore(fixVersion))) {
+            logger.log(Level.INFO, () -> "there exists an affected version that is after fix version %s".formatted(fixVersion.name()));
+            return false;
+        }
+        return true;
+    }
+
+    private Optional<Release> getInjectedVersion(List<Release> affectedVersions) {
+        return affectedVersions.stream()
+                .min((x, y) -> Comparator.comparing(Release::releaseDate).compare(x, y));
     }
 }

@@ -11,6 +11,7 @@ import io.github.francescodonnini.jira.JiraIssueApi;
 import io.github.francescodonnini.jira.JiraReleaseApi;
 import io.github.francescodonnini.jira.JiraVersionApi;
 import io.github.francescodonnini.jira.RestApi;
+import io.github.francescodonnini.proportion.Incremental;
 import io.github.francescodonnini.utils.FileUtils;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.eclipse.jgit.api.Git;
@@ -45,18 +46,15 @@ public class Main {
             var trustedReleases = releases.subList(0, lastRelease + 1);
             var factory = new DataLoaderImpl(projectPath, new AbstractCounterFactoryImpl(), trustedReleases.getLast().releaseDate(), reportsPath.toString());
             var localClassApi = new CsvJavaClassApi(Path.of(dataPath, "classes.csv").toString());
-            var classApi = new JavaClassRepository(factory, localClassApi, useCache);
+            var classApi = new JavaClassRepository(factory, localClassApi, true);
             var classes = classApi.getClasses();
             var localMethodApi = new CsvJavaMethodApi(Path.of(dataPath, "methods.csv").toString(), classes);
-            var methodApi = new JavaMethodRepository(factory, localMethodApi, useCache);
-            var methods = methodApi.getMethods();
+            var methods = localMethodApi.getLocal();
             System.out.printf("retrieved %d methods%n", methods.size());
-            var linker = new CsvSmellLinker(reportsPath.toString());
-            linker.link(classes);
+            var codeSmellLinker = new CsvSmellLinker(Path.of(dataPath, "pmd-reports", projectName).toString());
+            codeSmellLinker.link(classes);
             var diff = new DiffCollector(trustedReleases, methods);
             var diffed = diff.collect();
-            System.out.printf("collected %d methods%n", diffed.size());
-            localMethodApi.saveLocal(diffed, Path.of(dataPath, "diffed-methods.csv").toString());
             var commits = new ArrayList<RevCommit>();
             git.log().call().forEach(commits::add);
             var localIssueApi = new CsvIssueApi(Path.of(dataPath, "issues.csv").toString(), releases, commits);
@@ -66,10 +64,12 @@ public class Main {
             var issues = issueApi.getIssues();
             System.out.printf("retrieved %d issues%n", issues.size());
             System.out.printf("issues with affectedVersions" + issues.stream().filter(i -> i.affectedVersions().size() > 0).count());
-            var labelMaker = new LabelMakerImpl(git, issues, diffed, trustedReleases);
+            var proportion = new Incremental(issues, trustedReleases);
+            var finalIssues = proportion.makeLabels();
+            localIssueApi.saveLocal(finalIssues, Path.of(dataPath, "issues-with-prop.csv").toString());
+            var labelMaker = new LabelMakerImpl(git, finalIssues, diffed, trustedReleases);
             var labeledMethods = labelMaker.makeLabels();
-            System.out.printf("labelled %d methods%n", labeledMethods.size());
-            localMethodApi.saveLocal(labeledMethods, Path.of(dataPath, "lbl-methods.csv").toString());
+            localMethodApi.saveLocal(labeledMethods, Path.of(dataPath, "lbl-with-prop-methods.csv").toString());
             System.out.println("number of buggy methods: " + labeledMethods.stream().filter(m -> m.isBuggy()).count());
         }
     }
