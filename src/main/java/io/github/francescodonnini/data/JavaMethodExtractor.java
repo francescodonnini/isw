@@ -81,10 +81,12 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     @Override
     public Void visitClass(ClassTree node, Void unused) {
         if (isNamedClass(node)) {
+            var parent = currentClass;
             setNamedClass(node);
             var r = super.visitClass(node, unused);
             classes.add(currentClass);
             collectMetrics(node, currentClass);
+            currentClass = parent;
             return r;
         }
         return null;
