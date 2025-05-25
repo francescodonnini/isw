@@ -86,6 +86,5 @@ public class DiffCollector {
         to.getMetrics().addElseCount(from.getMetrics().getElseCount());
         to.getMetrics().addLoc(from.getMetrics().getLineOfCode());
         to.getMetrics().addStatementCount(from.getMetrics().getStatementsCount());
-        to.getMetrics().addCodeSmells(from.getMetrics().getCodeSmells());
     }
 }
