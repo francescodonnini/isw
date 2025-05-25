@@ -20,9 +20,6 @@ public class RestApi {
         return getIssues(gql, List.of(), 0, 1000, List.of());
     }
 
-    public Issues getIssues(String gql, int startAt) throws URISyntaxException {
-        return getIssues(gql, List.of(), startAt, 50, List.of());
-    }
     public Issues getIssues(String jql, List<String> fields, int startAt, int maxResults, List<String> properties) throws URISyntaxException {
         var request = new StringBuilder()
                 .append(createSearchQuery(jql))
