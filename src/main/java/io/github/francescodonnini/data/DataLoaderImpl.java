@@ -111,24 +111,38 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
                 logProgress(progress, commits.size());
                 checkout(git, commit.getName());
                 var susceptible = getTouchedFiles(commit);
-                try (var pmd = createPmdAnalysis(commit.getName())) {
-                    var parent = Path.of(projectPath);
-                    listAllFiles(parent).stream()
-                            .filter(this::isValidPath)
-                            .filter(p -> susceptible.contains(p.toString()))
-                            .forEach(p -> {
-                                parseFile(p, commit);
-                                pmd.files().addFile(parent.resolve(p));
-                            });
-                    pmd.performAnalysis();
-                } catch (IOException e) {
-                    logger.info(e.getMessage());
+                if (!susceptible.isEmpty()) {
+                    loadData(commit, susceptible);
                 }
             }
             dataLoaded = true;
         } finally {
             checkout(git, head);
         }
+    }
+
+    private void loadData(RevCommit commit, Set<String> susceptible) {
+        try (var pmd = createPmdAnalysis(commit.getName())) {
+            var parent = Path.of(projectPath);
+            var classList = new ArrayList<JavaClass>();
+            listAllFiles(parent).stream()
+                    .filter(this::isValidPath)
+                    .filter(p -> susceptible.contains(p.toString()))
+                    .forEach(p -> {
+                        classList.addAll(parseFile(p, commit));
+                        pmd.files().addFile(parent.resolve(p));
+                    });
+            parseCommit(classList, commit);
+            pmd.performAnalysis();
+            addProgramData(classList);
+        } catch (IOException e) {
+            logger.info(e.getMessage());
+        }
+    }
+
+    private void addProgramData(ArrayList<JavaClass> classList) {
+        classList.forEach(c -> methods.addAll(c.getMethods()));
+        classes.addAll(classList);
     }
 
     private PmdAnalysis createPmdAnalysis(String reportName) throws IOException {
@@ -218,17 +232,14 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         return path.endsWith(JAVA_FILE_EXT) && !path.endsWith("package-info.java");
     }
 
-    private void parseFile(Path file, RevCommit commit) {
+    private List<JavaClass> parseFile(Path file, RevCommit commit) {
         try {
             // clazz è l'entry point del file,
             var ctx = new ParseContext(commit.getName(), Path.of(projectPath), file, getCommitTime(commit));
-            var classList = parseClass(ctx);
-            // Raccoglie informazioni sui metodi modificati dal commit 'commit'
-            parseCommit(classList, commit);
-            classList.forEach(c -> methods.addAll(c.getMethods()));
-            classes.addAll(classList);
+            return parseClass(ctx);
         } catch (IOException e) {
             logger.log(Level.INFO, e.getMessage());
+            return List.of();
         }
     }
 
