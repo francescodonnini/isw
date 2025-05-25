@@ -19,15 +19,9 @@ public class LineNumberCounter {
         }
     }
 
-    private char peekChar() {
-        if (readPos + 1 < source.length()) {
-            return source.charAt(readPos + 1);
-        }
-        return 0;
-    }
-
     public int count() {
-        var count = 1;
+        var eolMet = false;
+        var count = 0;
         while (notEof()) {
             if (current == '/') {
                 nextChar();
@@ -40,27 +34,28 @@ public class LineNumberCounter {
                 }
             }
             if (current == '\n') {
+                eolMet = true;
                 count++;
             }
             nextChar();
+        }
+        if (!eolMet) {
+            return 1;
         }
         return count;
     }
 
     private void skipMultiLineComment() {
         while (notEof()) {
-            if (current == '*' && peekChar() == '/') {
+            if (current == '*') {
                 nextChar();
-                break;
-            }
-            nextChar();
-        }
-        while (notEof() && Character.isSpaceChar(current)) {
-            if (current == '\n') {
+                if (current == '/') {
+                    nextChar();
+                    break;
+                }
+            } else {
                 nextChar();
-                break;
             }
-            nextChar();
         }
     }
 
@@ -68,7 +63,9 @@ public class LineNumberCounter {
         while (notEof() && current != '\n') {
             nextChar();
         }
-        nextChar();
+        if (current == '\n') {
+            nextChar();
+        }
     }
 
     private boolean notEof() {
