@@ -38,7 +38,7 @@ public class Main {
         var settings = new IniSettings(args[0]);
         var useCache = false;
         var reportsPath = Path.of(settings.getString("pmdReportsPath"), projectName).toString();
-        FileUtils.createDirectory(reportsPath.toString());
+        FileUtils.createDirectory(reportsPath);
         var sourcePath = Path.of(settings.getString("gitBasePath"), projectName.toLowerCase());
         try (var git = createGit(Path.of(settings.getString("gitBasePath"), projectName.toLowerCase()))) {
             var restApi = new RestApi();
@@ -52,7 +52,7 @@ public class Main {
             var localMethodApi = new CsvJavaMethodApi(Path.of(dataPath, "methods.csv").toString(), classes);
             var methods = localMethodApi.getLocal();
             System.out.printf("retrieved %d methods%n", methods.size());
-            var codeSmellLinker = new CsvSmellLinker(reportsPath.toString());
+            var codeSmellLinker = new CsvSmellLinker(reportsPath);
             codeSmellLinker.link(classes);
             var diff = new DiffCollector(releases, methods);
             var diffed = diff.collect();
