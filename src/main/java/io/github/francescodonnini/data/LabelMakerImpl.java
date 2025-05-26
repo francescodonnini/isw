@@ -2,12 +2,10 @@ package io.github.francescodonnini.data;
 
 import io.github.francescodonnini.model.Issue;
 import io.github.francescodonnini.model.JavaMethod;
-import io.github.francescodonnini.model.LineRange;
 import io.github.francescodonnini.model.Release;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.diff.Edit;
-import org.eclipse.jgit.diff.EditList;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
@@ -42,7 +40,7 @@ public class LabelMakerImpl implements LabelMaker {
             LocalDate finalPrev = prev;
             methods.stream()
                     .filter(m -> isBetween(m, finalPrev, curr))
-                    .forEach(m -> releaseMethodMap.computeIfAbsent(release.id(), x -> new HashSet<>()).add(getId(m)));
+                    .forEach(m -> releaseMethodMap.computeIfAbsent(release.id(), _ -> new HashSet<>()).add(getId(m)));
             prev = curr;
         }
     }
@@ -62,9 +60,9 @@ public class LabelMakerImpl implements LabelMaker {
                     .collect(Collectors.groupingBy(m -> m.getJavaClass().getCommit()));
             for (var issue : issues) {
                 for (var commit : issue.commits()) {
-                    var susceptibles = index.getOrDefault(commit.getName(), List.of());
-                    if (!susceptibles.isEmpty()) {
-                        parseCommit(df, susceptibles, commit, issue);
+                    var susceptible = index.getOrDefault(commit.getName(), List.of());
+                    if (!susceptible.isEmpty()) {
+                        parseCommit(df, susceptible, commit, issue);
                     }
                 }
             }
@@ -75,14 +73,14 @@ public class LabelMakerImpl implements LabelMaker {
         return List.of();
     }
 
-    private void parseCommit(DiffFormatter df, List<JavaMethod> susceptibles, RevCommit commit, Issue issue) throws IOException {
+    private void parseCommit(DiffFormatter df, List<JavaMethod> susceptible, RevCommit commit, Issue issue) throws IOException {
         var diffList = df.scan(getParent(commit), commit.getTree());
         for (var diff : diffList) {
             var path = diff.getNewPath();
             var editList = df.toFileHeader(diff).toEditList();
-            susceptibles.stream()
+            susceptible.stream()
                     .filter(m -> m.getPath().toString().equals(path))
-                    .filter(m -> isTouched(m, editList))
+                    .filter(m -> EditUtils.isTouched(m, editList, this::match))
                     .forEach(m -> setBuggy(m, issue));
         }
     }
@@ -122,24 +120,10 @@ public class LabelMakerImpl implements LabelMaker {
         }
     }
 
-    private boolean isTouched(JavaMethod m, EditList edits) {
-        return edits.stream()
-                .filter(this::match)
-                .anyMatch(e -> overlaps(m, e));
-    }
-
     private boolean match(Edit edit) {
-        switch (edit.getType()) {
-            case DELETE, INSERT, REPLACE:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    private boolean overlaps(JavaMethod m, Edit e) {
-        e.extendB();
-        var range = new LineRange(e.getBeginB(), e.getEndB());
-        return m.getRange().intersects(range);
+        return switch (edit.getType()) {
+            case DELETE, INSERT, REPLACE -> true;
+            default -> false;
+        };
     }
 }

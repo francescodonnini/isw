@@ -64,11 +64,24 @@ public class Main {
 
     private static boolean loadProgramData() {
         try {
-            var dataLoader = new DataLoaderImpl(projectPath, new AbstractCounterFactoryImpl(), releases.getLast().releaseDate(), reportsPath);
             var localClassApi = new CsvJavaClassApi(dataPath.resolve("classes.csv").toString());
+            classes = localClassApi.getLocal();
+            localMethodApi = new CsvJavaMethodApi(dataPath.resolve("methods.csv").toString(), classes);
+            methods = localMethodApi.getLocal();
+            return true;
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "@loadProgramData: got error {}", e.getMessage());
+            return false;
+        }
+    }
+
+    private static boolean collectProgramData() {
+        try {
+            var dataLoader = new DataLoaderImpl(projectPath, new AbstractCounterFactoryImpl(), releases.getLast().releaseDate(), reportsPath);
+            var localClassApi = new CsvJavaClassApi(dataPath.resolve("classes-x.csv").toString());
             var classApi = new JavaClassRepository(dataLoader, localClassApi, useCache);
             classes = classApi.getClasses();
-            localMethodApi = new CsvJavaMethodApi(dataPath.resolve("methods.csv").toString(), classes);
+            localMethodApi = new CsvJavaMethodApi(dataPath.resolve("methods-x.csv").toString(), classes);
             var methodApi = new JavaMethodRepository(dataLoader, localMethodApi, useCache);
             methods = methodApi.getMethods();
             return true;
@@ -82,10 +95,21 @@ public class Main {
         var linker = new CsvSmellLinker(reportsPath);
         linker.link(classes);
         try {
-            localMethodApi.saveLocal(methods, dataPath.resolve("methods-with-smells.csv").toString());
+            localMethodApi.saveLocal(methods, dataPath.resolve("methods-x-with-smells.csv").toString());
             return true;
         } catch (IOException | CsvRequiredFieldEmptyException | CsvDataTypeMismatchException e) {
             logger.log(Level.SEVERE, "@linkCodeSmells: got error {}", e.getMessage());
+            return false;
+        }
+    }
+
+    private static boolean loadStinkyMethods() {
+        try {
+            var localMethodApi = new CsvJavaMethodApi(dataPath.resolve("methods-x-with-smells.csv").toString(), classes);
+            methods = localMethodApi.getLocal();
+            return true;
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "@loadStinkyMethods: got error {}", e.getMessage());
             return false;
         }
     }
@@ -94,7 +118,7 @@ public class Main {
         var collector = new DiffCollector(releases, methods);
         methods = collector.collect();
         try {
-            localMethodApi.saveLocal(methods, dataPath.resolve("methods-diffed.csv").toString());
+            localMethodApi.saveLocal(methods, dataPath.resolve("methods-x-diffed.csv").toString());
             return true;
         } catch (IOException | CsvRequiredFieldEmptyException | CsvDataTypeMismatchException e) {
             logger.log(Level.SEVERE, "@collectChangeMetrics: got error {}", e.getMessage());
@@ -140,7 +164,7 @@ public class Main {
         try (var git = createGit(projectPath)) {
             var labelMaker = new LabelMakerImpl(git, issues, methods, releases);
             methods = labelMaker.makeLabels();
-            localMethodApi.saveLocal(methods, dataPath.resolve("methods-labeled.csv").toString());
+            localMethodApi.saveLocal(methods, dataPath.resolve("methods-x-labeled.csv").toString());
             return true;
         } catch (IOException | CsvRequiredFieldEmptyException | CsvDataTypeMismatchException e) {
             logger.log(Level.SEVERE, "@doLabelling: got error {}", e.getMessage());

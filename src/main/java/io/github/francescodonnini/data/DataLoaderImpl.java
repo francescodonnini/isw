@@ -105,7 +105,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
                     .sorted(Comparator.comparingInt(RevCommit::getCommitTime))
                     .toList();
             logger.log(Level.INFO, "total commits: {0}", commits.size());
-            int progress = 0;
+            var progress = 0;
             for (var commit : commits) {
                 ++progress;
                 logProgress(progress, commits.size());
@@ -141,8 +141,10 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
     }
 
     private void addProgramData(ArrayList<JavaClass> classList) {
-        classList.forEach(c -> methods.addAll(c.getMethods()));
-        classes.addAll(classList);
+        classList.stream().filter(c -> !c.getMethods().isEmpty()).forEach(c -> {
+            methods.addAll(c.getMethods());
+            classes.add(c);
+        });
     }
 
     private PmdAnalysis createPmdAnalysis(String reportName) throws IOException {
@@ -234,7 +236,6 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
 
     private List<JavaClass> parseFile(Path file, RevCommit commit) {
         try {
-            // clazz è l'entry point del file,
             var ctx = new ParseContext(commit.getName(), Path.of(projectPath), file, getCommitTime(commit));
             return parseClass(ctx);
         } catch (IOException e) {
@@ -270,10 +271,15 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         for (var diff : diffs) {
             var oldPath = diff.getOldPath();
             var path = diff.getNewPath();
+            var edits = df.toFileHeader(diff).toEditList();
             // Se il percorso del file modificato non è un file .java allora non è necessario analizzare
             // la modifica.
             if (path.endsWith(JAVA_FILE_EXT) && index.containsKey(path)) {
-                getAuthor(commit).ifPresent(author -> index.get(path).forEach(c -> c.setAuthor(author)));
+                var author = getAuthor(commit);
+                for (var c : index.get(path)) {
+                    author.ifPresent(c::setAuthor);
+                    c.getMethods().removeIf(m -> !EditUtils.isTouched(m, edits));
+                }
                 if (!oldPath.equals("/dev/null") && !oldPath.equals(path)) {
                     renameOldEntries(oldPath, path);
                 }
@@ -306,7 +312,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
 
     private Optional<String> getAuthor(RevCommit commit) {
         var author = commit.getAuthorIdent().getEmailAddress();
-        if (author == null || author.isEmpty() || author.equalsIgnoreCase("unknown@apache.org")) {
+        if (author == null || author.isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(author);
