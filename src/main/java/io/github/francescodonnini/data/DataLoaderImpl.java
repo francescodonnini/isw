@@ -3,6 +3,7 @@ package io.github.francescodonnini.data;
 import io.github.francescodonnini.collectors.ast.*;
 import io.github.francescodonnini.model.JavaClass;
 import io.github.francescodonnini.model.JavaMethod;
+import io.github.francescodonnini.model.Release;
 import net.sourceforge.pmd.PMDConfiguration;
 import net.sourceforge.pmd.PmdAnalysis;
 import net.sourceforge.pmd.lang.LanguageRegistry;
@@ -23,6 +24,7 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -34,23 +36,22 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
     // repositoryPath è il percorso delle repository dove leggere i file da cui creare le entry per il dataset.
     private final String projectPath;
     private final Git git;
-    private final LocalDate endTime;
     private final List<JavaClass> classes = new ArrayList<>();
     private final List<JavaMethod> methods = new ArrayList<>();
     private final JavaMethodExtractor extractor;
     private boolean dataLoaded = false;
     private final String reportsPath;
+    private final List<Release> releases;
 
     public DataLoaderImpl(
             String projectPath,
             AbstractCounterFactoryImpl factory,
-            LocalDate endTime,
-            String reportsPath) throws IOException {
+            String reportsPath, List<Release> releases) throws IOException {
         this.projectPath = projectPath;
         this.git = createGit(projectPath);
-        this.endTime = endTime;
         this.reportsPath = reportsPath;
         extractor = new JavaMethodExtractor(createCounters(factory));
+        this.releases = releases;
     }
 
     private Git createGit(String projectPath) throws IOException {
@@ -98,21 +99,28 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
     private void loadData() throws IOException, GitAPIException {
         var head = git.getRepository().getBranch();
         try {
+            var endTime = releases.getLast().releaseDate();
             // lista di commit effettuati non oltre endTime e ordinati rispetto alla data di commit.
             var commits = StreamSupport
                     .stream(git.log().call().spliterator(), false)
                     .filter(c -> !getCommitDate(c).isAfter(endTime))
                     .sorted(Comparator.comparingInt(RevCommit::getCommitTime))
                     .toList();
+            var releaseChangeSet = new HashSet<String>();
+            var lastCommitPerRelease = getLastCommitPerRelease(commits);
             logger.log(Level.INFO, "total commits: {0}", commits.size());
             var progress = 0;
             for (var commit : commits) {
                 ++progress;
                 logProgress(progress, commits.size());
                 checkout(git, commit.getName());
+                var isLastCommitOfRelease = lastCommitPerRelease.contains(commit.getName());
                 var susceptible = getTouchedFiles(commit);
-                if (!susceptible.isEmpty()) {
-                    loadData(commit, susceptible);
+                releaseChangeSet.addAll(susceptible);
+                Predicate<String> filter = getPathFilter(isLastCommitOfRelease, susceptible, releaseChangeSet);
+                loadData(commit, filter);
+                if (isLastCommitOfRelease) {
+                    releaseChangeSet.clear();
                 }
             }
             dataLoaded = true;
@@ -121,13 +129,31 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         }
     }
 
-    private void loadData(RevCommit commit, Set<String> susceptible) {
+    private Predicate<String> getPathFilter(boolean isLastCommitOfRelease, Set<String> susceptible, Set<String> alreadyChecked) {
+        if (isLastCommitOfRelease) {
+            return p -> !alreadyChecked.contains(p);
+        }
+        return susceptible::contains;
+    }
+
+    private Set<String> getLastCommitPerRelease(List<RevCommit> commits) {
+        var set = new HashSet<String>();
+        for (var release : releases) {
+            commits.stream()
+                    .filter(c -> !getCommitDate(c).isAfter(release.releaseDate()))
+                    .max(Comparator.comparing(this::getCommitDate))
+                    .ifPresent(c -> set.add(c.getName()));
+        }
+        return set;
+    }
+
+    private void loadData(RevCommit commit, Predicate<String> pathFilter) {
         try (var pmd = createPmdAnalysis(commit.getName())) {
             var parent = Path.of(projectPath);
             var classList = new ArrayList<JavaClass>();
             listAllFiles(parent).stream()
                     .filter(this::isValidPath)
-                    .filter(p -> susceptible.contains(p.toString()))
+                    .filter(p -> pathFilter.test(p.toString()))
                     .forEach(p -> {
                         classList.addAll(parseFile(p, commit));
                         pmd.files().addFile(parent.resolve(p));
@@ -262,6 +288,9 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
     }
 
     private void parseCommit(List<JavaClass> classList, RevCommit commit) throws IOException {
+        if (classList.isEmpty()) {
+            return;
+        }
         var df = new DiffFormatter(DisabledOutputStream.INSTANCE);
         df.setRepository(git.getRepository());
         df.setDetectRenames(true);
