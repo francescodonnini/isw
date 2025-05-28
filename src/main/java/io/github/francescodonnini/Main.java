@@ -25,6 +25,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -75,9 +76,20 @@ public class Main {
         }
     }
 
+    private static boolean loadClasses() {
+        try {
+            var localClassApi = new CsvJavaClassApi(dataPath.resolve("classes-x.csv").toString());
+            classes = localClassApi.getLocal();
+            return true;
+        } catch (FileNotFoundException e) {
+            logger.log(Level.SEVERE, "@loadClasses: got error {}", e.getMessage());
+            return false;
+        }
+    }
+
     private static boolean collectProgramData() {
         try {
-            var dataLoader = new DataLoaderImpl(projectPath, new AbstractCounterFactoryImpl(), releases.getLast().releaseDate(), reportsPath);
+            var dataLoader = new DataLoaderImpl(projectPath, new AbstractCounterFactoryImpl(), reportsPath, releases);
             var localClassApi = new CsvJavaClassApi(dataPath.resolve("classes-x.csv").toString());
             var classApi = new JavaClassRepository(dataLoader, localClassApi, useCache);
             classes = classApi.getClasses();
@@ -195,11 +207,11 @@ public class Main {
     private static void completeWorkflow() {
         new WorkflowBuilder()
                 .addNode(Node.create("1", "loadReleases", Main::loadReleases))
-                .addNode(Node.create("2", "loadProgramData", List.of("1"), Main::loadProgramData))
-                .addNode(Node.create("3", "linkCodeSmells", List.of("2"), Main::linkCodeSmells))
+                .addNode(Node.create("2", "loadClasses", List.of("1"), Main::loadClasses))
+                .addNode(Node.create("3", "loadStinkyMethods", List.of("2"), Main::loadStinkyMethods))
                 .addNode(Node.create("4", "collectChangeMetrics", List.of("3"), Main::collectChangeMetrics))
-                .addNode(Node.create("5", "doProportion", List.of("4"), Main::doProportion))
-                .addNode(Node.create("6", "doLabelling", List.of("5"), Main::doLabelling))
+                // .addNode(Node.create("5", "doProportion", List.of("4"), Main::doProportion))
+                // .addNode(Node.create("6", "doLabelling", List.of("5"), Main::doLabelling))
                 .build()
                 .execute();
     }
