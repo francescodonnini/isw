@@ -28,7 +28,9 @@ public class CsvReportEntity {
     @CsvBindByName(column = "Rule")
     private String rule;
 
-    public CsvReportEntity() {}
+
+    public CsvReportEntity() { // Il costruttore pubblico vuoto è richiesto da opencsv
+    }
 
     public int getProblem() {
         return problem;

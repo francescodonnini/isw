@@ -20,7 +20,7 @@ public class JiraVersionApi {
             return restApi.getReleaseInfo(projectName).getVersions().stream()
                     .map(JiraVersionApi::fromVersionNetworkEntity)
                     .toList();
-        } catch (URISyntaxException e) {
+        } catch (URISyntaxException _) {
             return List.of();
         }
     }
