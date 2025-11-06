@@ -17,15 +17,12 @@ import io.github.francescodonnini.model.JavaMethod;
 import io.github.francescodonnini.model.Release;
 import io.github.francescodonnini.proportion.Incremental;
 import io.github.francescodonnini.utils.FileUtils;
-import io.github.francescodonnini.workflow.Node;
-import io.github.francescodonnini.workflow.WorkflowBuilder;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -42,13 +39,12 @@ public class Main {
     private static String projectPath;
     private static String reportsPath;
     private static final RestApi restApi = new RestApi();
-    private static CsvJavaMethodApi localMethodApi;
     private static List<Release> releases;
     private static List<JavaClass> classes;
     private static List<JavaMethod> methods;
     private static List<Issue> issues;
 
-    private static boolean loadReleases() {
+    private static void loadReleases() {
         var localVersionApi = new CsvVersionApi(dataPath.resolve("versions.csv").toString());
         var jiraVersionApi = new JiraVersionApi(projectName, restApi);
         var versionApi = new VersionRepository(jiraVersionApi, localVersionApi, false);
@@ -60,99 +56,55 @@ public class Main {
         }
         var remainingReleases = (1 - dropFactor) * allReleases.size();
         releases = allReleases.subList(0, (int) remainingReleases);
-        return true;
+        logger.log(Level.INFO, () -> String.format("selected %d/%d releases", releases.size(), allReleases.size()));
     }
 
-    private static boolean loadProgramData() {
-        try {
+    private static void loadProgramData() throws IOException {
+        if (useCache) {
             var localClassApi = new CsvJavaClassApi(dataPath.resolve("classes.csv").toString());
             classes = localClassApi.getLocal();
-            localMethodApi = new CsvJavaMethodApi(dataPath.resolve("methods.csv").toString(), classes);
+            var localMethodApi = new CsvJavaMethodApi(dataPath.resolve("methods.csv").toString(), classes);
             methods = localMethodApi.getLocal();
-            return true;
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "@loadProgramData: got error {}", e.getMessage());
-            return false;
-        }
-    }
-
-    private static boolean loadClasses() {
-        try {
-            var localClassApi = new CsvJavaClassApi(dataPath.resolve("classes-x.csv").toString());
-            classes = localClassApi.getLocal();
-            return true;
-        } catch (FileNotFoundException e) {
-            logger.log(Level.SEVERE, "@loadClasses: got error {}", e.getMessage());
-            return false;
-        }
-    }
-
-    private static boolean collectProgramData() {
-        try {
+        } else {
             var dataLoader = new DataLoaderImpl(projectPath, new AbstractCounterFactoryImpl(), reportsPath, releases);
-            var localClassApi = new CsvJavaClassApi(dataPath.resolve("classes-x.csv").toString());
+            var localClassApi = new CsvJavaClassApi(dataPath.resolve("classes.csv").toString());
             var classApi = new JavaClassRepository(dataLoader, localClassApi, useCache);
             classes = classApi.getClasses();
-            localMethodApi = new CsvJavaMethodApi(dataPath.resolve("methods-x.csv").toString(), classes);
+            var localMethodApi = new CsvJavaMethodApi(dataPath.resolve("methods.csv").toString(), classes);
             var methodApi = new JavaMethodRepository(dataLoader, localMethodApi, useCache);
             methods = methodApi.getMethods();
-            return true;
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "@loadProgramData: got error {}", e.getMessage());
-            return false;
         }
     }
 
-    private static boolean linkCodeSmells() {
-        var linker = new CsvSmellLinker(reportsPath);
-        linker.link(classes);
-        try {
-            localMethodApi.saveLocal(methods, dataPath.resolve("methods-x-with-smells.csv").toString());
-            return true;
-        } catch (IOException | CsvRequiredFieldEmptyException | CsvDataTypeMismatchException e) {
-            logger.log(Level.SEVERE, "@linkCodeSmells: got error {}", e.getMessage());
-            return false;
+    private static void linkCodeSmells() throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
+        var localMethodApi = new CsvJavaMethodApi(dataPath.resolve("stinky-methods.csv").toString(), classes);
+        if (!useCache) {
+            var linker = new CsvSmellLinker(reportsPath);
+            linker.link(classes);
+            localMethodApi.saveLocal(methods, dataPath.resolve("stinky-methods.csv").toString());
         }
+        methods = localMethodApi.getLocal();
     }
 
-    private static boolean loadStinkyMethods() {
-        try {
-            var localMethodApi = new CsvJavaMethodApi(dataPath.resolve("methods-x-with-smells.csv").toString(), classes);
-            methods = localMethodApi.getLocal();
-            return true;
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "@loadStinkyMethods: got error {}", e.getMessage());
-            return false;
+    private static void collectChangeMetrics() throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
+        var localMethodApi = new CsvJavaMethodApi(dataPath.resolve("methods-cm.csv").toString(), classes);
+        if (!useCache) {
+            var collector = new DiffCollector(releases, methods);
+            methods = collector.collect();
+            localMethodApi.saveLocal(methods, dataPath.resolve("methods-cm.csv").toString());
         }
+        methods = localMethodApi.getLocal();
     }
 
-    private static boolean collectChangeMetrics() {
-        var collector = new DiffCollector(releases, methods);
-        methods = collector.collect();
-        try {
-            localMethodApi.saveLocal(methods, dataPath.resolve("methods-x-diffed.csv").toString());
-            return true;
-        } catch (IOException | CsvRequiredFieldEmptyException | CsvDataTypeMismatchException e) {
-            logger.log(Level.SEVERE, "@collectChangeMetrics: got error {}", e.getMessage());
-            return false;
-        }
-    }
-
-    private static boolean doProportion() {
-        try {
-            var commits = getCommits(projectPath);
-            var pattern = "%s-\\d+".formatted(projectName);
-            var jiraIssueApi = new JiraIssueApi(projectName, pattern, restApi, releases, commits);
-            var localIssueApi = new CsvIssueApi(dataPath.resolve("issues.csv").toString(), releases, commits);
-            var issueApi = new IssueRepository(jiraIssueApi, localIssueApi, useCache);
-            issues = issueApi.getIssues();
-            var proportion = new Incremental(issues, releases);
-            proportion.makeLabels();
-            return true;
-        } catch (IOException | GitAPIException e) {
-            logger.log(Level.SEVERE, "@doProportion: got error {}", e.getMessage());
-            return false;
-        }
+    private static void doProportion() throws GitAPIException, IOException {
+        var commits = getCommits(projectPath);
+        var pattern = "%s-\\d+".formatted(projectName);
+        var jiraIssueApi = new JiraIssueApi(projectName, pattern, restApi, releases, commits);
+        var localIssueApi = new CsvIssueApi(dataPath.resolve("issues.csv").toString(), releases, commits);
+        var issueApi = new IssueRepository(jiraIssueApi, localIssueApi, useCache);
+        issues = issueApi.getIssues();
+        var proportion = new Incremental(issues, releases);
+        proportion.makeLabels();
     }
 
     private static List<RevCommit> getCommits(String projectPath) throws IOException, GitAPIException {
@@ -172,19 +124,16 @@ public class Main {
         }
     }
 
-    private static boolean doLabelling() {
+    private static void doLabelling() throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {
         try (var git = createGit(projectPath)) {
             var labelMaker = new LabelMakerImpl(git, issues, methods, releases);
             methods = labelMaker.makeLabels();
-            localMethodApi.saveLocal(methods, dataPath.resolve("methods-x-labeled.csv").toString());
-            return true;
-        } catch (IOException | CsvRequiredFieldEmptyException | CsvDataTypeMismatchException e) {
-            logger.log(Level.SEVERE, "@doLabelling: got error {}", e.getMessage());
-            return false;
+            var localMethodApi = new CsvJavaMethodApi(dataPath.resolve("labeled-methods.csv").toString(), classes);
+            localMethodApi.saveLocal(methods, dataPath.resolve("labeled-methods.csv").toString());
         }
     }
 
-    public static void main(String[] args) throws ConfigurationException, IOException {
+    public static void main(String[] args) throws ConfigurationException, IOException, GitAPIException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {
         init(args);
         completeWorkflow();
     }
@@ -202,17 +151,19 @@ public class Main {
         FileUtils.createDirectory(reportsPath);
         projectPath = Path.of(settings.getString("gitBasePath"), projectName.toLowerCase()).toString();
         dataPath = Path.of(settings.getString("dataPath"), projectName);
+        logger.log(Level.INFO, "project name: {0}", projectName);
+        logger.log(Level.INFO, "project path: {0}", projectPath);
+        logger.log(Level.INFO, "reports path: {0}", reportsPath);
+        logger.log(Level.INFO, () -> String.format("dataset path: %s (use cache %s)", reportsPath, useCache));
+        logger.log(Level.INFO, "drop  factor: {0}", dropFactor);
     }
 
-    private static void completeWorkflow() {
-        new WorkflowBuilder()
-                .addNode(Node.create("1", "loadReleases", Main::loadReleases))
-                .addNode(Node.create("2", "loadClasses", List.of("1"), Main::loadClasses))
-                .addNode(Node.create("3", "loadStinkyMethods", List.of("2"), Main::loadStinkyMethods))
-                .addNode(Node.create("4", "collectChangeMetrics", List.of("3"), Main::collectChangeMetrics))
-                // .addNode(Node.create("5", "doProportion", List.of("4"), Main::doProportion))
-                // .addNode(Node.create("6", "doLabelling", List.of("5"), Main::doLabelling))
-                .build()
-                .execute();
+    private static void completeWorkflow() throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, GitAPIException {
+        loadReleases();
+        loadProgramData();
+        linkCodeSmells();
+        collectChangeMetrics();
+        doProportion();
+        doLabelling();
     }
 }

@@ -68,6 +68,8 @@ public class JavaMethodLocalEntity {
     List<String> authors;
     @CsvBindByName(column = "codeSmells")
     int codeSmells;
+    @CsvBindByName(column = "codeDuplication")
+    double codeDuplication;
 
     public double getAvgLocAdded() {
         return avgLocAdded;
@@ -315,5 +317,13 @@ public class JavaMethodLocalEntity {
 
     public void setCodeSmells(int codeSmells) {
         this.codeSmells = codeSmells;
+    }
+
+    public double getCodeDuplication() {
+        return codeDuplication;
+    }
+
+    public void setCodeDuplication(double codeDuplication) {
+        this.codeDuplication = codeDuplication;
     }
 }

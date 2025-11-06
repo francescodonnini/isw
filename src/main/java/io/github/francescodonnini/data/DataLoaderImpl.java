@@ -6,6 +6,8 @@ import io.github.francescodonnini.model.JavaMethod;
 import io.github.francescodonnini.model.Release;
 import net.sourceforge.pmd.PMDConfiguration;
 import net.sourceforge.pmd.PmdAnalysis;
+import net.sourceforge.pmd.cpd.CPDConfiguration;
+import net.sourceforge.pmd.cpd.CpdAnalysis;
 import net.sourceforge.pmd.lang.LanguageRegistry;
 import net.sourceforge.pmd.renderers.CSVRenderer;
 import org.eclipse.jgit.api.Git;
@@ -148,7 +150,8 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
     }
 
     private void loadData(RevCommit commit, Predicate<String> pathFilter) {
-        try (var pmd = createPmdAnalysis(commit.getName())) {
+        try (var pmd = createPmdAnalysis(commit.getName());
+             var cpd = createCpdAnalysis()) {
             var parent = Path.of(projectPath);
             var classList = new ArrayList<JavaClass>();
             listAllFiles(parent).stream()
@@ -157,9 +160,11 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
                     .forEach(p -> {
                         classList.addAll(parseFile(p, commit));
                         pmd.files().addFile(parent.resolve(p));
+                        cpd.files().addFile(parent.resolve(p));
                     });
             parseCommit(classList, commit);
             pmd.performAnalysis();
+            cpd.performAnalysis(new CPDConsumer(classList));
             addProgramData(classList);
         } catch (IOException e) {
             logger.info(e.getMessage());
@@ -171,6 +176,15 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
             methods.addAll(c.getMethods());
             classes.add(c);
         });
+    }
+
+    private CpdAnalysis createCpdAnalysis() {
+        var config = new CPDConfiguration();
+        config.setMinimumTileSize(100);
+        config.setDefaultLanguageVersion(LanguageRegistry.CPD.getLanguageVersionById("java", "22"));
+        config.setIgnoreIdentifiers(true);
+        config.setIgnoreLiterals(true);
+        return CpdAnalysis.create(config);
     }
 
     private PmdAnalysis createPmdAnalysis(String reportName) throws IOException {

@@ -29,8 +29,16 @@ public record LineRange(int start, int end) {
      * @param other
      * @return
      */
-
     public boolean intersects(LineRange other) {
         return !(end <= other.start || start >= other.end);
+    }
+
+    public boolean contains(LineRange other) {
+        return start <= other.start && other.end <= end;
+    }
+
+    @Override
+    public String toString() {
+        return start + ":" + end;
     }
 }
