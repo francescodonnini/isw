@@ -48,7 +48,7 @@ public class DiffCollector {
         methods.stream()
                 .sorted(Comparator.comparing(a -> a.getJavaClass().getTime()))
                 .filter(m -> isBetween(m, LocalDate.MIN, releases.getLast().releaseDate()))
-                .forEach(m -> history.computeIfAbsent(key(m), _ -> new ArrayList<>()).add(m));
+                .forEach(m -> history.computeIfAbsent(key(m), s -> new ArrayList<>()).add(m));
     }
 
     private boolean isBetween(JavaMethod m, LocalDate start, LocalDate end) {

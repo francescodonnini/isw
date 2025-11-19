@@ -40,7 +40,7 @@ public class LabelMakerImpl implements LabelMaker {
             LocalDate finalPrev = prev;
             methods.stream()
                     .filter(m -> isBetween(m, finalPrev, curr))
-                    .forEach(m -> releaseMethodMap.computeIfAbsent(release.id(), _ -> new HashSet<>()).add(getId(m)));
+                    .forEach(m -> releaseMethodMap.computeIfAbsent(release.id(), h -> new HashSet<>()).add(getId(m)));
             prev = curr;
         }
     }
@@ -114,7 +114,7 @@ public class LabelMakerImpl implements LabelMaker {
     private RevTree getParent(RevCommit commit) {
         try {
             return commit.getParent(0).getTree();
-        } catch (IndexOutOfBoundsException _) {
+        } catch (IndexOutOfBoundsException e) {
             logger.log(Level.INFO, "commit %s has no parent".formatted(commit));
             return null;
         }

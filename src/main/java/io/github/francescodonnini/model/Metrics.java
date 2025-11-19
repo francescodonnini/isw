@@ -341,7 +341,7 @@ public class Metrics {
     }
 
     private double getAvgChangeSetSize(List<Integer> history) {
-        return getAvgChangeSetSize(history, _ -> true);
+        return getAvgChangeSetSize(history, i -> true);
     }
 
     private double getAvgChangeSetSize(List<Integer> history, Predicate<Integer> filter) {
@@ -370,7 +370,7 @@ public class Metrics {
     }
 
     private int getMaxChangeSetSize(List<Integer> history) {
-        return getMaxChangeSetSize(history, _ -> true);
+        return getMaxChangeSetSize(history, i -> true);
     }
 
     private int getMaxChangeSetSize(List<Integer> history, Predicate<Integer> filter) {

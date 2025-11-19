@@ -11,7 +11,7 @@ public class EditUtils {
     private EditUtils() {}
 
     public static boolean isTouched(JavaMethod m, EditList edits) {
-        return isTouched(m, edits, _ -> true);
+        return isTouched(m, edits, e -> true);
     }
 
     public static boolean isTouched(JavaMethod m, EditList edits, Predicate<Edit> predicate) {

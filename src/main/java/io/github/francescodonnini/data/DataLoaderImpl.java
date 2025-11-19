@@ -347,7 +347,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
     private RevTree getParent(RevCommit commit) {
         try {
             return commit.getParent(0).getTree();
-        } catch (IndexOutOfBoundsException _) {
+        } catch (IndexOutOfBoundsException e) {
             logger.log(Level.INFO, "commit %s has no parent".formatted(commit));
             return null;
         }

@@ -91,7 +91,7 @@ public class JiraIssueApi {
         for (var commit : commits) {
             var matcher = p.matcher(commit.getFullMessage());
             if (matcher.find()) {
-                mapping.computeIfAbsent(matcher.group(), _ -> new ArrayList<>()).add(commit);
+                mapping.computeIfAbsent(matcher.group(), m -> new ArrayList<>()).add(commit);
             }
         }
         return mapping;
@@ -111,12 +111,9 @@ public class JiraIssueApi {
 
     private Optional<Release> getFixVersion(Map<String, List<RevCommit>> mapping, String key) {
         var o = getLatestCommitDate(mapping, key);
-        if (o.isEmpty()) {
-            return Optional.empty();
-        }
-        return releases.stream()
-                .filter(r -> !r.releaseDate().isBefore(o.get()))
-                .min((x, y) -> Comparator.comparing(Release::releaseDate).compare(x, y));
+        return o.flatMap(localDate -> releases.stream()
+                .filter(r -> !r.releaseDate().isBefore(localDate))
+                .min((x, y) -> Comparator.comparing(Release::releaseDate).compare(x, y)));
     }
 
     private Optional<LocalDate> getLatestCommitDate(Map<String, List<RevCommit>> mapping, String key) {

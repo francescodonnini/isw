@@ -55,7 +55,7 @@ public class CsvSmellLinker implements SmellLinker {
     private Map<String, Map<String, JavaClass>> createCommitClassIndex(List<JavaClass> classes) {
         var index = new HashMap<String, Map<String, JavaClass>>();
         for (var c : classes) {
-            var classSet = index.computeIfAbsent(c.getCommit(), _ -> new HashMap<>());
+            var classSet = index.computeIfAbsent(c.getCommit(), s -> new HashMap<>());
             classSet.put(c.getAbsolutePath().toString(), c);
             var oldPath = c.getOldPath();
             oldPath.ifPresent(path -> classSet.put(path.toString(), c));

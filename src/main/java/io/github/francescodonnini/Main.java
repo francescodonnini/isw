@@ -103,7 +103,7 @@ public class Main {
         var localIssueApi = new CsvIssueApi(dataPath.resolve("issues.csv").toString(), releases, commits);
         var issueApi = new IssueRepository(jiraIssueApi, localIssueApi, useCache);
         issues = issueApi.getIssues();
-        var proportion = new Incremental(issues, releases);
+        var proportion = new Incremental(issues, releases, false);
         proportion.makeLabels();
     }
 
@@ -145,7 +145,7 @@ public class Main {
         projectName = args[1].toUpperCase();
         // regex "<project name>-d+" ("%s-\\d+") è presente in tutti i commit che chiudono un ticket di JIRA
         var settings = new IniSettings(args[0]);
-        useCache = false;
+        useCache = true;
         dropFactor = settings.getDouble("dropFactor");
         reportsPath = Path.of(settings.getString("pmdReportsPath"), projectName).toString();
         FileUtils.createDirectory(reportsPath);
