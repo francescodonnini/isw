@@ -63,7 +63,7 @@ public class JiraIssueApi {
                 // Bisogna controllare che:
                 // 1. IV < FV (cioè il bug non viene fixato nella stessa release in cui è stato trovato).
                 // 2. IV <= OV
-                // 3. OV <= FV (il fix del bug deve avvenire almeno nella stessa release (o comunque successiva) alla release in cui è stato scoperto)
+                // 3. OV < FV (il fix del bug deve avvenire almeno nella release successiva alla release in cui è stato scoperto)
                 // Tutti e 3 i vincoli devono essere verificati solamente negli issue che hanno il campo `affectedVersion` non vuoto.
                 // Non è presente una release con data di pubblicazione >= alla data di creazione del ticket
                 var fixVersion = o1.get();
@@ -160,7 +160,7 @@ public class JiraIssueApi {
     // checkForConsistency controlla se la tripla (affectedVersions, openingVersion, fixVersion) è consistente, cioè:
     // 1. IV < FV
     // 2. IV <= OV
-    // 3. OV <= FV
+    // 3. OV < FV
     // 4. AV <= FV
     private boolean checkForConsistency(List<Release> affectedVersions, Release openingVersion, Release fixVersion) {
         var o = getInjectedVersion(affectedVersions);
@@ -177,7 +177,7 @@ public class JiraIssueApi {
             logger.log(Level.INFO, () -> "injected version %s is after opening version %s".formatted(injected.name(), openingVersion.name()));
             return false;
         }
-        if (openingVersion.isAfter(fixVersion)) {
+        if (!openingVersion.isBefore(fixVersion)) {
             logger.log(Level.INFO, () -> "opening version %s is after fix version %s".formatted(openingVersion.name(), fixVersion.name()));
             return false;
         }

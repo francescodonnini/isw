@@ -11,16 +11,12 @@ public class Incremental implements Proportion {
     private final boolean complete;
     private final List<Issue> issues;
     private final List<Release> releases;
-    private final Map<Release, Integer> order = new HashMap<>();
 
     public Incremental(List<Issue> issues, List<Release> releases, boolean complete) {
         this.complete = complete;
         this.issues = issues;
         this.releases = releases;
         releases.sort(Comparator.comparing(Release::releaseDate));
-        for (int i = 1; i <= releases.size(); i++) {
-            order.put(releases.get(i - 1), i);
-        }
     }
 
     @Override
@@ -55,8 +51,8 @@ public class Incremental implements Proportion {
     }
 
     private List<Release> getRange(Issue issue, double p) {
-        var fixVersion = order.get(issue.fixVersion());
-        var openingVersion = order.get(issue.openingVersion());
+        var fixVersion = issue.fixVersion().order();
+        var openingVersion = issue.openingVersion().order();
         var injectedVersion = (int) Math.ceil(fixVersion - (fixVersion - openingVersion) * p);
         return releases.subList(injectedVersion, fixVersion);
     }
@@ -81,13 +77,23 @@ public class Incremental implements Proportion {
     }
 
     private double calculateP(Issue i) {
-        var fv = order.get(i.fixVersion());
-        var ov = order.get(i.openingVersion());
-        var iv = order.get(i.affectedVersions().getFirst());
-        var d = (double) (fv - ov);
+        var fv = i.fixVersion();
+        var ov = i.openingVersion();
+        var iv = i.affectedVersions().getFirst();
+        throwIfFalse(fv.isAfter(ov), "issue %s: fix version %s is before opening version %s".formatted(i, fv, ov));
+        throwIfFalse(fv.order() > ov.order(), "%s < %s".formatted(fv, ov));
+        var d = (double) (fv.order() - ov.order());
         if (d == 0) {
             d = 1;
         }
-        return (fv - iv) / d;
+        throwIfFalse(iv.isBefore(fv), "issue %s: injected version %s is after fix version %s".formatted(i, iv, fv));
+        throwIfFalse(iv.order() < fv.order(), "%s > %s".formatted(iv, fv));
+        return (fv.order() - iv.order()) / d;
+    }
+
+    private void throwIfFalse(boolean condition, String message) {
+        if (!condition) {
+            throw new IllegalStateException(message);
+        }
     }
 }

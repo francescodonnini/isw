@@ -19,9 +19,11 @@ public class JiraReleaseApi {
         var versions = versionApi.getVersions().stream()
                 .filter(Version::released).filter(v -> v.releaseDate() != null)
                 .sorted(Comparator.comparing(Version::releaseDate)).toList();
+        var order = 0;
         var releases = new ArrayList<Release>();
         for (Version v : versions) {
-            releases.add(new Release(v.id(), v.name(), v.releaseDate()));
+            releases.add(new Release(v.id(), v.name(), v.releaseDate(), order));
+            order++;
         }
         return releases;
     }

@@ -17,6 +17,7 @@ import io.github.francescodonnini.model.JavaMethod;
 import io.github.francescodonnini.model.Release;
 import io.github.francescodonnini.proportion.Incremental;
 import io.github.francescodonnini.utils.FileUtils;
+import io.github.francescodonnini.weka.JavaMethodArffSerializer;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -101,9 +102,9 @@ public class Main {
         var pattern = "%s-\\d+".formatted(projectName);
         var jiraIssueApi = new JiraIssueApi(projectName, pattern, restApi, releases, commits);
         var localIssueApi = new CsvIssueApi(dataPath.resolve("issues.csv").toString(), releases, commits);
-        var issueApi = new IssueRepository(jiraIssueApi, localIssueApi, useCache);
+        var issueApi = new IssueRepository(jiraIssueApi, localIssueApi, false);
         issues = issueApi.getIssues();
-        var proportion = new Incremental(issues, releases, false);
+        var proportion = new Incremental(issues, releases, true);
         proportion.makeLabels();
     }
 
@@ -133,6 +134,17 @@ public class Main {
         }
     }
 
+    private static void loadLabeledMethods() throws IOException {
+        var classes = new CsvJavaClassApi(dataPath.resolve("classes.csv").toString()).getLocal();
+        var localMethodApi = new CsvJavaMethodApi(dataPath.resolve("labeled-methods.csv").toString(), classes);
+        methods = localMethodApi.getLocal();
+    }
+
+    private static void toArff() throws IOException {
+        new JavaMethodArffSerializer(dataPath)
+                .toArff(releases, methods);
+    }
+
     public static void main(String[] args) throws ConfigurationException, IOException, GitAPIException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {
         init(args);
         completeWorkflow();
@@ -145,7 +157,7 @@ public class Main {
         projectName = args[1].toUpperCase();
         // regex "<project name>-d+" ("%s-\\d+") è presente in tutti i commit che chiudono un ticket di JIRA
         var settings = new IniSettings(args[0]);
-        useCache = true;
+        useCache = false;
         dropFactor = settings.getDouble("dropFactor");
         reportsPath = Path.of(settings.getString("pmdReportsPath"), projectName).toString();
         FileUtils.createDirectory(reportsPath);
@@ -165,5 +177,6 @@ public class Main {
         collectChangeMetrics();
         doProportion();
         doLabelling();
+        toArff();
     }
 }

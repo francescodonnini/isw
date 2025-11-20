@@ -61,6 +61,6 @@ public class CsvReleaseApi {
     }
 
     protected Release fromCsv(ReleaseLocalEntity bean) {
-        return new Release(bean.getId(), bean.getName(), bean.getReleaseDate());
+        return new Release(bean.getId(), bean.getName(), bean.getReleaseDate(), bean.getOrder());
     }
 }

@@ -7,12 +7,22 @@ import io.github.francescodonnini.csv.converters.LocalDateConverter;
 import java.time.LocalDate;
 
 public class ReleaseLocalEntity {
+    @CsvBindByName(column = "Order", required = true)
+    private int order;
     @CsvBindByName(column = "Id", required = true)
     private String id;
     @CsvBindByName(column = "Name", required = true)
     private String name;
     @CsvCustomBindByName(column = "Release Date", converter = LocalDateConverter.class, required = true)
     private LocalDate releaseDate;
+
+    public int getOrder() {
+        return order;
+    }
+
+    public void setOrder(int order) {
+        this.order = order;
+    }
 
     public String getId() {
         return id;
