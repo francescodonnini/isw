@@ -12,10 +12,12 @@ import java.util.logging.Logger;
 public class ColdStart implements Proportion {
     private final Logger logger = Logger.getLogger(ColdStart.class.getName());
     private final IssueApi issueApi;
+    private final List<Issue> issues;
     private final List<Release> projectReleases;
 
-    public ColdStart(IssueApi issueApi, List<Release> projectReleases) {
+    public ColdStart(IssueApi issueApi, List<Issue> issues, List<Release> projectReleases) {
         this.issueApi = issueApi;
+        this.issues = issues;
         this.projectReleases = projectReleases;
     }
 
@@ -27,7 +29,6 @@ public class ColdStart implements Proportion {
                     .filter(i -> !i.affectedVersions().isEmpty())
                     .toList());
         }
-        var issues = issueApi.getIssues(projectName);
         var labeled = ProportionUtils.getLabelled(issues);
         var unlabeled = ProportionUtils.getUnlabelled(labeled);
         var result = new ArrayList<>(labeled);

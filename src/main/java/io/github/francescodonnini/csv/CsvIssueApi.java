@@ -38,7 +38,7 @@ public class CsvIssueApi {
 
     public List<Issue> getLocal(String projectName) throws IOException, GitAPIException {
         var commits = GitUtils.getCommits(source.resolve(projectName.toLowerCase())).stream()
-                .map(c -> Map.entry(c.getId().toString(), c))
+                .map(c -> Map.entry(c.getName(), c))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         var releases = releaseApi.getReleases(projectName).stream()
                 .map(r -> Map.entry(r.id(), r))

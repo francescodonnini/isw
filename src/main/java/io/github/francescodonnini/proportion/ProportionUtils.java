@@ -25,7 +25,7 @@ public class ProportionUtils {
         var result = new ArrayList<Issue>();
         for (var issue : issues) {
             var fixVersion = issue.fixVersion();
-            result.add(issue.withAffectedVersions(releases.subList(injectedVersion(issue, p), fixVersion.order())));
+            result.add(issue.withAffectedVersions(releases.subList(Math.max(0, injectedVersion(issue, p)), fixVersion.order())));
         }
         return result;
     }

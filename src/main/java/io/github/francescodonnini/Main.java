@@ -26,14 +26,14 @@ public class Main {
         var jiraVersionApi = new JiraVersionApi(new RestApi());
         var cachePath = Path.of(settings.getString("cachePath"));
         var localVersionApi = new CsvVersionApi(cachePath);
-        var versionApi = new VersionRepository(jiraVersionApi, localVersionApi, false);
+        var versionApi = new VersionRepository(jiraVersionApi, localVersionApi, true);
         var jiraReleaseApi = new JiraReleaseApi(versionApi);
         var localReleaseApi = new CsvReleaseApi(cachePath);
-        var releaseApi = new ReleaseRepository(jiraReleaseApi, localReleaseApi, false);
+        var releaseApi = new ReleaseRepository(jiraReleaseApi, localReleaseApi, true);
         var source = Path.of(settings.getString("sourcesPath"));
         var jiraIssueApi = new JiraIssueApi(new RestApi(), releaseApi, source);
         var localIssueApi = new CsvIssueApi(releaseApi, cachePath, source);
-        var issueApi = new IssueRepository(jiraIssueApi, localIssueApi, false);
+        var issueApi = new IssueRepository(jiraIssueApi, localIssueApi, true);
         var api = new Api(issueApi, releaseApi);
         var context = new DataPipelineContext(api, args[1], settings);
         dataPipeline(context);
@@ -41,8 +41,8 @@ public class Main {
 
     private static void dataPipeline(DataPipelineContext context) throws Exception {
         Pipeline.start(new LoadProjectInfoStep(context))
-                .next(new ExtractProgramDataStep(context))
                 .next(new DoProportionStep(context))
+                .next(new ExtractProgramDataStep(context))
                 .next(new ExportToArffStep(context))
                 .run(null);
     }

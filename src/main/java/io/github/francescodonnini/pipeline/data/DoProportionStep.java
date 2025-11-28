@@ -14,11 +14,11 @@ public class DoProportionStep implements Step<ProjectInfo, ProjectInfo> {
     }
 
     @Override
-    public ProjectInfo execute(ProjectInfo input) throws Exception {
+    public ProjectInfo execute(ProjectInfo input) {
         var api = context.getApi();
         var proportion = switch (context.getProportion()) {
-            case "Incremental" -> new Incremental(api.getIssueApi(), input.getProjectReleases(), true);
-            case "ColdStart" -> new ColdStart(api.getIssueApi(), input.getProjectReleases());
+            case "Incremental" -> new Incremental(input.getIssues(), input.getProjectReleases(), true);
+            case "ColdStart" -> new ColdStart(api.getIssueApi(), input.getIssues(), input.getProjectReleases());
             default -> throw new IllegalStateException("unknown proportion method " + context.getProportion());
         };
         var issues = proportion.makeLabels(context.getProjectName());

@@ -65,7 +65,7 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
         var classApi = new CsvJavaClassApi();
         var path = context.getCache()
                 .resolve(context.getProjectName())
-                .resolve("classes.csv")
+                .resolve("classes(nolbl).csv")
                 .toString();
         classApi.saveLocal(classes, path);
     }
@@ -75,7 +75,7 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
         var methodApi = new CsvJavaMethodApi();
         var path = context.getCache()
                 .resolve(context.getProjectName())
-                .resolve("methods.csv")
+                .resolve("methods(nolbl).csv")
                 .toString();
         methodApi.saveLocal(methods, path);
     }
@@ -83,14 +83,14 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
     private String getCurrentClassPath() {
         return context.getCache()
                 .resolve(context.getProjectName())
-                .resolve("classes.csv")
+                .resolve("classes(nolbl).csv")
                 .toString();
     }
 
     private String getCurrentMethodPath() {
         return context.getCache()
                 .resolve(context.getProjectName())
-                .resolve("methods.csv")
+                .resolve("methods(nolbl).csv")
                 .toString();
     }
 }

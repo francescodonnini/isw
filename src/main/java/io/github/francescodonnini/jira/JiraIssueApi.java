@@ -190,7 +190,7 @@ public class JiraIssueApi {
     }
 
     private Optional<Issue> createIssue(IssueNetworkEntity i, Map<String, List<RevCommit>> commits, List<Release> affectedVersions, Release openingVersion, Release fixVersion) {
-        if (!affectedVersions.isEmpty() && !checkForConsistency(affectedVersions, openingVersion, fixVersion)) {
+        if (!checkForConsistency(affectedVersions, openingVersion, fixVersion)) {
             return Optional.empty();
         }
         var issue = new Issue(
@@ -211,6 +211,9 @@ public class JiraIssueApi {
     // 3. OV < FV
     // 4. AV <= FV
     private boolean checkForConsistency(List<Release> affectedVersions, Release openingVersion, Release fixVersion) {
+        if (affectedVersions.isEmpty()) {
+            return isNotPostReleaseFix(openingVersion, fixVersion);
+        }
         var injectedVersion = affectedVersions.stream().min(Comparator.comparing(Release::releaseDate)).orElseThrow();
         if (!injectedVersion.isBefore(fixVersion)) {
             logger.log(Level.INFO, () -> "injected version %s is not before fix version %s".formatted(injectedVersion.name(), fixVersion.name()));
@@ -222,14 +225,18 @@ public class JiraIssueApi {
             injectedAfterOpeningVersion++;
             return false;
         }
-        if (!openingVersion.isBefore(fixVersion)) {
-            logger.log(Level.INFO, () -> "opening version %s is after fix version %s".formatted(openingVersion.name(), fixVersion.name()));
-            noPostReleaseFix++;
-            return false;
-        }
         if (affectedVersions.stream().anyMatch(r -> !r.isBefore(fixVersion))) {
             logger.log(Level.INFO, () -> "there exists an affected version that is after fix version %s".formatted(fixVersion.name()));
             affectedNotBeforeFixVersion++;
+            return false;
+        }
+        return isNotPostReleaseFix(openingVersion, fixVersion);
+    }
+
+    private boolean isNotPostReleaseFix(Release openingVersion, Release fixVersion) {
+        if (!openingVersion.isBefore(fixVersion)) {
+            logger.log(Level.INFO, () -> "opening version %s is after fix version %s".formatted(openingVersion.name(), fixVersion.name()));
+            noPostReleaseFix++;
             return false;
         }
         return true;

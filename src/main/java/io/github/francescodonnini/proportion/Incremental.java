@@ -1,6 +1,5 @@
 package io.github.francescodonnini.proportion;
 
-import io.github.francescodonnini.data.IssueApi;
 import io.github.francescodonnini.model.Issue;
 import io.github.francescodonnini.model.Release;
 
@@ -9,22 +8,21 @@ import java.util.logging.Logger;
 
 public class Incremental implements Proportion {
     private static final Logger logger = Logger.getLogger(Incremental.class.getName());
-    private final IssueApi issueApi;
+    private final List<Issue> issues;
     private final List<Release> projectReleases;
     private final boolean complete;
 
-    public Incremental(IssueApi issueApi, List<Release> projectReleases, boolean complete) {
-        this.issueApi = issueApi;
+    public Incremental(List<Issue> issues, List<Release> projectReleases, boolean complete) {
+        this.issues = issues;
         this.projectReleases = projectReleases;
         this.complete = complete;
     }
 
     @Override
     public List<Issue> makeLabels(String projectName) {
-        var issues = issueApi.getIssues(projectName);
         var labeled = ProportionUtils.getLabelled(issues);
         var unlabeled = ProportionUtils.getUnlabelled(issues);
-        var result = new ArrayList<Issue>();
+        var result = new ArrayList<>(labeled);
         if (complete) {
             calculateProportion(labeled, projectReleases.getLast())
                     .ifPresent(p -> result.addAll(ProportionUtils.applyP(unlabeled, p, projectReleases)));
@@ -50,18 +48,17 @@ public class Incremental implements Proportion {
         var fv = i.fixVersion();
         var ov = i.openingVersion();
         var iv = i.affectedVersions().getFirst();
-        throwIfFalse(fv.isAfter(ov), "issue %s: fix version %s is before opening version %s".formatted(i, fv, ov));
-        throwIfFalse(fv.order() > ov.order(), "%s < %s".formatted(fv, ov));
+        assertTrue(fv.isAfter(ov), "issue %s: fix version %s must come after opening version %s".formatted(i, fv, ov));
         var d = (double) (fv.order() - ov.order());
         if (d == 0) {
             d = 1;
         }
-        throwIfFalse(iv.isBefore(fv), "issue %s: injected version %s is after fix version %s".formatted(i, iv, fv));
-        throwIfFalse(iv.order() < fv.order(), "%s > %s".formatted(iv, fv));
+        assertTrue(iv.isBefore(fv), "issue %s: injected version %s must come before fix version %s".formatted(i, iv, fv));
+        assertTrue(iv.order() < fv.order(), "%s,%s: %d should be smaller than %d".formatted(iv, fv, iv.order(), fv.order()));
         return (fv.order() - iv.order()) / d;
     }
 
-    private void throwIfFalse(boolean condition, String message) {
+    private void assertTrue(boolean condition, String message) {
         if (!condition) {
             throw new IllegalStateException(message);
         }

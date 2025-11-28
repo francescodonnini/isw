@@ -11,11 +11,11 @@ public record Release(
 ) {
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof Release(String otherId, String otherName, LocalDate otherDate, int order))) return false;
-        return Objects.equals(id, otherId)
-                && Objects.equals(name, otherName)
-                && Objects.equals(releaseDate, otherDate)
-                && Objects.equals(order, order);
+        if (!(o instanceof Release(String id, String name, LocalDate date, int order))) return false;
+        return Objects.equals(this.id, id)
+                && Objects.equals(this.name, name)
+                && Objects.equals(this.releaseDate, date)
+                && Objects.equals(this.order, order);
     }
 
     @Override
@@ -25,7 +25,7 @@ public record Release(
 
     @Override
     public String toString() {
-        return "(%s, %s, %s)".formatted(id, name, releaseDate);
+        return "(%d %s, %s, %s)".formatted(order, id, name, releaseDate);
     }
 
     public boolean isBefore(Release release) {
