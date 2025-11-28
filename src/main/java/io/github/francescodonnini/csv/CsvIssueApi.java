@@ -6,71 +6,76 @@ import com.opencsv.enums.CSVReaderNullFieldIndicator;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import io.github.francescodonnini.csv.entities.IssueLocalEntity;
+import io.github.francescodonnini.data.ReleaseApi;
 import io.github.francescodonnini.model.Issue;
 import io.github.francescodonnini.model.Release;
 import io.github.francescodonnini.utils.FileUtils;
+import io.github.francescodonnini.utils.GitUtils;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.revwalk.RevCommit;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class CsvIssueApi {
     private final Logger logger = Logger.getLogger(CsvIssueApi.class.getName());
-    private final String defaultPath;
-    private final Map<String, Release> releases;
-    private final Map<String, RevCommit> commits;
+    private final ReleaseApi releaseApi;
+    private final Path cache;
+    private final Path source;
 
-    public CsvIssueApi(String defaultPath, List<Release> releases, List<RevCommit> commits) {
-        this.defaultPath = defaultPath;
-        this.releases = releases.stream().collect(Collectors.toMap(Release::id, r -> r));
-        this.commits = commits.stream().collect(Collectors.toMap(c -> c.getId().getName(), c -> c));
+    public CsvIssueApi(ReleaseApi releaseApi, Path cache, Path source) {
+        this.releaseApi = releaseApi;
+        this.cache = cache;
+        this.source = source;
     }
 
-    public List<Issue> getLocal(String path) throws FileNotFoundException {
-        return getIssues(path);
+    public List<Issue> getLocal(String projectName) throws IOException, GitAPIException {
+        var commits = GitUtils.getCommits(source.resolve(projectName.toLowerCase())).stream()
+                .map(c -> Map.entry(c.getId().toString(), c))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        var releases = releaseApi.getReleases(projectName).stream()
+                .map(r -> Map.entry(r.id(), r))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        return getIssues(commits, releases, cache.resolve(projectName).resolve("issues.csv"));
     }
 
-    public List<Issue> getLocal() throws FileNotFoundException {
-        return getIssues(defaultPath);
-    }
-
-    private List<Issue> getIssues(String path) throws FileNotFoundException {
-        var beans = new CsvToBeanBuilder<IssueLocalEntity>(new FileReader(path))
+    private List<Issue> getIssues(Map<String, RevCommit> commits, Map<String, Release> releases, Path path) throws FileNotFoundException {
+        var beans = new CsvToBeanBuilder<IssueLocalEntity>(new FileReader(path.toFile()))
                 .withType(IssueLocalEntity.class)
                 .withFieldAsNull(CSVReaderNullFieldIndicator.EMPTY_QUOTES)
                 .build()
                 .parse();
         return beans.stream()
-                .map(this::fromCsv)
+                .map(b -> fromCsv(b, commits, releases))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .toList();
     }
 
-    public void saveLocal(List<Issue> issues, String path) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
-        save(issues, path);
-    }
-
     public void saveLocal(List<Issue> issues) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
-        save(issues, defaultPath);
+        if (issues.isEmpty()) {
+            return;
+        }
+        var project = issues.getFirst().project();
+        save(issues, cache.resolve(project.toUpperCase()));
     }
 
-    private void save(List<Issue> issues, String path) throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {
+    private void save(List<Issue> issues, Path path) throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {
         var beans = issues.stream().map(this::toCsv).toList();
-        FileUtils.createFileIfNotExists(path);
-        try (var writer = new FileWriter(path)) {
+        FileUtils.createDirectory(path);
+        try (var writer = new FileWriter(path.resolve("issues.csv").toFile())) {
             var beanToCsv = new StatefulBeanToCsvBuilder<IssueLocalEntity>(writer).build();
             for (var b : beans) {
                 beanToCsv.write(b);
             }
+            logger.log(Level.INFO, "{}", "Saved " + beans.size() + " issues");
         }
     }
 
@@ -86,26 +91,24 @@ public class CsvIssueApi {
         return bean;
     }
 
-    private Optional<Issue> fromCsv(IssueLocalEntity bean) {
+    private Optional<Issue> fromCsv(IssueLocalEntity bean, Map<String, RevCommit> commits, Map<String, Release> releases) {
         List<Release> affectedVersions = new ArrayList<>();
         if (bean.getAffectedVersions() != null) {
             affectedVersions.addAll(bean.getAffectedVersions().stream()
-                    .map(this::getReleaseById)
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
+                    .map(releases::get)
+                    .filter(Objects::nonNull)
                     .toList());
         }
-        var fixVersion = getReleaseById(bean.getFixVersion());
-        var openingVersion = getReleaseById(bean.getOpeningVersion());
-        if (fixVersion.isEmpty() || openingVersion.isEmpty()) {
+        var fixVersion = releases.get(bean.getFixVersion());
+        var openingVersion = releases.get(bean.getOpeningVersion());
+        if (fixVersion == null || openingVersion == null) {
             return Optional.empty();
         }
         var commitList = new ArrayList<RevCommit>();
         if (bean.getCommits() != null) {
             commitList.addAll(bean.getCommits().stream()
-                    .map(this::getByObjectId)
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
+                    .map(commits::get)
+                    .filter(Objects::nonNull)
                     .toList());
         }
         if (commitList.isEmpty()) {
@@ -114,27 +117,11 @@ public class CsvIssueApi {
         return Optional.of(new Issue(
                 affectedVersions,
                 bean.getCreated(),
-                fixVersion.get(),
-                openingVersion.get(),
+                fixVersion,
+                openingVersion,
                 commitList,
                 bean.getKey(),
                 bean.getProject()
         ));
-    }
-
-    private Optional<RevCommit> getByObjectId(String id) {
-        var c = commits.get(id);
-        if (c == null) {
-            logger.info(() -> "cannot retrieve commit with id %s".formatted(id));
-        }
-        return Optional.ofNullable(c);
-    }
-
-    private Optional<Release> getReleaseById(String id) {
-        var r = releases.get(id);
-        if (r == null) {
-            logger.info(() -> "cannot retrieve release with id %s".formatted(id));
-        }
-        return Optional.ofNullable(r);
     }
 }

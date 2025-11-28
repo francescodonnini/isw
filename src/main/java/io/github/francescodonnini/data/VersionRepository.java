@@ -16,7 +16,7 @@ public class VersionRepository implements VersionApi {
     private final Logger logger = Logger.getLogger(VersionRepository.class.getName());
     private final JiraVersionApi remoteSource;
     private final CsvVersionApi localSource;
-    private final boolean useCache;
+    private boolean useCache;
 
     public VersionRepository(JiraVersionApi remoteSource, CsvVersionApi localSource, boolean useCache) {
         this.remoteSource = remoteSource;
@@ -25,37 +25,37 @@ public class VersionRepository implements VersionApi {
     }
 
     @Override
-    public List<Version> getVersions() {
+    public List<Version> getVersions(String projectName) {
         if (useCache) {
-            return tryGetCache();
+            return tryGetCache(projectName);
         } else {
-            return tryGetFreshData();
+            return tryGetFreshData(projectName);
         }
     }
 
-    private List<Version> tryGetCache() {
+    private List<Version> tryGetCache(String projectName) {
         try {
-            var versions = localSource.getLocal();
+            var versions = localSource.getLocal(projectName);
             if (versions.isEmpty()) {
-                versions = remoteSource.getVersions();
-                saveLocal(versions);
+                versions = remoteSource.getVersions(projectName);
+                saveLocal(versions, projectName);
             }
             return versions;
         } catch (FileNotFoundException e) {
             logger.log(Level.SEVERE, e.getMessage());
-            return tryGetFreshData();
+            return tryGetFreshData(projectName);
         }
     }
 
-    private List<Version> tryGetFreshData() {
-        var data = remoteSource.getVersions();
-        saveLocal(data);
+    private List<Version> tryGetFreshData(String projectName) {
+        var data = remoteSource.getVersions(projectName);
+        saveLocal(data, projectName);
         return data;
     }
 
-    private void saveLocal(List<Version> versions) {
+    private void saveLocal(List<Version> versions, String projectName) {
         try {
-            localSource.saveLocal(versions);
+            localSource.saveLocal(versions, projectName);
         } catch (CsvRequiredFieldEmptyException | CsvDataTypeMismatchException | IOException e) {
             logger.log(Level.INFO, e.getMessage());
         }

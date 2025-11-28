@@ -26,38 +26,38 @@ public class ReleaseRepository implements ReleaseApi {
     }
 
     @Override
-    public List<Release> getReleases() {
+    public List<Release> getReleases(String projectName) {
         if (useCache) {
-            return tryGetCache();
+            return tryGetCache(projectName);
         } else {
-            return tryGetFreshData();
+            return tryGetFreshData(projectName);
         }
     }
 
-    private List<Release> tryGetCache() {
+    private List<Release> tryGetCache(String projectName) {
         try {
-            var releases = localSource.getLocal();
+            var releases = localSource.getLocal(projectName);
             if (releases.isEmpty()) {
-                releases = remoteSource.getReleases();
-                saveLocal(releases);
+                releases = remoteSource.getReleases(projectName);
+                saveLocal(releases, projectName);
             }
             return releases;
         } catch (FileNotFoundException e) {
             logger.log(Level.SEVERE, e.getMessage());
-            return tryGetFreshData();
+            return tryGetFreshData(projectName);
         }
     }
 
-    private List<Release> tryGetFreshData() {
-        var data = remoteSource.getReleases();
+    private List<Release> tryGetFreshData(String projectName) {
+        var data = remoteSource.getReleases(projectName);
         data.sort(Comparator.comparing(Release::releaseDate));
-        saveLocal(data);
+        saveLocal(data, projectName);
         return data;
     }
 
-    private void saveLocal(List<Release> releases) {
+    private void saveLocal(List<Release> releases, String projectName) {
         try {
-            localSource.saveLocal(releases);
+            localSource.saveLocal(releases, projectName);
         } catch (CsvRequiredFieldEmptyException | CsvDataTypeMismatchException | IOException e) {
             logger.log(Level.INFO, e.getMessage());
         }

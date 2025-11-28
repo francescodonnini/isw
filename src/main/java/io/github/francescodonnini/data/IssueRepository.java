@@ -5,8 +5,8 @@ import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import io.github.francescodonnini.csv.CsvIssueApi;
 import io.github.francescodonnini.jira.JiraIssueApi;
 import io.github.francescodonnini.model.Issue;
+import org.eclipse.jgit.api.errors.GitAPIException;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
@@ -25,30 +25,30 @@ public class IssueRepository implements IssueApi {
     }
 
     @Override
-    public List<Issue> getIssues() {
+    public List<Issue> getIssues(String projectName) {
         if (useCache) {
-            return tryGetCache();
+            return tryGetCache(projectName);
         } else {
-            return tryGetFreshData();
+            return tryGetFreshData(projectName);
         }
     }
 
-    private List<Issue> tryGetCache() {
+    private List<Issue> tryGetCache(String projectName) {
         try {
-            var issues = localSource.getLocal();
+            var issues = localSource.getLocal(projectName);
             if (issues.isEmpty()) {
-                issues = remoteSource.getIssues();
+                issues = remoteSource.getIssues(projectName);
                 saveLocal(issues);
             }
             return issues;
-        } catch (FileNotFoundException e) {
+        } catch (IOException | GitAPIException e) {
             logger.log(Level.SEVERE, e.getMessage());
-            return tryGetFreshData();
+            return tryGetFreshData(projectName);
         }
     }
 
-    private List<Issue> tryGetFreshData() {
-        var data = remoteSource.getIssues();
+    private List<Issue> tryGetFreshData(String projectName) {
+        var data = remoteSource.getIssues(projectName);
         saveLocal(data);
         return data;
     }

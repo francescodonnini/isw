@@ -5,5 +5,5 @@ import io.github.francescodonnini.model.Release;
 import java.util.List;
 
 public interface ReleaseApi {
-    List<Release> getReleases();
+    List<Release> getReleases(String projectName);
 }

@@ -7,18 +7,21 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 public class JiraVersionApi {
-    private final String projectName;
     private final RestApi restApi;
 
-    public JiraVersionApi(String projectName, RestApi restApi) {
-        this.projectName = projectName;
+    public JiraVersionApi(RestApi restApi) {
         this.restApi = restApi;
     }
 
-    public List<Version> getVersions() {
+    public List<Version> getVersions(String projectName) {
         try {
-            return restApi.getReleaseInfo(projectName).getVersions().stream()
+            var result = restApi.getReleaseInfo(projectName);
+            if (result == null || result.getVersions() == null) {
+                return List.of();
+            }
+            return result.getVersions().stream()
                     .map(JiraVersionApi::fromVersionNetworkEntity)
+                    .filter(v -> v.released() && v.releaseDate() != null)
                     .toList();
         } catch (URISyntaxException e) {
             return List.of();

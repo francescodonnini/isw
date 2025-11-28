@@ -12,39 +12,39 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
 public class CsvReleaseApi {
-    private final String defaultPath;
+    private final Path cachePath;
 
-    public CsvReleaseApi(String defaultPath) {
-        this.defaultPath = defaultPath;
+    public CsvReleaseApi(Path cachePath) {
+        this.cachePath = cachePath;
     }
 
-    public List<Release> getLocal() throws FileNotFoundException {
-        return getReleases(defaultPath);
+    public List<Release> getLocal(String projectName) throws FileNotFoundException {
+        return getReleases(projectName);
     }
 
-    public List<Release> getLocal(String path) throws FileNotFoundException {
-        return getReleases(path);
-    }
-
-    public List<Release> getReleases(String path) throws FileNotFoundException {
-        var beans = new CsvToBeanBuilder<ReleaseLocalEntity>(new FileReader(path))
+    public List<Release> getReleases(String projectName) throws FileNotFoundException {
+        var beans = new CsvToBeanBuilder<ReleaseLocalEntity>(new FileReader(cachePath.resolve(projectName).resolve("releases.csv").toFile()))
                 .withType(ReleaseLocalEntity.class)
                 .build()
                 .parse();
         return beans.stream().map(this::fromCsv).toList();
     }
 
-    public void saveLocal(List<Release> releases) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
-        saveLocal(releases, defaultPath);
+    public void saveLocal(List<Release> releases, String projectName) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
+        if (releases.isEmpty()) {
+            return;
+        }
+        saveLocal(releases, cachePath.resolve(projectName).resolve("releases.csv"));
     }
 
-    private void saveLocal(List<Release> releases, String path) throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {
+    private void saveLocal(List<Release> releases, Path path) throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {
         var beans = releases.stream().map(this::toCsv).toList();
-        FileUtils.createFileIfNotExists(path);
-        try (var writer = new FileWriter(path)) {
+        FileUtils.createFileIfNotExists(path.toString());
+        try (var writer = new FileWriter(path.toFile())) {
             var beanToCsv = new StatefulBeanToCsvBuilder<ReleaseLocalEntity>(writer).build();
             for (var b : beans) {
                 beanToCsv.write(b);

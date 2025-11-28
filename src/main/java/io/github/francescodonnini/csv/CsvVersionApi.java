@@ -13,30 +13,35 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class CsvVersionApi {
-    private final String defaultPath;
+    private final Logger logger = Logger.getLogger(CsvVersionApi.class.getName());
+    private final Path cachePath;
 
-    public CsvVersionApi(String defaultPath) {
-        this.defaultPath = defaultPath;
+    public CsvVersionApi(Path cachePath) {
+        this.cachePath = cachePath;
     }
 
-    public List<Version> getLocal() throws FileNotFoundException {
-        return getVersions(defaultPath);
+    public List<Version> getLocal(String projectName) throws FileNotFoundException {
+        return getVersions(cachePath.resolve(projectName).resolve("versions.csv"));
     }
 
-    public List<Version> getLocal(String path) throws FileNotFoundException {
-        return getVersions(path);
-    }
-
-    private List<Version> getVersions(String path) throws FileNotFoundException {
-        var beans = new CsvToBeanBuilder<VersionLocalEntity>(new FileReader(path))
-                .withType(VersionLocalEntity.class)
-                .withFieldAsNull(CSVReaderNullFieldIndicator.EMPTY_QUOTES)
-                .build()
-                .parse();
-        return beans.stream().map(this::fromCsv).toList();
+    private List<Version> getVersions(Path path) throws FileNotFoundException {
+        try {
+            var beans = new CsvToBeanBuilder<VersionLocalEntity>(new FileReader(path.toFile()))
+                    .withType(VersionLocalEntity.class)
+                    .withFieldAsNull(CSVReaderNullFieldIndicator.EMPTY_QUOTES)
+                    .build()
+                    .parse();
+            return beans.stream().map(this::fromCsv).toList();
+        } catch (RuntimeException e) {
+            logger.log(Level.WARNING, "Missing required fields {}", e.getMessage());
+            return List.of();
+        }
     }
 
     private VersionLocalEntity toCsv(Version model) {
@@ -53,15 +58,16 @@ public class CsvVersionApi {
         return new Version(bean.isArchived(), bean.getId(), bean.getName(), bean.isReleased(), bean.getReleaseDate());
     }
 
-    public void saveLocal(List<Version> versions) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
-        saveLocal(versions, defaultPath);
+    public void saveLocal(List<Version> versions, String projectName) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
+        saveLocal(versions, cachePath.resolve(projectName).resolve("versions.csv"));
     }
 
-    public void saveLocal(List<Version> versions, String path) throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {
+    public void saveLocal(List<Version> versions, Path path) throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {
         var beans = versions.stream().map(this::toCsv).toList();
-        FileUtils.createFileIfNotExists(path);
-        try (var writer = new FileWriter(path)) {
-            var beanToCsv = new StatefulBeanToCsvBuilder<VersionLocalEntity>(writer).build();
+        FileUtils.createFileIfNotExists(path.toString());
+        try (var writer = new FileWriter(path.toFile())) {
+            var beanToCsv = new StatefulBeanToCsvBuilder<VersionLocalEntity>(writer)
+                    .build();
             for (var b : beans) {
                 beanToCsv.write(b);
             }

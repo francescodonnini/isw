@@ -20,13 +20,12 @@ public class FileUtils {
         logger.log(Level.INFO, message);
     }
 
-    public static boolean createDirectory(String path) {
-        var p = Path.of(path);
-        if (Files.exists(p)) {
+    public static boolean createDirectory(Path path) {
+        if (Files.exists(path)) {
             return false;
         } else {
             try {
-                Files.createDirectories(p);
+                Files.createDirectories(path);
                 return true;
             } catch (Exception e) {
                 logger.log(Level.SEVERE, e.getMessage());

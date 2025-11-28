@@ -1,0 +1,31 @@
+package io.github.francescodonnini.pipeline.data;
+
+import io.github.francescodonnini.pipeline.DataPipelineContext;
+import io.github.francescodonnini.pipeline.ProjectInfo;
+import io.github.francescodonnini.pipeline.Step;
+
+import java.util.logging.Logger;
+
+public class LoadProjectInfoStep implements Step<Void, ProjectInfo> {
+    private final Logger logger = Logger.getLogger(LoadProjectInfoStep.class.getName());
+    private final DataPipelineContext context;
+
+    public LoadProjectInfoStep(DataPipelineContext context) {
+        this.context = context;
+    }
+
+    @Override
+    public ProjectInfo execute(Void input) {
+        var api = context.getApi();
+        var releases = context.getApi()
+                .getReleaseApi()
+                .getReleases(context.getProjectName());
+        var remainingReleases = (int) Math.ceil(releases.size() * (1 - context.getDropFactor()));
+        var issues = api.getIssueApi()
+                .getIssues(context.getProjectName());
+        var runtime = new ProjectInfo();
+        runtime.setIssues(issues);
+        runtime.setProjectReleases(releases.subList(0, remainingReleases));
+        return runtime;
+    }
+}

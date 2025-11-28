@@ -9,15 +9,9 @@ import java.nio.file.Path;
 import java.util.List;
 
 public class JavaMethodArffSerializer {
-    private final Path parent;
-
-    public JavaMethodArffSerializer(Path parent) {
-        this.parent = parent;
-    }
-
-    public void toArff(List<Release> releases, List<JavaMethod> methods) throws IOException {
-        FileUtils.createDirectory(parent.toString());
-        try (var off = new FileWriter(parent.resolve("methods.arff").toFile())) {
+    public void toArff(Path path, List<Release> releases, List<JavaMethod> methods) throws IOException {
+        FileUtils.createDirectory(path.getParent());
+        try (var off = new FileWriter(path.toFile())) {
             off.write("@relation methods\n\n");
             booleanAttribute(off, "buggy");
             numericAttribute(off, "cyclomatic_complexity");
@@ -48,7 +42,6 @@ public class JavaMethodArffSerializer {
             numericAttribute(off, "duplication");
             numericAttribute(off, "release");
             off.write("@DATA\n");
-            var releaseNumber = 0;
             for (var i = 0; i < releases.size(); i++) {
                 final var r = releases.get(i);
                 List<JavaMethod> current;
@@ -70,11 +63,11 @@ public class JavaMethodArffSerializer {
     }
 
     private void booleanAttribute(Writer writer, String name) throws IOException {
-        writer.write("@ATTRIBUTE %s\t\t{0,1}\n".formatted(name));
+        writer.write("@ATTRIBUTE %s\t\t{0,1}%n".formatted(name));
     }
 
     private void numericAttribute(Writer writer, String name) throws IOException {
-        writer.write("@ATTRIBUTE %s\t\tNUMERIC\n".formatted(name));
+        writer.write("@ATTRIBUTE %s\t\tNUMERIC%n".formatted(name));
     }
 
     private boolean between(JavaMethod method, Release last, Release current) {

@@ -10,8 +10,11 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class RestApi {
+    private static final Logger logger = Logger.getLogger(RestApi.class.getName());
     private final HttpClient client = HttpClient
             .newBuilder()
             .build();
@@ -31,7 +34,9 @@ public class RestApi {
         if (!properties.isEmpty()) {
             request.append("&properties=").append(String.join(",", properties));
         }
-        return get(request.toString().replace(" ", "%20"), Issues.class);
+        var finalRequest = request.toString().replace(" ", "%20");
+        logger.log(Level.INFO, "request query for issues: {0}", finalRequest);
+        return get(finalRequest, Issues.class);
     }
 
     private static String createSearchQuery(String jql) {

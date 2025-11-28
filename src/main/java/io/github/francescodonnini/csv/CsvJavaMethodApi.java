@@ -15,17 +15,13 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class CsvJavaMethodApi {
-    private final String defaultPath;
-    private final Map<String, JavaClass> classMap = new HashMap<>();
-
-    public CsvJavaMethodApi(String defaultPath, List<JavaClass> classes) {
-        this.defaultPath = defaultPath;
-        classes.forEach(c -> classMap.put(key(c), c));
-    }
-
     private String key(JavaClass clazz) {
         return String.format("%s%s", clazz.getPath(), clazz.getCommit());
     }
@@ -34,27 +30,25 @@ public class CsvJavaMethodApi {
         return String.format("%s%s", clazz.getClassPath(), clazz.getCommit());
     }
 
-    public List<JavaMethod> getLocal(String path) throws FileNotFoundException {
-        return getEntries(path);
+    public List<JavaMethod> getLocal(String path, List<JavaClass> classes) throws FileNotFoundException {
+        return getEntries(path, classes.stream()
+                .map(c -> Map.entry(key(c), c))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
     }
 
-    public List<JavaMethod> getLocal() throws FileNotFoundException {
-        return getEntries(defaultPath);
-    }
-
-    private List<JavaMethod> getEntries(String path) throws FileNotFoundException {
+    private List<JavaMethod> getEntries(String path, Map<String, JavaClass> classes) throws FileNotFoundException {
         var beans = new CsvToBeanBuilder<JavaMethodLocalEntity>(new FileReader(path))
                 .withType(JavaMethodLocalEntity.class)
                 .withFieldAsNull(CSVReaderNullFieldIndicator.EMPTY_QUOTES)
                 .build()
                 .parse();
         var methods = new ArrayList<JavaMethod>();
-        beans.forEach(bean -> fromCsv(bean).ifPresent(methods::add));
+        beans.forEach(bean -> fromCsv(bean, classes).ifPresent(methods::add));
         return methods;
     }
 
-    private Optional<JavaMethod> fromCsv(JavaMethodLocalEntity bean) {
-        var o = getJavaClass(bean);
+    private Optional<JavaMethod> fromCsv(JavaMethodLocalEntity bean, Map<String, JavaClass> classes) {
+        var o = Optional.ofNullable(classes.get(key(bean)));
         if (o.isEmpty()) {
             return Optional.empty();
         }
@@ -65,10 +59,6 @@ public class CsvJavaMethodApi {
             new LineRange(bean.getLineStart(), bean.getLineEnd()));
         addMetrics(m, bean);
         return Optional.of(m);
-    }
-
-    private Optional<JavaClass> getJavaClass(JavaMethodLocalEntity bean) {
-        return Optional.ofNullable(classMap.get(key(bean)));
     }
 
     private void addMetrics(JavaMethod m, JavaMethodLocalEntity bean) {
@@ -106,10 +96,6 @@ public class CsvJavaMethodApi {
 
     public void saveLocal(List<JavaMethod> entries, String path) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
         save(entries, path);
-    }
-
-    public void saveLocal(List<JavaMethod> entries) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
-        save(entries, defaultPath);
     }
 
     private void save(List<JavaMethod> entries, String path) throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {

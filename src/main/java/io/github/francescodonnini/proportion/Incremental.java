@@ -1,5 +1,6 @@
 package io.github.francescodonnini.proportion;
 
+import io.github.francescodonnini.data.IssueApi;
 import io.github.francescodonnini.model.Issue;
 import io.github.francescodonnini.model.Release;
 
@@ -8,65 +9,34 @@ import java.util.logging.Logger;
 
 public class Incremental implements Proportion {
     private static final Logger logger = Logger.getLogger(Incremental.class.getName());
+    private final IssueApi issueApi;
+    private final List<Release> projectReleases;
     private final boolean complete;
-    private final List<Issue> issues;
-    private final List<Release> releases;
 
-    public Incremental(List<Issue> issues, List<Release> releases, boolean complete) {
+    public Incremental(IssueApi issueApi, List<Release> projectReleases, boolean complete) {
+        this.issueApi = issueApi;
+        this.projectReleases = projectReleases;
         this.complete = complete;
-        this.issues = issues;
-        this.releases = releases;
-        releases.sort(Comparator.comparing(Release::releaseDate));
     }
 
     @Override
-    public List<Issue> makeLabels() {
-        var unlabeled = getUnlabeledIssues();
-        var labeled = getLabeledIssues();
-        var result = new ArrayList<>(labeled);
+    public List<Issue> makeLabels(String projectName) {
+        var issues = issueApi.getIssues(projectName);
+        var labeled = ProportionUtils.getLabelled(issues);
+        var unlabeled = ProportionUtils.getUnlabelled(issues);
+        var result = new ArrayList<Issue>();
         if (complete) {
-            var p = calculateProportion(labeled, releases.getLast());
-            if (p.isEmpty()) {
-                logger.warning("cannot calculate proportion");
-            } else {
-                unlabeled.stream()
-                        .map(i -> i.withAffectedVersions(getRange(i, p.getAsDouble())))
-                        .forEach(result::add);
-            }
+            calculateProportion(labeled, projectReleases.getLast())
+                    .ifPresent(p -> result.addAll(ProportionUtils.applyP(unlabeled, p, projectReleases)));
         } else {
-            for (var r : releases.subList(1, releases.size())) {
-                var p = calculateProportion(labeled, r);
-                if (p.isEmpty()) {
-                    logger.warning("cannot calculate proportion for " + r.name());
-                    continue;
-                }
-                unlabeled.stream()
-                        .filter(i -> i.fixVersion().equals(r))
-                        .map(i -> i.withAffectedVersions(getRange(i, p.getAsDouble())))
-                        .forEach(result::add);
+            for (var r : projectReleases.subList(1, projectReleases.size())) {
+                var l = labeled.stream().filter(i -> !i.fixVersion().isAfter(r)).toList();
+                var u = unlabeled.stream().filter(i -> i.fixVersion().equals(r)).toList();
+                calculateProportion(l, r)
+                        .ifPresent(p -> result.addAll(ProportionUtils.applyP(u, p, projectReleases)));
             }
         }
-
         return result;
-    }
-
-    private List<Release> getRange(Issue issue, double p) {
-        var fixVersion = issue.fixVersion().order();
-        var openingVersion = issue.openingVersion().order();
-        var injectedVersion = (int) Math.ceil(fixVersion - (fixVersion - openingVersion) * p);
-        return releases.subList(injectedVersion, fixVersion);
-    }
-
-    private List<Issue> getLabeledIssues() {
-        return issues.stream()
-                .filter(i -> !i.affectedVersions().isEmpty())
-                .toList();
-    }
-
-    private List<Issue> getUnlabeledIssues() {
-        return issues.stream()
-                .filter(i -> i.affectedVersions().isEmpty())
-                .toList();
     }
 
     private OptionalDouble calculateProportion(List<Issue> issues, Release r) {

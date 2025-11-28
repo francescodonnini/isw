@@ -19,18 +19,8 @@ import java.util.List;
 import java.util.Optional;
 
 public class CsvJavaClassApi {
-    private final String defaultPath;
-
-    public CsvJavaClassApi(String defaultPath) {
-        this.defaultPath = defaultPath;
-    }
-
     public List<JavaClass> getLocal(String path) throws FileNotFoundException {
         return getEntries(path);
-    }
-
-    public List<JavaClass> getLocal() throws FileNotFoundException {
-        return getEntries(defaultPath);
     }
 
     private List<JavaClass> getEntries(String path) throws FileNotFoundException {
@@ -64,10 +54,6 @@ public class CsvJavaClassApi {
 
     public void saveLocal(List<JavaClass> entries, String path) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
         save(entries, path);
-    }
-
-    public void saveLocal(List<JavaClass> entries) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
-        save(entries, defaultPath);
     }
 
     private void save(List<JavaClass> entries, String path) throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {
