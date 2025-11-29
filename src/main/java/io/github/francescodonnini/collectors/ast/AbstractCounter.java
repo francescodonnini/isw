@@ -9,14 +9,19 @@ import io.github.francescodonnini.model.Metrics;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public abstract class AbstractCounter extends TreeScanner<Void, JavaClass> {
+    private final Logger logger = Logger.getLogger(AbstractCounter.class.getName());
     private final Map<String, JavaMethod> index = new HashMap<>();
 
     protected void update(String signature, Function<Metrics, Void> f) {
         var method = index.get(signature);
         if (method != null) {
             f.apply(method.getMetrics());
+        } else {
+            logger.log(Level.INFO, "No method found for signature: " + signature);
         }
     }
 

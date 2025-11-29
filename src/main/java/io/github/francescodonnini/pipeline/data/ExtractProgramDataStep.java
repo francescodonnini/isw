@@ -55,6 +55,7 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
                     .collect();
             saveClasses(classes);
             saveMethods(methods);
+            input.setMethods(methods);
         }
         return input;
     }

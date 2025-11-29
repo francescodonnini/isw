@@ -9,13 +9,17 @@ public class NestingDepth extends AbstractCounter {
 
     @Override
     public Void visitMethod(MethodTree node, JavaClass javaClass) {
+        var oldNestingDepth = currentNestingDepth;
         currentNestingDepth = 0;
+        var oldMaxNestingDepth = maxNestingDepth;
         maxNestingDepth = 0;
         var v = super.visitMethod(node, javaClass);
         update(AstUtils.getSignature(node), m -> {
-            m.setNestingDepth(currentNestingDepth);
+            m.setNestingDepth(maxNestingDepth);
             return null;
         });
+        currentNestingDepth = oldNestingDepth;
+        maxNestingDepth = oldMaxNestingDepth;
         return v;
     }
 

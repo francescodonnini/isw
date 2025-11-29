@@ -182,7 +182,7 @@ public class Metrics {
 
     public double getAvgStatementsAdded() {
         if (!statementHistory.isEmpty()) {
-            avgStatementsAdded = getAdded(statementHistory);
+            avgStatementsAdded = getAvgPositiveChangeSetSize(statementHistory);
         }
         return avgStatementsAdded;
     }
