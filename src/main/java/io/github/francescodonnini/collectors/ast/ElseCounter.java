@@ -5,14 +5,15 @@ import com.sun.source.tree.MethodTree;
 import io.github.francescodonnini.model.JavaClass;
 
 public class ElseCounter extends AbstractCounter {
-    private int numberOfElse = 0;
+    private int counter = 0;
 
     @Override
     public Void visitMethod(MethodTree node, JavaClass javaClass) {
-        numberOfElse = 0;
+        var oldCounter = counter;
+        counter = 0;
         var v = super.visitMethod(node, javaClass);
         update(AstUtils.getSignature(node), m -> {
-            m.setElseCount(numberOfElse);
+            m.setElseCount(oldCounter + counter);
             return null;
         });
         return v;
@@ -21,7 +22,7 @@ public class ElseCounter extends AbstractCounter {
     @Override
     public Void visitIf(IfTree node, JavaClass javaClass) {
         if (node.getElseStatement() != null) {
-            numberOfElse++;
+            counter++;
         }
         return super.visitIf(node, javaClass);
     }

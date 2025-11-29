@@ -4,11 +4,12 @@ import com.sun.source.tree.*;
 import io.github.francescodonnini.model.JavaClass;
 
 public class CyclomaticComplexityCounter extends AbstractCounter {
-    private int complexity = 1;
+    private int counter = 1;
 
     @Override
     public Void visitMethod(MethodTree node, JavaClass unused) {
-        complexity = 1;
+        var oldCounter = counter;
+        counter = 1;
         var body = node.getBody();
         // questo controllo è necessario nel caso in cui il metodo in esame non ha implementazione, cioè è un metodo
         // di un'interfaccia oppure astratto.
@@ -16,7 +17,7 @@ public class CyclomaticComplexityCounter extends AbstractCounter {
             visitBlock(node.getBody(), null);
         }
         update(AstUtils.getSignature(node), m -> {
-            m.setCyclomaticComplexity(complexity);
+            m.setCyclomaticComplexity(oldCounter + counter);
             return null;
         });
         return super.visitMethod(node, null);
@@ -25,56 +26,56 @@ public class CyclomaticComplexityCounter extends AbstractCounter {
     @Override
     public Void visitBinary(BinaryTree node, JavaClass unused) {
         if (node.getKind() == Tree.Kind.CONDITIONAL_AND || node.getKind() == Tree.Kind.CONDITIONAL_OR) {
-            complexity++;
+            counter++;
         }
         return super.visitBinary(node, unused);
     }
 
     @Override
     public Void visitCase(CaseTree node, JavaClass unused) {
-        complexity++;
+        counter++;
         return super.visitCase(node, unused);
     }
 
     @Override
     public Void visitPatternCaseLabel(PatternCaseLabelTree node, JavaClass unused) {
-        complexity++;
+        counter++;
         return super.visitPatternCaseLabel(node, unused);
     }
 
     @Override
     public Void visitConditionalExpression(ConditionalExpressionTree node, JavaClass unused) {
-        complexity++;
+        counter++;
         return super.visitConditionalExpression(node, unused);
     }
 
     @Override
     public Void visitDoWhileLoop(DoWhileLoopTree node, JavaClass unused) {
-        complexity++;
+        counter++;
         return super.visitDoWhileLoop(node, unused);
     }
 
     @Override
     public Void visitEnhancedForLoop(EnhancedForLoopTree node, JavaClass unused) {
-        complexity++;
+        counter++;
         return super.visitEnhancedForLoop(node, unused);
     }
 
     @Override
     public Void visitForLoop(ForLoopTree node, JavaClass unused) {
-        complexity++;
+        counter++;
         return super.visitForLoop(node, unused);
     }
 
     @Override
     public Void visitIf(IfTree node, JavaClass unused) {
-        complexity++;
+        counter++;
         return super.visitIf(node, unused);
     }
 
     @Override
     public Void visitWhileLoop(WhileLoopTree node, JavaClass unused) {
-        complexity++;
+        counter++;
         return super.visitWhileLoop(node, unused);
     }
 }

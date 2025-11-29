@@ -21,10 +21,11 @@ public class StatementsCounter extends AbstractCounter {
 
     @Override
     public Void visitMethod(MethodTree node, JavaClass unused) {
+        var oldCounter = counter;
         counter = 0;
         var rv = super.visitMethod(node, unused);
         update(AstUtils.getSignature(node), m -> {
-            m.setStatementsCount(counter);
+            m.setStatementsCount(oldCounter + counter);
             return null;
         });
         return rv;
