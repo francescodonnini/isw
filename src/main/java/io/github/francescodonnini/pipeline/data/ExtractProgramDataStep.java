@@ -35,7 +35,10 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
             var classes = classApi.getLocal(getCurrentClassPath());
             input.setClasses(classes);
             var methodApi = new CsvJavaMethodApi();
-            var methods = methodApi.getLocal(getCurrentMethodPath(), classes);
+            var methods = methodApi
+                    .getLocal(getCurrentMethodPath(), classes).stream()
+                    .filter(m -> !m.getJavaClass().getTime().isAfter(input.getProjectReleases().getLast().releaseDate().atStartOfDay()))
+                    .toList();
             input.setMethods(methods);
         } catch (FileNotFoundException e) {
             logger.log(Level.WARNING, "cannot find any classes/methods cached files");
@@ -45,7 +48,7 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
             var report = context.getReports()
                     .resolve(context.getProjectName())
                     .toString();
-            var loader = new DataLoaderImpl(source.toString(), factory, report, input.getProjectReleases());
+            var loader = new DataLoaderImpl(factory, input.getProjectReleases(), source.toString(), report);
             var classes = loader.getClasses();
             new CsvSmellLinker(report).link(classes);
             var methods = new DiffCollector(input.getProjectReleases(), loader.getMethods())

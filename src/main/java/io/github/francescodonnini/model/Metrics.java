@@ -267,7 +267,7 @@ public class Metrics {
     }
 
     public int getAuthorsCount() {
-        return authors.size();
+        return Math.max(authors.size(), 1);
     }
 
     public int getNestingDepth() {

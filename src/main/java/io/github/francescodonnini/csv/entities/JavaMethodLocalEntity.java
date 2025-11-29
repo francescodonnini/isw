@@ -8,12 +8,6 @@ import java.util.List;
 public class JavaMethodLocalEntity {
     @CsvBindByName(column = "buggy", required = true)
     private boolean buggy;
-    @CsvBindByName(column = "signature", required = true)
-    private String signature;
-    @CsvBindByName(column = "classPath", required = true)
-    private String classPath;
-    @CsvBindByName(column = "commit", required = true)
-    private String commit;
     @CsvBindByName(column = "lineStart", required = true)
     private int lineStart;
     @CsvBindByName(column = "lineEnd", required = true)
@@ -70,6 +64,22 @@ public class JavaMethodLocalEntity {
     int codeSmells;
     @CsvBindByName(column = "codeDuplication")
     double codeDuplication;
+    @CsvBindByName(column = "signature", required = true)
+    private String signature;
+    @CsvBindByName(column = "classPath", required = true)
+    private String classPath;
+    @CsvBindByName(column = "className", required = true)
+    private String className;
+    @CsvBindByName(column = "commit", required = true)
+    private String commit;
+
+    public String getClassName() {
+        return className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
+    }
 
     public double getAvgLocAdded() {
         return avgLocAdded;

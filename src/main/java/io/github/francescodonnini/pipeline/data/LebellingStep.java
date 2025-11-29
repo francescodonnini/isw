@@ -18,9 +18,8 @@ public class LebellingStep implements Step<ProjectInfo, ProjectInfo> {
         var source = context.getSources()
                 .resolve(context.getProjectName().toLowerCase());
         try (var git = GitUtils.createGit(source)) {
-            var methods = new LabelMakerImpl(git, input.getIssues(), input.getMethods(), input.getProjectReleases())
-                    .makeLabels();
-            input.setMethods(methods);
+            new LabelMakerImpl(git, input.getIssues(), input.getProjectReleases())
+                    .makeLabels(input.getMethods());
         }
         return input;
     }

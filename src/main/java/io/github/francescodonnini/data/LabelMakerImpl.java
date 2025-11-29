@@ -21,19 +21,38 @@ public class LabelMakerImpl implements LabelMaker {
     private static final Logger logger = Logger.getLogger(LabelMakerImpl.class.getName());
     private final Git git;
     private final List<Issue> issues;
-    private final List<JavaMethod> methods;
     private final List<Release> releases;
     private final Map<String, HashSet<String>> releaseMethodMap = new HashMap<>();
 
-    public LabelMakerImpl(Git git, List<Issue> issues, List<JavaMethod> methods, List<Release> releases) {
+    public LabelMakerImpl(Git git, List<Issue> issues, List<Release> releases) {
         this.issues = issues;
-        this.methods = methods;
         this.git = git;
         this.releases = releases;
-        createReleaseMethodMap();
     }
 
-    private void createReleaseMethodMap() {
+    @Override
+    public void makeLabels(List<JavaMethod> methods) {
+        try {
+            createReleaseMethodMap(methods);
+            var df = new DiffFormatter(DisabledOutputStream.INSTANCE);
+            df.setRepository(git.getRepository());
+            df.setDetectRenames(true);
+            var index = methods.stream()
+                    .collect(Collectors.groupingBy(m -> m.getJavaClass().getCommit()));
+            for (var issue : issues) {
+                for (var commit : issue.commits()) {
+                    var susceptible = index.getOrDefault(commit.getName(), List.of());
+                    if (!susceptible.isEmpty()) {
+                        parseCommit(df, susceptible, commit, issue, methods);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, e.getMessage());
+        }
+    }
+
+    private void createReleaseMethodMap(List<JavaMethod> methods) {
         var prev = LocalDate.MIN;
         for (var release : releases) {
             var curr = release.releaseDate();
@@ -50,30 +69,8 @@ public class LabelMakerImpl implements LabelMaker {
         return !time.isBefore(a) && !time.isAfter(b);
     }
 
-    @Override
-    public List<JavaMethod> makeLabels() {
-        try {
-            var df = new DiffFormatter(DisabledOutputStream.INSTANCE);
-            df.setRepository(git.getRepository());
-            df.setDetectRenames(true);
-            var index = methods.stream()
-                    .collect(Collectors.groupingBy(m -> m.getJavaClass().getCommit()));
-            for (var issue : issues) {
-                for (var commit : issue.commits()) {
-                    var susceptible = index.getOrDefault(commit.getName(), List.of());
-                    if (!susceptible.isEmpty()) {
-                        parseCommit(df, susceptible, commit, issue);
-                    }
-                }
-            }
-            return methods;
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, e.getMessage());
-        }
-        return List.of();
-    }
 
-    private void parseCommit(DiffFormatter df, List<JavaMethod> susceptible, RevCommit commit, Issue issue) throws IOException {
+    private void parseCommit(DiffFormatter df, List<JavaMethod> susceptible, RevCommit commit, Issue issue, List<JavaMethod> methods) throws IOException {
         var diffList = df.scan(getParent(commit), commit.getTree());
         for (var diff : diffList) {
             var path = diff.getNewPath();
@@ -81,20 +78,20 @@ public class LabelMakerImpl implements LabelMaker {
             susceptible.stream()
                     .filter(m -> m.getPath().toString().equals(path))
                     .filter(m -> EditUtils.isTouched(m, editList, this::match))
-                    .forEach(m -> setBuggy(m, issue));
+                    .forEach(m -> setBuggy(m, issue, methods));
         }
     }
 
-    private void setBuggy(JavaMethod m, Issue issue) {
+    private void setBuggy(JavaMethod m, Issue issue, List<JavaMethod> methods) {
         m.setBuggy(true);
-        backtrack(m, issue.affectedVersions());
+        backtrack(m, issue.affectedVersions(), methods);
     }
 
     private String getId(JavaMethod m) {
         return m.getPath().toString() + m.getSignature();
     }
 
-    private void backtrack(JavaMethod m, List<Release> affectedVersions) {
+    private void backtrack(JavaMethod m, List<Release> affectedVersions, List<JavaMethod> methods) {
         methods.stream()
                 .filter(x -> x != m)
                 .filter(x -> getId(x).equals(getId(m)))

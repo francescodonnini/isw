@@ -5,5 +5,5 @@ import io.github.francescodonnini.model.JavaMethod;
 import java.util.List;
 
 public interface LabelMaker {
-    List<JavaMethod> makeLabels();
+    void makeLabels(List<JavaMethod> methods);
 }

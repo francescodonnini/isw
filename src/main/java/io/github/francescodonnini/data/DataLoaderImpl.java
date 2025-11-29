@@ -46,9 +46,8 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
     private final List<Release> releases;
 
     public DataLoaderImpl(
-            String projectPath,
-            AbstractCounterFactoryImpl factory,
-            String reportsPath, List<Release> releases) throws IOException {
+            AbstractCounterFactoryImpl factory, List<Release> releases, String projectPath,
+            String reportsPath) throws IOException {
         this.projectPath = projectPath;
         this.git = createGit(projectPath);
         this.reportsPath = reportsPath;

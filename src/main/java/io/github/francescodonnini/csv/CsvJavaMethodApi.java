@@ -27,13 +27,13 @@ public class CsvJavaMethodApi {
     }
 
     private String key(JavaMethodLocalEntity clazz) {
-        return String.format("%s%s", clazz.getClassPath(), clazz.getCommit());
+        return String.format("%s%s%s", clazz.getClassPath(), clazz.getClassName(), clazz.getCommit());
     }
 
     public List<JavaMethod> getLocal(String path, List<JavaClass> classes) throws FileNotFoundException {
         return getEntries(path, classes.stream()
                 .map(c -> Map.entry(key(c), c))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a)));
     }
 
     private List<JavaMethod> getEntries(String path, Map<String, JavaClass> classes) throws FileNotFoundException {
@@ -114,6 +114,7 @@ public class CsvJavaMethodApi {
         bean.setBuggy(model.isBuggy());
         bean.setClassPath(model.getPath().toString());
         bean.setSignature(model.getSignature());
+        bean.setClassName(model.getJavaClass().getName());
         bean.setCommit(model.getJavaClass().getCommit());
         bean.setLineStart(model.getStartLine());
         bean.setLineEnd(model.getEndLine());
