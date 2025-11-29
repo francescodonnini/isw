@@ -39,7 +39,7 @@ public class CsvVersionApi {
                     .parse();
             return beans.stream().map(this::fromCsv).toList();
         } catch (RuntimeException e) {
-            logger.log(Level.WARNING, "Missing required fields {}", e.getMessage());
+            logger.log(Level.WARNING, "Missing required fields {0}", e.getMessage());
             return List.of();
         }
     }

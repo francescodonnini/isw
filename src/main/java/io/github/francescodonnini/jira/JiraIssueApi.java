@@ -54,14 +54,14 @@ public class JiraIssueApi {
             // Ordino le releases in ordine crescente rispetto alla data di creazione
             var releases = new ArrayList<>(releaseApi.getReleases(projectName.toUpperCase()));
             if (releases.isEmpty()) {
-                logger.log(Level.WARNING, "{}", "No releases found for project: " + projectName);
+                logger.log(Level.WARNING, "No releases found for project: {0}", projectName);
                 return List.of();
             }
             releases.sort(Comparator.comparing(Release::releaseDate));
             var mapping = getTicketCommitMapping(source.resolve(projectName.toLowerCase()), PATTERN.formatted(ApacheProjects.jiraKey(projectName)));
             var result = restApi.getIssues("project='%s' AND type=bug AND (status=closed OR status=resolved) AND resolution=fixed".formatted(projectName));
             if (result == null || result.getIssueList() == null) {
-                logger.log(Level.WARNING, "No issues found for project: {}",  projectName);
+                logger.log(Level.WARNING, "No issues found for project: {0}",  projectName);
                 return List.of();
             }
             var issueNetworkEntities = result.getIssueList().stream()
@@ -116,16 +116,14 @@ public class JiraIssueApi {
                 + injectedNotBeforeFixVersion
                 + affectedNotBeforeFixVersion
                 + injectedAfterOpeningVersion;
-        var s = new StringBuilder()
-                .append(projectName)
-                .append(" dropped a total of ").append(total).append("/").append(totalIssues).append(" issues\n")
-                .append("No Fix version:").append(noFixVersion).append('\n')
-                .append("No Opening version:").append(noOpeningVersion).append('\n')
-                .append("No Post release fix:").append(noPostReleaseFix).append('\n')
-                .append("IV > OV:").append(injectedAfterOpeningVersion).append('\n')
-                .append("IV >= FV:").append(injectedNotBeforeFixVersion).append('\n')
-                .append("AV >= FV:").append(affectedNotBeforeFixVersion).append('\n')
-                .toString();
+        var s = projectName +
+                " dropped a total of " + total + "/" + totalIssues + " issues\n" +
+                "No Fix version:" + noFixVersion + '\n' +
+                "No Opening version:" + noOpeningVersion + '\n' +
+                "No Post release fix:" + noPostReleaseFix + '\n' +
+                "IV > OV:" + injectedAfterOpeningVersion + '\n' +
+                "IV >= FV:" + injectedNotBeforeFixVersion + '\n' +
+                "AV >= FV:" + affectedNotBeforeFixVersion + '\n';
         logger.log(Level.INFO, () -> s);
     }
 

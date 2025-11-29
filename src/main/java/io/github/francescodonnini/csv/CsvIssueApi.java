@@ -75,7 +75,7 @@ public class CsvIssueApi {
             for (var b : beans) {
                 beanToCsv.write(b);
             }
-            logger.log(Level.INFO, "{}", "Saved " + beans.size() + " issues");
+            logger.log(Level.INFO, "Saved {0} issues", beans.size());
         }
     }
 

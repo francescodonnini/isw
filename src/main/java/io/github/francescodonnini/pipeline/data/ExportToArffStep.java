@@ -16,7 +16,7 @@ public class ExportToArffStep implements Step<ProjectInfo, ProjectInfo> {
     public ProjectInfo execute(ProjectInfo input) throws Exception {
         var path = context.getData()
                 .resolve(context.getProjectName())
-                .resolve("data.arff");
+                .resolve("data_%s.arff".formatted(context.getProportion()));
         new JavaMethodArffSerializer()
                 .toArff(path, input.getProjectReleases(), input.getMethods());
         return input;
