@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 public class CsvJavaMethodApi {
     private String key(JavaClass clazz) {
-        return String.format("%s%s", clazz.getPath(), clazz.getCommit());
+        return String.format("%s%s%s", clazz.getPath(), clazz.getName(), clazz.getCommit());
     }
 
     private String key(JavaMethodLocalEntity clazz) {

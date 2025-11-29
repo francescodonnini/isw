@@ -22,6 +22,6 @@ public class LebellingStep implements Step<ProjectInfo, ProjectInfo> {
                     .makeLabels();
             input.setMethods(methods);
         }
-        return null;
+        return input;
     }
 }
