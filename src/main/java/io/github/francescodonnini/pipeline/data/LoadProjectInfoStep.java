@@ -4,10 +4,7 @@ import io.github.francescodonnini.pipeline.DataPipelineContext;
 import io.github.francescodonnini.pipeline.ProjectInfo;
 import io.github.francescodonnini.pipeline.Step;
 
-import java.util.logging.Logger;
-
 public class LoadProjectInfoStep implements Step<Void, ProjectInfo> {
-    private final Logger logger = Logger.getLogger(LoadProjectInfoStep.class.getName());
     private final DataPipelineContext context;
 
     public LoadProjectInfoStep(DataPipelineContext context) {

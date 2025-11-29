@@ -8,16 +8,16 @@ import io.github.francescodonnini.csv.CsvJavaClassApi;
 import io.github.francescodonnini.csv.CsvJavaMethodApi;
 import io.github.francescodonnini.data.CsvSmellLinker;
 import io.github.francescodonnini.data.DataLoaderImpl;
-import io.github.francescodonnini.data.LabelMakerImpl;
 import io.github.francescodonnini.model.JavaClass;
 import io.github.francescodonnini.model.JavaMethod;
 import io.github.francescodonnini.pipeline.DataPipelineContext;
 import io.github.francescodonnini.pipeline.ProjectInfo;
 import io.github.francescodonnini.pipeline.Step;
-import io.github.francescodonnini.utils.GitUtils;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
@@ -30,14 +30,15 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
 
     @Override
     public ProjectInfo execute(ProjectInfo input) throws Exception {
-        if (context.useCache()) {
+        try {
             var classApi = new CsvJavaClassApi();
             var classes = classApi.getLocal(getCurrentClassPath());
             input.setClasses(classes);
             var methodApi = new CsvJavaMethodApi();
             var methods = methodApi.getLocal(getCurrentMethodPath(), classes);
             input.setMethods(methods);
-        } else {
+        } catch (FileNotFoundException e) {
+            logger.log(Level.WARNING, "cannot find any classes/methods cached files");
             var factory = new AbstractCounterFactoryImpl();
             var source = context.getSources()
                     .resolve(context.getProjectName().toLowerCase());
@@ -47,16 +48,10 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
             var loader = new DataLoaderImpl(source.toString(), factory, report, input.getProjectReleases());
             var classes = loader.getClasses();
             new CsvSmellLinker(report).link(classes);
-            var methods = loader.getMethods();
-            methods = new DiffCollector(input.getProjectReleases(), loader.getMethods())
+            var methods = new DiffCollector(input.getProjectReleases(), loader.getMethods())
                     .collect();
-            try (var git = GitUtils.createGit(source)) {
-                methods = new LabelMakerImpl(git, input.getIssues(), methods, input.getProjectReleases())
-                        .makeLabels();
-                input.setMethods(methods);
-                saveClasses(classes);
-                saveMethods(methods);
-            }
+            saveClasses(classes);
+            saveMethods(methods);
         }
         return input;
     }

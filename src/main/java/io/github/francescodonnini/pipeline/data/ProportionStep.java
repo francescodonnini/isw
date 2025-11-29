@@ -6,10 +6,10 @@ import io.github.francescodonnini.pipeline.Step;
 import io.github.francescodonnini.proportion.ColdStart;
 import io.github.francescodonnini.proportion.Incremental;
 
-public class DoProportionStep implements Step<ProjectInfo, ProjectInfo> {
+public class ProportionStep implements Step<ProjectInfo, ProjectInfo> {
     private final DataPipelineContext context;
 
-    public DoProportionStep(DataPipelineContext context) {
+    public ProportionStep(DataPipelineContext context) {
         this.context = context;
     }
 

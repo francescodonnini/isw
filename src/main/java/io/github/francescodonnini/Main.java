@@ -16,11 +16,8 @@ import io.github.francescodonnini.pipeline.ml.LoadDatasetStep;
 import io.github.francescodonnini.pipeline.ml.TrainingStep;
 
 import java.nio.file.Path;
-import java.util.logging.Logger;
 
 public class Main {
-    private static final Logger logger = Logger.getLogger(Main.class.getName());
-
     public static void main(String[] args) throws Exception {
         var settings = new IniSettings(args[0]);
         var jiraVersionApi = new JiraVersionApi(new RestApi());
@@ -41,8 +38,9 @@ public class Main {
 
     private static void dataPipeline(DataPipelineContext context) throws Exception {
         Pipeline.start(new LoadProjectInfoStep(context))
-                .next(new DoProportionStep(context))
+                .next(new ProportionStep(context))
                 .next(new ExtractProgramDataStep(context))
+                .next(new LebellingStep(context))
                 .next(new ExportToArffStep(context))
                 .run(null);
     }
