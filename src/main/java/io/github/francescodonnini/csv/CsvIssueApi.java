@@ -59,11 +59,10 @@ public class CsvIssueApi {
                 .toList();
     }
 
-    public void saveLocal(List<Issue> issues) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
+    public void saveLocal(String project, List<Issue> issues) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
         if (issues.isEmpty()) {
             return;
         }
-        var project = issues.getFirst().project();
         save(issues, cache.resolve(project.toUpperCase()));
     }
 

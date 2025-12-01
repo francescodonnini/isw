@@ -37,7 +37,9 @@ public class CsvVersionApi {
                     .withFieldAsNull(CSVReaderNullFieldIndicator.EMPTY_QUOTES)
                     .build()
                     .parse();
-            return beans.stream().map(this::fromCsv).toList();
+            return beans.stream()
+                    .map(this::fromCsv)
+                    .toList();
         } catch (RuntimeException e) {
             logger.log(Level.WARNING, "Missing required fields {0}", e.getMessage());
             return List.of();

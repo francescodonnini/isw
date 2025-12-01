@@ -38,7 +38,7 @@ public class IssueRepository implements IssueApi {
             var issues = localSource.getLocal(projectName);
             if (issues.isEmpty()) {
                 issues = remoteSource.getIssues(projectName);
-                saveLocal(issues);
+                saveLocal(projectName, issues);
             }
             return issues;
         } catch (IOException | GitAPIException e) {
@@ -49,13 +49,13 @@ public class IssueRepository implements IssueApi {
 
     private List<Issue> tryGetFreshData(String projectName) {
         var data = remoteSource.getIssues(projectName);
-        saveLocal(data);
+        saveLocal(projectName, data);
         return data;
     }
 
-    private void saveLocal(List<Issue> issues) {
+    private void saveLocal(String project, List<Issue> issues) {
         try {
-            localSource.saveLocal(issues);
+            localSource.saveLocal(project, issues);
         } catch (CsvRequiredFieldEmptyException | CsvDataTypeMismatchException | IOException e) {
             logger.log(Level.INFO, e.getMessage());
         }
