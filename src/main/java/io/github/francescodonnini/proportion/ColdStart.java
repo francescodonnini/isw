@@ -13,13 +13,15 @@ public class ColdStart implements Proportion {
     private final Logger logger = Logger.getLogger(ColdStart.class.getName());
     private final IssueApi issueApi;
     private final List<Issue> issues;
-    private final List<Release> projectReleases;
+    private final List<Release> releases;
+    private final int projectReleasesEnd;
     private final boolean complete;
 
-    public ColdStart(IssueApi issueApi, List<Issue> issues, List<Release> projectReleases, boolean complete) {
+    public ColdStart(IssueApi issueApi, List<Issue> issues, List<Release> releases, int projectReleasesEnd, boolean complete) {
         this.issueApi = issueApi;
         this.issues = issues;
-        this.projectReleases = projectReleases;
+        this.releases = releases;
+        this.projectReleasesEnd = projectReleasesEnd;
         this.complete = complete;
     }
 
@@ -47,7 +49,7 @@ public class ColdStart implements Proportion {
         return ProportionUtils.applyP(
                 ProportionUtils.getUnlabelled(issues),
                 m.get(),
-                projectReleases);
+                releases);
     }
 
     private List<Issue> makeLabelsRealistic(String projectName) {
@@ -61,14 +63,15 @@ public class ColdStart implements Proportion {
             }
         }
         var labeled = ProportionUtils.getLabelled(issues);
-        var unlabeled = ProportionUtils.getUnlabelled(labeled);
+        var unlabeled = ProportionUtils.getUnlabelled(issues);
         var result = new ArrayList<>(labeled);
-        for (var k = 1; k < projectReleases.size(); k++) {
-            final var curr = projectReleases.get(k);
-            final var prev = projectReleases.get(k - 1);
+        for (var k = 1; k < projectReleasesEnd; k++) {
+            final var curr = releases.get(k);
+            final var prev = releases.get(k - 1);
             var pAvg = new ArrayList<Double>();
             for (var project : ApacheProjects.getProjects(projectName)) {
-            ProportionUtils.calculateP(pIssues.getOrDefault(project, List.of()), i -> !i.created().isAfter(curr.releaseDate().atStartOfDay()))
+                ProportionUtils
+                        .calculateP(pIssues.getOrDefault(project, List.of()), i -> !i.created().isAfter(curr.releaseDate().atStartOfDay()))
                         .ifPresent(pAvg::add);
             }
             var toLabel = unlabeled.stream()
@@ -76,7 +79,7 @@ public class ColdStart implements Proportion {
                     .toList();
             median(pAvg).ifPresent(p -> {
                 logger.log(Level.INFO, "Release %d: P=%f".formatted(curr.order(), p));
-                result.addAll(ProportionUtils.applyP(toLabel, p, projectReleases));
+                result.addAll(ProportionUtils.applyP(toLabel, p, releases));
             });
             pAvg.clear();
         }

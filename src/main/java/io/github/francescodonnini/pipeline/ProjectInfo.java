@@ -15,6 +15,10 @@ public class ProjectInfo {
     private final List<JavaMethod> methods = new ArrayList<>();
     private final List<Issue> issues = new ArrayList<>();
 
+    public int getProjectReleasesEnd() {
+        return projectReleasesEnd;
+    }
+
     public void setProjectReleasesEnd(int projectReleasesEnd) {
         this.projectReleasesEnd = projectReleasesEnd;
     }
