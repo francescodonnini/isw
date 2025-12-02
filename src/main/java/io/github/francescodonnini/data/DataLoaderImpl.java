@@ -111,6 +111,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
             var lastCommitPerRelease = getLastCommitPerRelease(commits);
             logger.log(Level.INFO, "total commits: {0}", commits.size());
             var progress = 0;
+            var previousCount = -1;
             for (var commit : commits) {
                 ++progress;
                 logProgress(progress, commits.size());
@@ -121,6 +122,14 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
                 Predicate<String> filter = getPathFilter(isLastCommitOfRelease, susceptible, releaseChangeSet);
                 loadData(commit, filter);
                 if (isLastCommitOfRelease) {
+                    int currCount;
+                    if (previousCount >= 0) {
+                        currCount = methods.size() - previousCount;
+                    } else {
+                        currCount = methods.size();
+                    }
+                    logger.log(Level.INFO, "read methods: {0}", previousCount);
+                    previousCount = currCount;
                     releaseChangeSet.clear();
                 }
             }

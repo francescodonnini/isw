@@ -1,15 +1,17 @@
 package io.github.francescodonnini.pipeline;
 
 import io.github.francescodonnini.config.Settings;
+import io.github.francescodonnini.data.IssueApi;
+import io.github.francescodonnini.data.ReleaseApi;
 import io.github.francescodonnini.utils.FileUtils;
 
 import java.nio.file.Path;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class DataPipelineContext {
     private final Logger logger = Logger.getLogger(this.getClass().getName());
-    private final Api api;
+    private final IssueApi issueApi;
+    private final ReleaseApi releaseApi;
     private final String projectName;
     private final double dropFactor;
     private final Path cache;
@@ -18,9 +20,11 @@ public class DataPipelineContext {
     private final Path reports;
     private final boolean useCache;
     private final String proportion;
+    private final double movingWindowPercentage;
 
-    public DataPipelineContext(Api api, String projectName, Settings settings) {
-        this.api = api;
+    public DataPipelineContext(IssueApi issueApi, ReleaseApi releaseApi, String projectName, Settings settings) {
+        this.issueApi = issueApi;
+        this.releaseApi = releaseApi;
         this.projectName = projectName;
         dropFactor = settings.getDouble("%s_dropFactor".formatted(projectName.toLowerCase()));
         cache = Path.of(settings.getString("cachePath"));
@@ -33,22 +37,32 @@ public class DataPipelineContext {
         FileUtils.createDirectory(reports);
         useCache = settings.getBool("useCache", false);
         proportion = settings.getString("proportion");
+        movingWindowPercentage = settings.getDouble("%s_movingWindowPercentage".formatted(projectName.toLowerCase()), 0.01);
         logInfo();
     }
 
     private void logInfo() {
-        logger.log(Level.INFO, "project name: {0}", projectName);
-        logger.log(Level.INFO, "cache path:   {0}", cache);
-        logger.log(Level.INFO, "data path:    {0}", data);
-        logger.log(Level.INFO, "sources path: {0}", sources);
-        logger.log(Level.INFO, "reports path: {0}", reports);
-        logger.log(Level.INFO, "dropFactor:   {0}", dropFactor);
-        logger.log(Level.INFO, "proportion:   {0}", proportion);
-        logger.log(Level.INFO, "useCache:     {0}", useCache);
+        var s = new StringBuilder()
+                .append("Project Configuration\n")
+                .append("projectName: ").append(projectName).append("\n")
+                .append("cachePath:   ").append(cache).append("\n")
+                .append("dataPath:    ").append(data).append("\n")
+                .append("sourcesPath: ").append(sources).append("\n")
+                .append("reportsPath: ").append(reports).append("\n")
+                .append("proportion:  ").append(proportion);
+        if (proportion.equals("MovingWindow")) {
+            s.append(" (windowP=%f)".formatted(movingWindowPercentage));
+        }
+        s.append("\n");
+        logger.info(s.toString());
     }
 
-    public Api getApi() {
-        return api;
+    public IssueApi getIssueApi() {
+        return issueApi;
+    }
+
+    public ReleaseApi getReleaseApi() {
+        return releaseApi;
     }
 
     public Path getCache() {
@@ -81,5 +95,9 @@ public class DataPipelineContext {
 
     public boolean useCache() {
         return useCache;
+    }
+
+    public Double getMovingWindowPercentage() {
+        return movingWindowPercentage;
     }
 }

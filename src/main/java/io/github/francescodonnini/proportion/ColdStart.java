@@ -14,39 +14,68 @@ public class ColdStart implements Proportion {
     private final IssueApi issueApi;
     private final List<Issue> issues;
     private final List<Release> projectReleases;
+    private final boolean complete;
 
-    public ColdStart(IssueApi issueApi, List<Issue> issues, List<Release> projectReleases) {
+    public ColdStart(IssueApi issueApi, List<Issue> issues, List<Release> projectReleases, boolean complete) {
         this.issueApi = issueApi;
         this.issues = issues;
         this.projectReleases = projectReleases;
+        this.complete = complete;
     }
 
     @Override
     public List<Issue> makeLabels(String projectName) {
+        if (complete) {
+            return makeLabelsComplete(projectName);
+        }
+        return makeLabelsRealistic(projectName);
+    }
+
+    private List<Issue> makeLabelsComplete(String projectName) {
+        var pAvg = new ArrayList<Double>();
+        for (var project : ApacheProjects.getProjects(projectName)) {
+            issueApi.getIssues(ApacheProjects.jiraKey(project)).stream()
+                    .filter(i -> !i.affectedVersions().isEmpty())
+                    .mapToInt(i -> i.affectedVersions().size())
+                    .average()
+                    .ifPresent(pAvg::add);
+        }
+        var m = median(pAvg);
+        if (m.isEmpty()) {
+            return List.of();
+        }
+        return ProportionUtils.applyP(
+                ProportionUtils.getUnlabelled(issues),
+                m.get(),
+                projectReleases);
+    }
+
+    private List<Issue> makeLabelsRealistic(String projectName) {
         var pIssues = new HashMap<String, List<Issue>>();
         for (var project : ApacheProjects.PROJECTS) {
-            pIssues.put(project, issueApi.getIssues(ApacheProjects.jiraKey(project)).stream()
-                    .filter(i -> !i.affectedVersions().isEmpty())
-                    .toList());
+            var issues = issueApi.getIssues(ApacheProjects.jiraKey(project)).stream()
+                    .filter(issue -> !issue.affectedVersions().isEmpty())
+                    .toList();
+            if (!issues.isEmpty()) {
+                pIssues.put(project, issues);
+            }
         }
         var labeled = ProportionUtils.getLabelled(issues);
         var unlabeled = ProportionUtils.getUnlabelled(labeled);
         var result = new ArrayList<>(labeled);
-        var pAvg = new ArrayList<Double>();
         for (var k = 1; k < projectReleases.size(); k++) {
-            var curr = projectReleases.get(k);
-            var prev = projectReleases.get(k - 1);
-            var toLabel = unlabeled.stream()
-                            .filter(i -> !i.created().isAfter(curr.releaseDate().atStartOfDay()))
-                            .toList();
-            for (var project : ApacheProjects.PROJECTS) {
-                calculateP(pIssues.getOrDefault(project, List.of()).stream()
-                        .filter(i -> isBetween(i, prev, curr))
-                        .toList())
+            final var curr = projectReleases.get(k);
+            final var prev = projectReleases.get(k - 1);
+            var pAvg = new ArrayList<Double>();
+            for (var project : ApacheProjects.getProjects(projectName)) {
+            ProportionUtils.calculateP(pIssues.getOrDefault(project, List.of()), i -> !i.created().isAfter(curr.releaseDate().atStartOfDay()))
                         .ifPresent(pAvg::add);
             }
+            var toLabel = unlabeled.stream()
+                    .filter(i -> isBetween(i, prev, curr))
+                    .toList();
             median(pAvg).ifPresent(p -> {
-                logger.log(Level.INFO, "Median P = {0}", p);
+                logger.log(Level.INFO, "Release %d: P=%f".formatted(curr.order(), p));
                 result.addAll(ProportionUtils.applyP(toLabel, p, projectReleases));
             });
             pAvg.clear();
@@ -66,27 +95,5 @@ public class ColdStart implements Proportion {
             return Optional.of(v.get(m));
         }
         return Optional.empty();
-    }
-
-    private OptionalDouble calculateP(List<Issue> issues) {
-        return issues.stream()
-                .map(this::calculateP)
-                .filter(Optional::isPresent)
-                .mapToDouble(Optional::get)
-                .average();
-    }
-
-    private Optional<Double> calculateP(Issue issue) {
-        var fv = (double)issue.fixVersion().order();
-        var o = issue.injectedVersion();
-        if (o.isEmpty()) {
-            return Optional.empty();
-        }
-        var iv = o.get().order();
-        var ov = issue.openingVersion().order();
-        if (fv == ov) {
-            return Optional.empty();
-        }
-        return Optional.of((fv - iv)/(fv - ov));
     }
 }

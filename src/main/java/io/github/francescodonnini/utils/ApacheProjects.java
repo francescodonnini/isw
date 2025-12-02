@@ -53,6 +53,12 @@ public class ApacheProjects {
         return JIRA.getOrDefault(project, project.toUpperCase());
     }
 
+    public static List<String> getProjects(String exclude) {
+        return PROJECTS.stream()
+                .filter(p -> !p.equalsIgnoreCase(exclude))
+                .toList();
+    }
+
     public static void main(String[] args) throws IOException, InterruptedException {
         for (String project : PROJECTS) {
             var name = project.toLowerCase()

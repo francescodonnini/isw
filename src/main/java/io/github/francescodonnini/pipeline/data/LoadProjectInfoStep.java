@@ -13,16 +13,15 @@ public class LoadProjectInfoStep implements Step<Void, ProjectInfo> {
 
     @Override
     public ProjectInfo execute(Void input) {
-        var api = context.getApi();
-        var releases = context.getApi()
-                .getReleaseApi()
+        var releases = context.getReleaseApi()
                 .getReleases(context.getProjectName());
         var remainingReleases = (int) Math.ceil(releases.size() * (1 - context.getDropFactor()));
-        var issues = api.getIssueApi()
+        var issues = context.getIssueApi()
                 .getIssues(context.getProjectName());
         var runtime = new ProjectInfo();
         runtime.setIssues(issues);
-        runtime.setProjectReleases(releases.subList(0, remainingReleases));
+        runtime.setAllReleases(releases);
+        runtime.setProjectReleasesEnd(remainingReleases);
         return runtime;
     }
 }

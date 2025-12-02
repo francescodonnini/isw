@@ -9,22 +9,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProjectInfo {
-    private final List<Release> projectReleases = new ArrayList<>();
+    private final List<Release> allReleases = new ArrayList<>();
+    private int projectReleasesEnd;
     private final List<JavaClass> classes = new ArrayList<>();
     private final List<JavaMethod> methods = new ArrayList<>();
     private final List<Issue> issues = new ArrayList<>();
 
+    public void setProjectReleasesEnd(int projectReleasesEnd) {
+        this.projectReleasesEnd = projectReleasesEnd;
+    }
+
+    public List<Release> getAllReleases() {
+        return allReleases;
+    }
+
+    public void setAllReleases(List<Release> allReleases) {
+        this.allReleases.clear();
+        this.allReleases.addAll(allReleases);
+    }
+
     public List<Release> getProjectReleases() {
-        return projectReleases;
-    }
-
-    public void setProjectReleases(List<Release> projectReleases) {
-        this.projectReleases.clear();
-        this.projectReleases.addAll(projectReleases);
-    }
-
-    public List<JavaClass> getClasses() {
-        return classes;
+        return allReleases.subList(0, projectReleasesEnd);
     }
 
     public void setClasses(List<JavaClass> classes) {

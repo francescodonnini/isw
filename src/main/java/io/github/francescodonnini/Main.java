@@ -7,7 +7,6 @@ import io.github.francescodonnini.jira.JiraIssueApi;
 import io.github.francescodonnini.jira.JiraReleaseApi;
 import io.github.francescodonnini.jira.JiraVersionApi;
 import io.github.francescodonnini.jira.RestApi;
-import io.github.francescodonnini.pipeline.Api;
 import io.github.francescodonnini.pipeline.MLPipelineContext;
 import io.github.francescodonnini.pipeline.Pipeline;
 import io.github.francescodonnini.pipeline.DataPipelineContext;
@@ -31,8 +30,7 @@ public class Main {
         var jiraIssueApi = new JiraIssueApi(new RestApi(), releaseApi, source);
         var localIssueApi = new CsvIssueApi(releaseApi, cachePath, source);
         var issueApi = new IssueRepository(jiraIssueApi, localIssueApi, true);
-        var api = new Api(issueApi, releaseApi);
-        var context = new DataPipelineContext(api, args[1], settings);
+        var context = new DataPipelineContext(issueApi, releaseApi, args[1], settings);
         dataPipeline(context);
     }
 
