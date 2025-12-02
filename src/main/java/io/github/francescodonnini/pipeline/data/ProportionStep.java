@@ -15,11 +15,9 @@ public class ProportionStep implements Step<ProjectInfo, ProjectInfo> {
 
     @Override
     public ProjectInfo execute(ProjectInfo input) {
-        var issues = input.getIssues().stream()
-                .filter(i -> !i.created().isAfter(input.getProjectReleases().getLast().releaseDate().atStartOfDay()))
-                .toList();
+        var issues = input.getIssues();
         var proportion = switch (context.getProportion()) {
-            case "Incremental" -> new Incremental(issues, input.getProjectReleases(), true);
+            case "Incremental" -> new Incremental(issues, context.getApi().getReleaseApi(), true);
             case "ColdStart" -> new ColdStart(context.getApi().getIssueApi(), issues, input.getProjectReleases());
             default -> throw new IllegalStateException("unknown proportion method " + context.getProportion());
         };

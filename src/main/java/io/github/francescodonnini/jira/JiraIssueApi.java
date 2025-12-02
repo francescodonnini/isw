@@ -27,9 +27,10 @@ public class JiraIssueApi {
     private final ReleaseApi releaseApi;
     private final Path source;
     private int noOpeningVersion = 0;
+    private int fixBeforeOpening = 0;
     private int noFixVersion = 0;
     private int noPostReleaseFix = 0;
-    private int injectedNotBeforeFixVersion = 0;
+    private int injectedAfterFix = 0;
     private int injectedAfterOpeningVersion = 0;
     private int affectedNotBeforeFixVersion = 0;
     private int totalIssues = 0;
@@ -77,13 +78,12 @@ public class JiraIssueApi {
                 // La fixVersion è la prima release la cui data è maggiore della data dell'ultimo commit che ha fixato
                 // l'issue
                 var o1 = getFixVersion(mapping, i.getKey(), releases);
+                // L'opening version è la release relativa alla data di creazione del ticket.
+                var o2 = getOpeningVersion(i.getFields().getCreated(), releases);
                 if (o1.isEmpty()) {
                     noFixVersion++;
                     logger.log(Level.INFO, "Issue {0} has no fix version", i);
-                }
-                // L'opening version è la release relativa alla data di creazione del ticket.
-                var o2 = getOpeningVersion(i.getFields().getCreated(), releases);
-                if (o2.isEmpty()) {
+                } else if (o2.isEmpty()) {
                     noOpeningVersion++;
                     logger.log(Level.INFO, "Issue {0} has no opening version", i);
                 }
@@ -99,7 +99,11 @@ public class JiraIssueApi {
                 var affectedVersions = getAffectedVersions(releaseMap, i);
                 var fixVersion = o1.get();
                 var openingVersion = o2.get();
-                createIssue(i, mapping, affectedVersions, openingVersion, fixVersion).ifPresent(issues::add);
+                if (fixVersion.isBefore(openingVersion)) {
+                    fixBeforeOpening++;
+                } else {
+                    createIssue(i, mapping, affectedVersions, openingVersion, fixVersion).ifPresent(issues::add);
+                }
             }
             logDroppedIssues(projectName, totalIssues);
             return issues;
@@ -113,7 +117,8 @@ public class JiraIssueApi {
         var total = noOpeningVersion
                 + noFixVersion
                 + noPostReleaseFix
-                + injectedNotBeforeFixVersion
+                + injectedAfterFix
+                + fixBeforeOpening
                 + affectedNotBeforeFixVersion
                 + injectedAfterOpeningVersion;
         var s = projectName +
@@ -122,7 +127,8 @@ public class JiraIssueApi {
                 "No Opening version:" + noOpeningVersion + '\n' +
                 "No Post release fix:" + noPostReleaseFix + '\n' +
                 "IV > OV:" + injectedAfterOpeningVersion + '\n' +
-                "IV >= FV:" + injectedNotBeforeFixVersion + '\n' +
+                "OV > IV:" + fixBeforeOpening + '\n' +
+                "IV >= FV:" + injectedAfterFix + '\n' +
                 "AV >= FV:" + affectedNotBeforeFixVersion + '\n';
         logger.log(Level.INFO, () -> s);
     }
@@ -204,18 +210,21 @@ public class JiraIssueApi {
     }
 
     // checkForConsistency controlla se la tripla (affectedVersions, openingVersion, fixVersion) è consistente, cioè:
-    // 1. IV < FV
-    // 2. IV <= OV
-    // 3. OV < FV
-    // 4. AV <= FV
+    // - IV < FV
+    // - IV <= OV
+    // - AV <= FV
     private boolean checkForConsistency(List<Release> affectedVersions, Release openingVersion, Release fixVersion) {
         if (affectedVersions.isEmpty()) {
-            return isNotPostReleaseFix(openingVersion, fixVersion);
+            return true;
         }
         var injectedVersion = affectedVersions.stream().min(Comparator.comparing(Release::releaseDate)).orElseThrow();
         if (!injectedVersion.isBefore(fixVersion)) {
+            if (injectedVersion.equals(fixVersion)) {
+                noPostReleaseFix++;
+            } else {
+                injectedAfterFix++;
+            }
             logger.log(Level.INFO, () -> "injected version %s is not before fix version %s".formatted(injectedVersion.name(), fixVersion.name()));
-            injectedNotBeforeFixVersion++;
             return false;
         }
         if (injectedVersion.isAfter(openingVersion)) {
@@ -226,15 +235,6 @@ public class JiraIssueApi {
         if (affectedVersions.stream().anyMatch(r -> !r.isBefore(fixVersion))) {
             logger.log(Level.INFO, () -> "there exists an affected version that is after fix version %s".formatted(fixVersion.name()));
             affectedNotBeforeFixVersion++;
-            return false;
-        }
-        return isNotPostReleaseFix(openingVersion, fixVersion);
-    }
-
-    private boolean isNotPostReleaseFix(Release openingVersion, Release fixVersion) {
-        if (!openingVersion.isBefore(fixVersion)) {
-            logger.log(Level.INFO, () -> "opening version %s is after fix version %s".formatted(openingVersion.name(), fixVersion.name()));
-            noPostReleaseFix++;
             return false;
         }
         return true;
