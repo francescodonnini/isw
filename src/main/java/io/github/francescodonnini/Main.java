@@ -18,7 +18,23 @@ import java.nio.file.Path;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        var settings = new IniSettings(args[0]);
+        if (args.length != 3) {
+            System.exit(1);
+        }
+        switch (args[0]) {
+            case "DATA":
+                dataPipeline(args);
+                break;
+            case "ML":
+                mlPipeline(args);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown option: " + args[0]);
+        }
+    }
+
+    private static void dataPipeline(String[] args) throws Exception {
+        var settings = new IniSettings(args[1]);
         var jiraVersionApi = new JiraVersionApi(new RestApi());
         var cachePath = Path.of(settings.getString("cachePath"));
         var localVersionApi = new CsvVersionApi(cachePath);
@@ -30,7 +46,7 @@ public class Main {
         var jiraIssueApi = new JiraIssueApi(new RestApi(), releaseApi, source);
         var localIssueApi = new CsvIssueApi(releaseApi, cachePath, source);
         var issueApi = new IssueRepository(jiraIssueApi, localIssueApi, true);
-        var context = new DataPipelineContext(issueApi, releaseApi, args[1], settings);
+        var context = new DataPipelineContext(issueApi, releaseApi, args[2], settings);
         dataPipeline(context);
     }
 
@@ -41,6 +57,12 @@ public class Main {
                 .next(new LebellingStep(context))
                 .next(new ExportToArffStep(context))
                 .run(null);
+    }
+
+    private static void mlPipeline(String[] args) throws Exception {
+        var settings = new IniSettings(args[1]);
+        var context = new MLPipelineContext(args[2], settings);
+        mlPipeline(context);
     }
 
     private static void mlPipeline(MLPipelineContext context) throws Exception {

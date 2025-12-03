@@ -66,9 +66,9 @@ public class Dataset {
         return data;
     }
 
-    public Instances validationSet(int order) throws Exception {
-        var data = trainingSet(order, order + 1);
-        logCardinality(data, order, order + 1);
+    public Instances validationSet(int start) throws Exception {
+        var data = trainingSet(start, testRange.start());
+        logCardinality(data, start, testRange.start());
         return data;
     }
 
