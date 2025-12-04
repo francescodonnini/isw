@@ -4,6 +4,7 @@ import io.github.francescodonnini.collectors.ast.*;
 import io.github.francescodonnini.model.JavaClass;
 import io.github.francescodonnini.model.JavaMethod;
 import io.github.francescodonnini.model.Release;
+import io.github.francescodonnini.utils.FileUtils;
 import net.sourceforge.pmd.PMDConfiguration;
 import net.sourceforge.pmd.PmdAnalysis;
 import net.sourceforge.pmd.cpd.CPDConfiguration;
@@ -42,12 +43,12 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
     private final List<JavaMethod> methods = new ArrayList<>();
     private final JavaMethodExtractor extractor;
     private boolean dataLoaded = false;
-    private final String reportsPath;
+    private final Path reportsPath;
     private final List<Release> releases;
 
     public DataLoaderImpl(
             AbstractCounterFactoryImpl factory, List<Release> releases, String projectPath,
-            String reportsPath) throws IOException {
+            Path reportsPath) throws IOException {
         this.projectPath = projectPath;
         this.git = createGit(projectPath);
         this.reportsPath = reportsPath;
@@ -100,6 +101,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
     private void loadData() throws IOException, GitAPIException {
         var head = git.getRepository().getBranch();
         try {
+            FileUtils.createDirectory(reportsPath);
             var endTime = releases.getLast().releaseDate();
             // lista di commit effettuati non oltre endTime e ordinati rispetto alla data di commit.
             var commits = StreamSupport
@@ -200,7 +202,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
             reportName += ".csv";
         }
         var renderer = new CSVRenderer();
-        renderer.setWriter(Files.newBufferedWriter(Path.of(reportsPath, reportName)));
+        renderer.setWriter(Files.newBufferedWriter(reportsPath.resolve(reportName)));
         var pmd = PmdAnalysis.create(getPmdConfig(reportName));
         pmd.addRenderer(renderer);
         return pmd;
@@ -209,7 +211,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
     private PMDConfiguration getPmdConfig(String reportName) {
         var config = new PMDConfiguration();
         config.setDefaultLanguageVersion(LanguageRegistry.PMD.getLanguageVersionById("java", "22"));
-        config.setReportFile(Path.of(reportsPath, reportName));
+        config.setReportFile(reportsPath.resolve(reportName));
         config.addRuleSet("rulesets/java/quickstart.xml");
         return config;
     }

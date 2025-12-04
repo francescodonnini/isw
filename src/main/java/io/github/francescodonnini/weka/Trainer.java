@@ -30,7 +30,7 @@ public class Trainer {
             model.buildClassifier(trainingSet);
             var eval = new Evaluation(validationSet);
             eval.evaluateModel(model, validationSet);
-            logger.log(Level.INFO, "{}", "Evaluation for release %d: %s".formatted(validation, eval.toSummaryString()));
+            logger.log(Level.INFO, "{0}", "Evaluation for release %d: %s".formatted(validation, eval.toSummaryString()));
             history.add(eval);
         }
     }

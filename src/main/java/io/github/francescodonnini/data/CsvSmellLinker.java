@@ -19,16 +19,16 @@ import java.util.HashMap;
 
 public class CsvSmellLinker implements SmellLinker {
     private final Logger logger = Logger.getLogger(CsvSmellLinker.class.getName());
-    private final String reportDirectory;
+    private final Path reportDirectory;
 
-    public CsvSmellLinker(String reportDirectory) {
+    public CsvSmellLinker(Path reportDirectory) {
         this.reportDirectory = reportDirectory;
     }
 
     @Override
     public void link(List<JavaClass> classes) {
         var index = createCommitClassIndex(classes);
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(Path.of(reportDirectory))) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(reportDirectory)) {
             for (Path path : stream) {
                 var fileName = path.getFileName().toString();
                 if (fileName.endsWith(".csv")) {

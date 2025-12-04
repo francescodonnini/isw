@@ -40,14 +40,13 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
                     .filter(m -> !m.getJavaClass().getTime().isAfter(input.getProjectReleases().getLast().releaseDate().atStartOfDay()))
                     .toList();
             input.setMethods(methods);
-        } catch (FileNotFoundException e) {
-            logger.log(Level.WARNING, "cannot find any classes/methods cached files");
+        } catch (FileNotFoundException | RuntimeException e) {
+            logger.log(Level.WARNING, "cannot find any classes/methods cached files", e);
             var factory = new AbstractCounterFactoryImpl();
             var source = context.getSources()
                     .resolve(context.getProjectName().toLowerCase());
             var report = context.getReports()
-                    .resolve(context.getProjectName())
-                    .toString();
+                    .resolve(context.getProjectName());
             var loader = new DataLoaderImpl(factory, input.getProjectReleases(), source.toString(), report);
             var classes = loader.getClasses();
             new CsvSmellLinker(report).link(classes);
