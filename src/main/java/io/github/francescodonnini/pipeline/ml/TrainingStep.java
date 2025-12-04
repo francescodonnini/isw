@@ -15,8 +15,21 @@ import java.util.logging.Logger;
 
 public class TrainingStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
     private final Logger logger = Logger.getLogger(TrainingStep.class.getName());
+    private static final List<String> CLASSIFIERS = List.of(
+            "DecisionStump",
+            "DecisionTable",
+            "IBk",
+            "J48",
+            "Jrip",
+            "NaiveBayes",
+            "NaiveBayes+",
+            "OneR",
+            "PART",
+            "RandomForest",
+            "REPTree",
+            "SVM"
+    );
     private final MLPipelineContext context;
-
     public TrainingStep(MLPipelineContext context) {
         this.context = context;
     }
@@ -29,12 +42,11 @@ public class TrainingStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
         FileUtils.createDirectory(results);
         var trainer = new Trainer(input.getDataset());
         var workflowId = workflowId();
-        var models = List.of("random-forest");
-        for (var m : models) {
+        for (var m : CLASSIFIERS) {
             trainer.train(m);
             var history = trainer.getHistory();
             logger.log(Level.INFO, "summary for model: {0}", "%s%n%s".formatted(m, history.getSummary()));
-            history.save(results.resolve(workflowId + ".csv"));
+            history.save(results.resolve("%s-%s".formatted(workflowId, m) + ".csv"));
         }
         return input;
     }

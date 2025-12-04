@@ -3,8 +3,16 @@ package io.github.francescodonnini.weka;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.classifiers.bayes.NaiveBayes;
+import weka.classifiers.bayes.NaiveBayesUpdateable;
 import weka.classifiers.functions.SMO;
+import weka.classifiers.lazy.IBk;
+import weka.classifiers.rules.DecisionTable;
+import weka.classifiers.rules.JRip;
+import weka.classifiers.rules.OneR;
+import weka.classifiers.rules.PART;
+import weka.classifiers.trees.DecisionStump;
 import weka.classifiers.trees.J48;
+import weka.classifiers.trees.REPTree;
 import weka.classifiers.trees.RandomForest;
 
 import java.util.logging.Level;
@@ -37,10 +45,18 @@ public class Trainer {
 
     private static Classifier createModel(String name) {
         return switch (name) {
-            case "j48" -> new J48();
-            case "naive-bayes" -> new NaiveBayes();
-            case "random-forest" -> new RandomForest();
-            case "smo" -> new SMO();
+            case "DecisionStump" -> new DecisionStump();
+            case "DecisionTable" -> new DecisionTable();
+            case "IBk" -> new IBk();
+            case "J48" -> new J48();
+            case "Jrip" -> new JRip();
+            case "NaiveBayes" -> new NaiveBayes();
+            case "NaiveBayes+" -> new NaiveBayesUpdateable();
+            case "OneR" -> new OneR();
+            case "PART" -> new PART();
+            case "RandomForest" -> new RandomForest();
+            case "REPTree" -> new REPTree();
+            case "SVM" -> new SMO();
             default -> throw new IllegalArgumentException("Unknown model: " + name);
         };
     }
