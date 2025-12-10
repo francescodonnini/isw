@@ -13,6 +13,7 @@ import io.github.francescodonnini.pipeline.DataPipelineContext;
 import io.github.francescodonnini.pipeline.data.*;
 import io.github.francescodonnini.pipeline.ml.FeatureSelectionStep;
 import io.github.francescodonnini.pipeline.ml.LoadDatasetStep;
+import io.github.francescodonnini.pipeline.ml.PreprocessingStep;
 
 import java.nio.file.Path;
 
@@ -67,6 +68,7 @@ public class Main {
 
     private static void mlPipeline(MLPipelineContext context) throws Exception {
         Pipeline.start(new LoadDatasetStep(context))
+                .next(new PreprocessingStep())
                 .next(new FeatureSelectionStep(context))
                 .run(null);
 

@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class JavaMethodExtractor extends TreeScanner<Void, Void> {
@@ -80,6 +81,10 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
 
     @Override
     public Void visitClass(ClassTree node, Void unused) {
+        if (isGenerated(node)) {
+            logger.log(Level.INFO, "skip class %s because it is generated (commit %s)".formatted( context.path(), context.commit().substring(0, 6)));
+            return null;
+        }
         if (isNamedClass(node)) {
             var parent = currentClass;
             setNamedClass(node);
@@ -90,6 +95,16 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
             return r;
         }
         return null;
+    }
+
+    private boolean isGenerated(ClassTree node) {
+        for (var annotation : node.getModifiers().getAnnotations()) {
+            var annotationType = annotation.getAnnotationType();
+            if (annotationType.toString().toLowerCase().endsWith("generated")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void setNamedClass(ClassTree currentClass) {

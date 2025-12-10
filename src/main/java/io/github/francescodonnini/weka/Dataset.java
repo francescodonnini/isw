@@ -12,9 +12,10 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.IntStream;
 
 public class Dataset {
-    private static final int BUGGY_ATTR = 0;
+    private static final int BUGGY_ATTR_INDEX = 0;
     private static final String RELEASE_ATTR = "release";
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private Instances trainingSet;
@@ -35,7 +36,7 @@ public class Dataset {
     }
 
     private void loadDataset(Instances data, double trainingSplit) {
-        data.setClassIndex(BUGGY_ATTR);
+        data.setClassIndex(BUGGY_ATTR_INDEX);
         var distinct = new TreeSet<Integer>();
         for (var i : data) {
             distinct.add((int) i.value(data.attribute(Dataset.RELEASE_ATTR)));
@@ -99,7 +100,7 @@ public class Dataset {
     private Instances select(Instances data, Predicate<Instance> i) {
         var result = new Instances(data, 0);
         data.stream().filter(i).forEach(result::add);
-        result.setClassIndex(BUGGY_ATTR);
+        result.setClassIndex(BUGGY_ATTR_INDEX);
         return result;
     }
 
@@ -108,7 +109,20 @@ public class Dataset {
         remove.setExpression(Dataset.RELEASE_ATTR);
         remove.setInputFormat(data);
         var result = Filter.useFilter(data, remove);
-        result.setClassIndex(BUGGY_ATTR);
+        result.setClassIndex(BUGGY_ATTR_INDEX);
         return result;
+    }
+
+    public void preprocess(PreprocessingFunction f) {
+        var classIndex = trainingSet.classIndex();
+        var releaseIndex = trainingSet.attribute(Dataset.RELEASE_ATTR).index();
+        var attrIndices = IntStream.range(0, trainingSet.numAttributes())
+                .filter(i -> i != classIndex)
+                .filter(i -> i != releaseIndex)
+                .toArray();
+        for (var attrIdx : attrIndices) {
+            f.preprocess(trainingSet, attrIdx);
+            f.preprocess(testSet, attrIdx);
+        }
     }
 }
