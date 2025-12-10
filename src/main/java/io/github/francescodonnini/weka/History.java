@@ -5,8 +5,7 @@ import weka.classifiers.Evaluation;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class History {
     private final List<Evaluation> evaluationHistory = new ArrayList<>();
@@ -32,6 +31,32 @@ public class History {
             s.append(evaluation.toSummaryString()).append("\n");
         }
         return s.toString();
+    }
+
+    public OptionalDouble avg(String metric) {
+        return evaluationHistory.stream()
+                .mapToDouble(e -> getMetric(e, metric))
+                .average();
+    }
+
+    public Set<Metric> avg(Set<String> metrics) {
+        var averages = new HashSet<Metric>();
+        for (var metric : metrics) {
+            avg(metric).ifPresent(x -> averages.add(new Metric(metric, x)));
+        }
+        return averages;
+    }
+
+    private Double getMetric(Evaluation e, String metric) {
+        return switch (metric) {
+            case "f1" -> e.fMeasure(classIndex);
+            case "kappa" -> e.kappa();
+            case "precision" -> e.precision(classIndex);
+            case "recall" -> e.recall(classIndex);
+            case "roc" -> e.areaUnderROC(classIndex);
+            case "square" -> e.rootMeanSquaredError();
+            default -> throw new IllegalArgumentException("Invalid metric: " + metric);
+        };
     }
 
     public void save(Path path) throws IOException {

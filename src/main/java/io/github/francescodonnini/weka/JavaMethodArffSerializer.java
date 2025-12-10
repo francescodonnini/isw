@@ -40,6 +40,7 @@ public class JavaMethodArffSerializer {
             numericAttribute(off, "authors_count");
             numericAttribute(off, "smell_count");
             numericAttribute(off, "duplication");
+            numericAttribute(off, "halstead_effort");
             numericAttribute(off, "release");
             off.write("@DATA\n");
             for (var i = 0; i < releases.size(); i++) {
@@ -109,6 +110,7 @@ public class JavaMethodArffSerializer {
                 .append(metrics.getAuthorsCount()).append(",")
                 .append(metrics.getCodeSmells()).append(",")
                 .append(metrics.getCodeDuplication()).append(",")
+                .append(metrics.getHalsteadEffort()).append(",")
                 .append(r.order()).append("\n")
                 .toString();
         writer.write(s);

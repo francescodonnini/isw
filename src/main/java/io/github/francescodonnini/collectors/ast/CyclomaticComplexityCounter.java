@@ -14,13 +14,13 @@ public class CyclomaticComplexityCounter extends AbstractCounter {
         // questo controllo è necessario nel caso in cui il metodo in esame non ha implementazione, cioè è un metodo
         // di un'interfaccia oppure astratto.
         if (body != null) {
-            visitBlock(node.getBody(), null);
+            super.visitMethod(node, unused);
         }
         update(AstUtils.getSignature(node), m -> {
             m.setCyclomaticComplexity(oldCounter + counter);
             return null;
         });
-        return super.visitMethod(node, null);
+        return null;
     }
 
     @Override

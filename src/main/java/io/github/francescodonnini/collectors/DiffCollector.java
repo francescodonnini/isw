@@ -5,8 +5,11 @@ import io.github.francescodonnini.model.Release;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DiffCollector {
+    private final Logger logger = Logger.getLogger(DiffCollector.class.getName());
     private final List<Release> releases;
     private final List<JavaMethod> methods;
     private final Map<String, List<JavaMethod>> history = new HashMap<>();
@@ -35,8 +38,11 @@ public class DiffCollector {
         createMapping();
         var result = new ArrayList<JavaMethod>();
         var start = LocalDate.MIN;
-        for (var end : releases.stream().map(Release::releaseDate).toList()) {
-            result.addAll(collect(start, end));
+        for (var release : releases) {
+            var end = release.releaseDate();
+            var methods = collect(start, end);
+            logger.log(Level.INFO, "A total of %d methods has been read in release %s".formatted(methods.size(), release));
+            result.addAll(methods);
             if (!fromStart) {
                 start = end;
             }

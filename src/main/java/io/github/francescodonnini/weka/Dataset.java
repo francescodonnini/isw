@@ -1,5 +1,6 @@
 package io.github.francescodonnini.weka;
 
+import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.ConverterUtils;
@@ -13,39 +14,55 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Dataset {
+    private static final int BUGGY_ATTR = 0;
     private static final String RELEASE_ATTR = "release";
-    public record IntPair(int start, int endExcl) {}
-
     private final Logger logger = Logger.getLogger(this.getClass().getName());
-    private final Path dataPath;
-    private final double trainingSplit;
-    private final List<Integer> releases = new ArrayList<>();
     private Instances trainingSet;
     private Instances testSet;
     private IntPair trainingRange;
     private IntPair testRange;
 
     public Dataset(Path dataPath, double trainingSplit) throws Exception {
-        this.dataPath = dataPath;
-        this.trainingSplit = trainingSplit;
-        loadDataset();
+        var source = new ConverterUtils.DataSource(dataPath.toString());
+        loadDataset(source.getDataSet(), trainingSplit);
     }
 
-    private void loadDataset() throws Exception {
-        var source = new ConverterUtils.DataSource(dataPath.toString());
-        var data = source.getDataSet();
-        data.setClassIndex(0);
+    protected Dataset(Instances trainingSet, IntPair trainingRange, Instances testSet, IntPair testRange) {
+        this.trainingSet = trainingSet;
+        this.trainingRange = trainingRange;
+        this.testSet = testSet;
+        this.testRange = testRange;
+    }
+
+    private void loadDataset(Instances data, double trainingSplit) {
+        data.setClassIndex(BUGGY_ATTR);
         var distinct = new TreeSet<Integer>();
         for (var i : data) {
             distinct.add((int) i.value(data.attribute(Dataset.RELEASE_ATTR)));
         }
-        releases.addAll(distinct);
-        logger.log(Level.INFO, "{}", "%d distinct releases has been found [%s]".formatted(releases.size(), String.join(",", releases.stream().map(String::valueOf).toList())));
+        var releases = distinct.stream()
+                .toList();
+        logger.log(Level.INFO, "{0}", "%d distinct releases has been found [%s]".formatted(releases.size(), String.join(",", releases.stream().map(String::valueOf).toList())));
         var trainingSize = (int)Math.ceil(releases.size() * trainingSplit);
         trainingRange = new IntPair(releases.getFirst(), releases.get(trainingSize));
-        trainingSet = select(data, byReleaseRange(data, trainingRange.start, trainingRange.endExcl));
+        trainingSet = select(data, byReleaseRange(data, trainingRange.start(), trainingRange.endExcl()));
         testRange = new IntPair(releases.get(trainingSize), releases.size());
-        testSet = select(data, byReleaseRange(data, testRange.start, testRange.endExcl));
+        testSet = select(data, byReleaseRange(data, testRange.start(), testRange.endExcl()));
+    }
+
+    public Set<Attribute> getFeatures() {
+        var attributes = new HashSet<Attribute>();
+        for (var it = trainingSet.enumerateAttributes().asIterator(); it.hasNext(); ) {
+            var attr = it.next();
+            if (!attr.name().equals(Dataset.RELEASE_ATTR)) {
+                attributes.add(attr);
+            }
+        }
+        return attributes;
+    }
+
+    public Attribute getClassAttribute() {
+        return trainingSet.classAttribute();
     }
 
     public int getClassIndex() {
@@ -61,19 +78,11 @@ public class Dataset {
     }
 
     public Instances trainingSet(int start, int endExclusive) throws Exception {
-        var data = removeReleaseAttribute(select(trainingSet, byReleaseRange(trainingSet, start, endExclusive)));
-        logCardinality(data, start, endExclusive);
-        return data;
+        return removeReleaseAttribute(select(trainingSet, byReleaseRange(trainingSet, start, endExclusive)));
     }
 
     public Instances validationSet(int start) throws Exception {
-        var data = trainingSet(start, testRange.start());
-        logCardinality(data, start, testRange.start());
-        return data;
-    }
-
-    private void logCardinality(Instances data, int start, int endExclusive) {
-        logger.log(Level.INFO, "{0}", "Dataset[%d,%d)=%d".formatted(start, endExclusive, data.size()));
+        return trainingSet(start, testRange.start());
     }
 
     private Predicate<Instance> byReleaseRange(Instances data, int start, int endExclusive) {
@@ -90,6 +99,7 @@ public class Dataset {
     private Instances select(Instances data, Predicate<Instance> i) {
         var result = new Instances(data, 0);
         data.stream().filter(i).forEach(result::add);
+        result.setClassIndex(BUGGY_ATTR);
         return result;
     }
 
@@ -97,6 +107,8 @@ public class Dataset {
         var remove = new RemoveByName();
         remove.setExpression(Dataset.RELEASE_ATTR);
         remove.setInputFormat(data);
-        return Filter.useFilter(data, remove);
+        var result = Filter.useFilter(data, remove);
+        result.setClassIndex(BUGGY_ATTR);
+        return result;
     }
 }

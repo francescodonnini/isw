@@ -36,6 +36,7 @@ public class Metrics {
     private final Set<String> authors = new HashSet<>();
     private int codeSmells;
     private double codeDuplcation;
+    private int halsteadEffort;
 
     @Override
     public String toString() {
@@ -407,5 +408,13 @@ public class Metrics {
         }
         this.codeDuplcation += codeDuplication;
 
+    }
+
+    public int getHalsteadEffort() {
+        return halsteadEffort;
+    }
+
+    public void setHalsteadEffort(int halsteadEffort) {
+        this.halsteadEffort = halsteadEffort;
     }
 }

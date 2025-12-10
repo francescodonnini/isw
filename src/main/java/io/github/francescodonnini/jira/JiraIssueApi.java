@@ -59,7 +59,7 @@ public class JiraIssueApi {
                 return List.of();
             }
             releases.sort(Comparator.comparing(Release::releaseDate));
-            var mapping = getTicketCommitMapping(source.resolve(projectName.toLowerCase()), PATTERN.formatted(ApacheProjects.jiraKey(projectName)));
+            var mapping = getTicketCommitMapping(projectName.toLowerCase(), PATTERN.formatted(ApacheProjects.jiraKey(projectName)));
             var result = restApi.getIssues("project='%s' AND type=bug AND (status=closed OR status=resolved) AND resolution=fixed".formatted(projectName));
             if (result == null || result.getIssueList() == null) {
                 logger.log(Level.WARNING, "No issues found for project: {0}",  projectName);
@@ -140,10 +140,10 @@ public class JiraIssueApi {
      *                commit.
      * @return una mappa chiave ticket, commit il cui messaggio contiene la chiave del ticket.
      */
-    private Map<String, List<RevCommit>> getTicketCommitMapping(Path path, String pattern) throws GitAPIException, IOException {
+    private Map<String, List<RevCommit>> getTicketCommitMapping(String projectName, String pattern) throws GitAPIException, IOException {
         var p = Pattern.compile(pattern);
         var mapping = new HashMap<String, List<RevCommit>>();
-        for (var commit : GitUtils.getCommits(path)) {
+        for (var commit : GitUtils.getCommits(source.resolve(projectName), ApacheProjects.remoteUrl(projectName))) {
             var matcher = p.matcher(commit.getFullMessage());
             if (matcher.find()) {
                 mapping.computeIfAbsent(matcher.group(), m -> new ArrayList<>()).add(commit);

@@ -12,6 +12,8 @@ public class AbstractCounterFactoryImpl implements AbstractCounterFactory {
             return new ElseCounter();
         } else if (kind == NestingDepth.class) {
             return new NestingDepth();
+        } else if (kind == HalsteadComplexityCounter.class) {
+            return new HalsteadComplexityCounter();
         } else {
             throw new IllegalArgumentException("unknown kind: " + kind);
         }

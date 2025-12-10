@@ -45,6 +45,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
     private boolean dataLoaded = false;
     private final Path reportsPath;
     private final List<Release> releases;
+    private List<Integer> methodsPerRelease = new ArrayList<>();
 
     public DataLoaderImpl(
             AbstractCounterFactoryImpl factory, List<Release> releases, String projectPath,
@@ -69,7 +70,8 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
                 factory.build(InputParametersCounter.class),
                 factory.build(StatementsCounter.class),
                 factory.build(ElseCounter.class),
-                factory.build(NestingDepth.class));
+                factory.build(NestingDepth.class),
+                factory.build(HalsteadComplexityCounter.class));
     }
 
     @Override
@@ -113,25 +115,19 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
             var lastCommitPerRelease = getLastCommitPerRelease(commits);
             logger.log(Level.INFO, "total commits: {0}", commits.size());
             var progress = 0;
-            var previousCount = -1;
             for (var commit : commits) {
                 ++progress;
                 logProgress(progress, commits.size());
                 checkout(git, commit.getName());
-                var isLastCommitOfRelease = lastCommitPerRelease.contains(commit.getName());
+                var lastRelease = lastCommitPerRelease.get(commit.getName());
                 var susceptible = getTouchedFiles(commit);
                 releaseChangeSet.addAll(susceptible);
-                Predicate<String> filter = getPathFilter(isLastCommitOfRelease, susceptible, releaseChangeSet);
+                Predicate<String> filter = getPathFilter(lastRelease != null, susceptible, releaseChangeSet);
                 loadData(commit, filter);
-                if (isLastCommitOfRelease) {
-                    int currCount;
-                    if (previousCount >= 0) {
-                        currCount = methods.size() - previousCount;
-                    } else {
-                        currCount = methods.size();
-                    }
-                    logger.log(Level.INFO, "read methods: {0}", previousCount);
-                    previousCount = currCount;
+                if (lastRelease != null) {
+                    logger.log(Level.INFO, "In the closing commit of release %s a total of %d methods has been read".formatted(lastRelease, methodsPerRelease.getLast()));
+                    logger.log(Level.INFO, "A total of %d has been read for release %s (commit %s)".formatted(methodsPerRelease.stream().mapToInt(i -> i).sum(), lastRelease, commit.getName()));
+                    methodsPerRelease.clear();
                     releaseChangeSet.clear();
                 }
             }
@@ -148,15 +144,21 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         return susceptible::contains;
     }
 
-    private Set<String> getLastCommitPerRelease(List<RevCommit> commits) {
-        var set = new HashSet<String>();
+    private Map<String, Release> getLastCommitPerRelease(List<RevCommit> commits) {
+        var map = new HashMap<String, Release>();
         for (var release : releases) {
-            commits.stream()
+            var o = commits.stream()
                     .filter(c -> !getCommitDate(c).isAfter(release.releaseDate()))
-                    .max(Comparator.comparing(this::getCommitDate))
-                    .ifPresent(c -> set.add(c.getName()));
+                    .max(Comparator.comparing(this::getCommitDate));
+            if (o.isPresent()) {
+                var commit = o.get();
+                map.put(o.get().getName(), release);
+                logger.log(Level.INFO, "commit %s is the last one for release %s".formatted(commit, release));
+            } else {
+                logger.log(Level.WARNING, "cannot find a closing commit for release %s", release);
+            }
         }
-        return set;
+        return map;
     }
 
     private void loadData(RevCommit commit, Predicate<String> pathFilter) {
@@ -183,8 +185,10 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
 
     private void addProgramData(ArrayList<JavaClass> classList) {
         classList.stream().filter(c -> !c.getMethods().isEmpty()).forEach(c -> {
-            methods.addAll(c.getMethods());
+            var methods = c.getMethods();
+            this.methods.addAll(methods);
             classes.add(c);
+            methodsPerRelease.add(methods.size());
         });
     }
 
@@ -324,14 +328,14 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         for (var diff : diffs) {
             var oldPath = diff.getOldPath();
             var path = diff.getNewPath();
-            var edits = df.toFileHeader(diff).toEditList();
+            // var edits = df.toFileHeader(diff).toEditList();
             // Se il percorso del file modificato non è un file .java allora non è necessario analizzare
             // la modifica.
             if (path.endsWith(JAVA_FILE_EXT) && index.containsKey(path)) {
                 var author = getAuthor(commit);
                 for (var c : index.get(path)) {
                     author.ifPresent(c::setAuthor);
-                    c.getMethods().removeIf(m -> !EditUtils.isTouched(m, edits));
+                    // c.getMethods().removeIf(m -> !EditUtils.isTouched(m, edits));
                 }
                 if (!oldPath.equals("/dev/null") && !oldPath.equals(path)) {
                     renameOldEntries(oldPath, path);

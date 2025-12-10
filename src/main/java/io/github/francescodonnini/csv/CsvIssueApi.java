@@ -52,11 +52,13 @@ public class CsvIssueApi {
                 .withFieldAsNull(CSVReaderNullFieldIndicator.EMPTY_QUOTES)
                 .build()
                 .parse();
-        return beans.stream()
+        var issues = beans.stream()
                 .map(b -> fromCsv(b, commits, releases))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .toList();
+        logger.log(Level.INFO, "Retrieved {0} from cache", issues.size());
+        return issues;
     }
 
     public void saveLocal(String project, List<Issue> issues) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {

@@ -9,14 +9,20 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class GitUtils {
+    private static final Logger logger = Logger.getLogger(GitUtils.class.getName());
+
     private GitUtils() {}
 
     public static List<RevCommit> getCommits(Path path, String remoteUrl) throws IOException, GitAPIException {
         try {
             return getCommits(path);
         } catch (GitAPIException e) {
+            logger.log(Level.INFO, e.getMessage());
+            logger.log(Level.INFO, "{0}", "git clone %s %s".formatted(remoteUrl, path));
             var git = Git.cloneRepository()
                     .setURI(remoteUrl)
                     .setDirectory(path.toFile())

@@ -19,9 +19,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class CsvJavaMethodApi {
+    private final Logger logger =  Logger.getLogger(CsvJavaMethodApi.class.getName());
+
     private String key(JavaClass clazz) {
         return String.format("%s%s%s", clazz.getPath(), clazz.getName(), clazz.getCommit());
     }
@@ -92,6 +96,7 @@ public class CsvJavaMethodApi {
         m.getMetrics().setCodeSmells(bean.getCodeSmells());
         bean.getAuthors().forEach(a -> m.getMetrics().addAuthor(a));
         m.getMetrics().setCodeDuplcation(bean.getCodeDuplication());
+        m.getMetrics().setHalsteadEffort(bean.getHalsteadEffort());
     }
 
     public void saveLocal(List<JavaMethod> entries, String path) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
@@ -106,6 +111,7 @@ public class CsvJavaMethodApi {
             for (var b : beans) {
                 beanToCsv.write(b);
             }
+            logger.log(Level.INFO, "saved a total of {0} methods", beans.size());
         }
     }
 
@@ -144,6 +150,7 @@ public class CsvJavaMethodApi {
         bean.setAuthors(new ArrayList<>(model.getMetrics().getAuthors()));
         bean.setCodeSmells(model.getMetrics().getCodeSmells());
         bean.setCodeDuplication(model.getMetrics().getCodeDuplication());
+        bean.setHalsteadEffort(model.getMetrics().getHalsteadEffort());
         return bean;
     }
 }

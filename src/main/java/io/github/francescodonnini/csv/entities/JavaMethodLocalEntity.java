@@ -64,6 +64,8 @@ public class JavaMethodLocalEntity {
     int codeSmells;
     @CsvBindByName(column = "codeDuplication")
     double codeDuplication;
+    @CsvBindByName(column = "halsteadEffort")
+    int halsteadEffort;
     @CsvBindByName(column = "signature", required = true)
     private String signature;
     @CsvBindByName(column = "classPath", required = true)
@@ -335,5 +337,13 @@ public class JavaMethodLocalEntity {
 
     public void setCodeDuplication(double codeDuplication) {
         this.codeDuplication = codeDuplication;
+    }
+
+    public int getHalsteadEffort() {
+        return halsteadEffort;
+    }
+
+    public void setHalsteadEffort(int halsteadEffort) {
+        this.halsteadEffort = halsteadEffort;
     }
 }

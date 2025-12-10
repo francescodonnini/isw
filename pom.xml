@@ -46,21 +46,19 @@
             <version>3.49.1.0</version>
         </dependency>
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>RELEASE</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>dataframe</artifactId>
-            <version>0.15.0</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
             <groupId>nz.ac.waikato.cms.weka</groupId>
             <artifactId>weka-stable</artifactId>
             <version>3.8.6</version>
+        </dependency>
+        <dependency>
+            <groupId>nz.ac.waikato.cms.weka.thirdparty</groupId>
+            <artifactId>bounce</artifactId>
+            <version>0.18</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-core</artifactId>
+            <version>3.25.10</version>
         </dependency>
     </dependencies>
 </project>

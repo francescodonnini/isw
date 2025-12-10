@@ -1,0 +1,85 @@
+package io.github.francescodonnini;
+
+import com.github.javaparser.StaticJavaParser;
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.EnumDeclaration;
+import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.expr.ObjectCreationExpr;
+import io.github.francescodonnini.utils.GitUtils;
+import org.eclipse.jgit.api.errors.GitAPIException;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Stream;
+
+public class CrossCheck {
+
+    public static void main(String[] args) throws IOException, GitAPIException {
+        var rootPath = Path.of("/home/francesco/Documents/Università/Ingegneria del Software 2/60/sources/bookkeeper");
+        try (var git = GitUtils.createGit(rootPath)) {
+        var commits = List.of(
+                "213db5d6a6d55b5b093776a4c54fa5c8ffed5f0d",
+                "a2cd9899405ef7313a50e87a370aecef543ae4eb",
+                "7d8079c446110872d8f6d50eff86268a3cb4e989",
+                "f2bb5603ff33b8ac54bcdf2daddb61cf3e65de80",
+                "dea488afbf4615e4416079f5517a6e3ae1000c17",
+                "0345c8095ee47aefd7d40a07e2a621079c94f4fd",
+                "c9db762707538a99a92852e60b88bed577b01377",
+                "6688d96b52072496202f607f8c55976472f4c9a6",
+                "355ddbc7c13e39c49a58371d467e87aa80f696d7",
+                "089735246f6084e9f68085ab03999394c7158a72",
+                "f5c96ebc9e5952a89f86d0a50093ff65c821701b"
+        );
+        var order = 0;
+        var total = 0L;
+        for (var commit :  commits) {
+            git.checkout()
+                    .setName(commit)
+                    .call();
+            try (Stream<Path> paths = Files.walk(rootPath)) {
+                var count = paths
+                        .filter(p -> p.toString().endsWith(".java"))
+                        // Optional: Filter out tests if you only want src/main
+                        // .filter(p -> !p.toString().contains("/src/test/"))
+                        .mapToLong(CrossCheck::countMethodsInFile)
+                        .sum();
+                System.out.printf("Release %d: #methods %d%n", order, count);
+                order++;
+                total += count;
+            }
+        }
+        System.out.println("Total Methods (excluding anonymous): " + total);
+        }
+    }
+
+    private static long countMethodsInFile(Path path) {
+        try {
+            // Parse the file purely as syntax
+            CompilationUnit cu = StaticJavaParser.parse(path);
+
+            return cu.findAll(MethodDeclaration.class).stream()
+                    .filter(method -> {
+                        // Check parent to ensure it's not anonymous
+                        // In JavaParser, anonymous classes are usually inside ObjectCreationExpr
+                        var parent = method.getParentNode().orElse(null);
+
+                        // If parent is an ObjectCreationExpr, it's an anonymous class -> Exclude it
+                        if (parent instanceof ObjectCreationExpr) {
+                            return false;
+                        }
+
+                        // Double check: Ensure it belongs to a Class, Interface, or Enum
+                        return parent instanceof ClassOrInterfaceDeclaration || parent instanceof EnumDeclaration;
+                    })
+                    .count();
+
+        } catch (Exception e) {
+            // If a single file fails (e.g. strict syntax error), log it but DO NOT CRASH
+            System.err.println("Failed to parse: " + path);
+            return 0;
+        }
+    }
+}
