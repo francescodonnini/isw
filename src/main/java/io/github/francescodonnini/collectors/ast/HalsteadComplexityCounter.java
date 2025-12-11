@@ -21,7 +21,15 @@ public class HalsteadComplexityCounter extends AbstractCounter {
     }
 
     private int getVolume() {
-        return (int) (getProgramLength() * (Math.log(Math.max(getProgramVocabulary(), 1.0)) / Math.log(2)));
+        return (int) (getProgramLength() * log2(getProgramVocabulary() + Double.MIN_VALUE));
+    }
+
+    private int getEstimatedProgramLength() {
+        return (int) (getDistinctOperators() * log2(getDistinctOperators() + Double.MIN_VALUE) + getDistinctOperands() * log2(getDistinctOperands() + Double.MIN_VALUE));
+    }
+
+    private static double log2(double x) {
+        return Math.log(x) / Math.log(2);
     }
 
     private int getProgramLength() {
