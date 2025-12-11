@@ -70,7 +70,6 @@ public class Main {
     private static void mlPipeline(MLPipelineContext context) throws Exception {
         Pipeline.start(new LoadDatasetStep(context))
                 .next(new PreprocessingStep())
-                .next(new FeatureSelectionStep())
                 .next(new TrainingStep(context))
                 .run(null);
     }

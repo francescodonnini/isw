@@ -36,7 +36,7 @@ public class MLPipelineContext {
         this(projectName,
             settings.getString("proportion"),
             settings.getDouble("trainingTestSplit", 0.8),
-            settings.getString("model"),
+            settings.getString("model", "RandomForest"),
             settings.getString("dataPath"),
             settings.getDouble("%s_dropFactor".formatted(projectName.toLowerCase())));
     }
