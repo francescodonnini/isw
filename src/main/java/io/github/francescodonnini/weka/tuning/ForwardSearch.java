@@ -24,7 +24,7 @@ public class ForwardSearch implements FeatureSelection {
 
     @Override
     public Set<Attribute> select(String model) throws Exception {
-        if (maxFeatureSelected <= 0 && scoreFunction == null) {
+        if (maxFeatureSelected <= 0 || scoreFunction == null) {
             throw new IllegalStateException("must specify at least one between maxFeatureSelected or scoreFunction");
         }
         var factory = new FilteredModelFactory();
