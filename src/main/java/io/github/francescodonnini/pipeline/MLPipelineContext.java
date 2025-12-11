@@ -15,13 +15,15 @@ public class MLPipelineContext {
     private final String model;
     private final Path data;
     private final Path results;
+    private final double dropFactor;
 
-    public MLPipelineContext(String projectName, String labellingMethod, double trainingTestSplit, String model, String dataPath) {
+    public MLPipelineContext(String projectName, String labellingMethod, double trainingTestSplit, String model, String dataPath, double dropFactor) {
         this.projectName = projectName;
         this.labellingMethod = labellingMethod;
         this.trainingTestSplit = trainingTestSplit;
         this.model = model;
         data = Path.of(dataPath);
+        this.dropFactor = dropFactor;
         FileUtils.createDirectory(data);
         results = data
                 .resolve(projectName)
@@ -35,7 +37,8 @@ public class MLPipelineContext {
             settings.getString("proportion"),
             settings.getDouble("trainingTestSplit", 0.8),
             settings.getString("model"),
-            settings.getString("dataPath"));
+            settings.getString("dataPath"),
+            settings.getDouble("%s_dropFactor".formatted(projectName.toLowerCase())));
     }
 
     private void logInfo() {
@@ -71,5 +74,9 @@ public class MLPipelineContext {
 
     public double getTrainingTestSplit() {
         return trainingTestSplit;
+    }
+
+    public double getDropFactor() {
+        return dropFactor;
     }
 }
