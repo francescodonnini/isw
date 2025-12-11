@@ -28,13 +28,6 @@ public class Dataset {
         loadDataset(source.getDataSet(), trainingSplit, dropFactor);
     }
 
-    protected Dataset(Instances trainingSet, IntPair trainingRange, Instances testSet, IntPair testRange) {
-        this.trainingSet = trainingSet;
-        this.trainingRange = trainingRange;
-        this.testSet = testSet;
-        this.testRange = testRange;
-    }
-
     private void loadDataset(Instances data, double trainingSplit, double dropFactor) {
         data.setClassIndex(BUGGY_ATTR_INDEX);
         var distinct = new TreeSet<Integer>();
@@ -45,7 +38,7 @@ public class Dataset {
                 .filter(d -> d < Math.ceil(distinct.size() * (1 - dropFactor)))
                 .toList();
         logger.log(Level.INFO, "{0}", "%d distinct releases has been found [%s]".formatted(releases.size(), String.join(",", releases.stream().map(String::valueOf).toList())));
-        var trainingSize = (int)Math.ceil(releases.size() * trainingSplit);
+        var trainingSize = (int)Math.floor(releases.size() * trainingSplit);
         trainingRange = new IntPair(releases.getFirst(), releases.get(trainingSize));
         trainingSet = select(data, byReleaseRange(data, trainingRange.start(), trainingRange.endExcl()));
         testRange = new IntPair(releases.get(trainingSize), releases.size());

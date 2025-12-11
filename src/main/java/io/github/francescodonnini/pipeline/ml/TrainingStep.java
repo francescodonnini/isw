@@ -3,7 +3,7 @@ package io.github.francescodonnini.pipeline.ml;
 import io.github.francescodonnini.pipeline.MLPipelineContext;
 import io.github.francescodonnini.pipeline.MLWorkloadInfo;
 import io.github.francescodonnini.pipeline.Step;
-import io.github.francescodonnini.weka.factories.SimpleModelFactory;
+import io.github.francescodonnini.weka.factories.FilteredModelFactory;
 import io.github.francescodonnini.weka.Trainer;
 
 import java.util.logging.Level;
@@ -19,7 +19,9 @@ public class TrainingStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
 
     @Override
     public MLWorkloadInfo execute(MLWorkloadInfo input) throws Exception {
-        var trainer = new Trainer(input.getDataset(), new SimpleModelFactory());
+        var factory = new FilteredModelFactory();
+        factory.add(input.getSelectedFeatures());
+        var trainer = new Trainer(input.getDataset(), factory);
         trainer.train(context.getModel());
         var history = trainer.getHistory();
         logger.log(Level.INFO, "summary for model: {0}", "%s%n%s".formatted(context.getModel(), history.getSummary()));

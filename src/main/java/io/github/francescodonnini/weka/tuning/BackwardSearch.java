@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class BackwardSearch implements FeatureSelection {
@@ -34,6 +35,7 @@ public class BackwardSearch implements FeatureSelection {
             throw new IllegalStateException("cannot train model on whole dataset");
         }
         var currentScore = o.getAsDouble();
+        logger.log(Level.INFO, "initial score: %f".formatted(currentScore));
         boolean improved;
         do {
             improved = false;
@@ -46,9 +48,11 @@ public class BackwardSearch implements FeatureSelection {
                     worstFeature = feature;
                     currentScore = score.getAsDouble();
                     improved = true;
+                    logger.log(Level.INFO, "new worst feature: %s, score: %f".formatted(worstFeature.name(), currentScore));
                 }
             }
             if (worstFeature != null) {
+                logger.log(Level.INFO, "removing feature %s".formatted(worstFeature.name()));
                 remaining.remove(worstFeature);
             }
         } while (improved);
