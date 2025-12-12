@@ -100,7 +100,7 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     private boolean isGenerated(ClassTree node) {
         for (var annotation : node.getModifiers().getAnnotations()) {
             var annotationType = annotation.getAnnotationType();
-            if (annotationType.toString().toLowerCase().endsWith("generated")) {
+            if (annotationType.toString().matches("(?i)generated\\b")) {
                 return true;
             }
         }
