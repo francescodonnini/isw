@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * @param path percorso relativo del file rispetto alla directory genitore
  * @param time data e ora del commit
  */
-public record ParseContext(String commit, Path parent, Path path, LocalDateTime time) {
+public record ParseContext(long trackingId, String commit, Path parent, Path path, LocalDateTime time, String content) {
     public Path getAbsolutePath() {
         return parent.resolve(path);
     }

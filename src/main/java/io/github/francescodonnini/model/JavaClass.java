@@ -8,25 +8,27 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class JavaClass {
+    private long trackingId;
     private String author;
     private String commit;
-    private Path oldPath;
     private Path parent;
     private Path path;
-    private String name;
-    private LocalDateTime time;
+    private final boolean topLevel;
+    private final String name;
+    private final LocalDateTime time;
     private final List<JavaMethod> methods = new ArrayList<>();
 
-    public JavaClass(String commit, Path parent, Path path, String name, LocalDateTime time) {
-        this(null, commit, null, parent, path, name, time);
+    public JavaClass(long trackingId, String commit, Path parent, Path path, String name, LocalDateTime time, boolean topLevel) {
+        this(trackingId,null, commit, parent, path, topLevel, name, time);
     }
 
-    public JavaClass(String author, String commit, Path oldPath, Path parent, Path path, String name, LocalDateTime time) {
+    public JavaClass(long trackingId, String author, String commit, Path parent, Path path, boolean topLevel, String name, LocalDateTime time) {
+        this.trackingId = trackingId;
         this.author = author;
         this.commit = commit;
-        this.oldPath = oldPath;
         this.parent = parent;
         this.path = path;
+        this.topLevel = topLevel;
         this.name = name;
         this.time = time;
     }
@@ -34,22 +36,32 @@ public class JavaClass {
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof JavaClass javaClass)) return false;
-        return Objects.equals(author, javaClass.author)
+        return Objects.equals(trackingId, javaClass.trackingId)
+                && Objects.equals(author, javaClass.author)
                 && Objects.equals(commit, javaClass.commit)
                 && Objects.equals(parent, javaClass.parent)
                 && Objects.equals(path, javaClass.path)
                 && Objects.equals(name, javaClass.name)
-                && Objects.equals(time, javaClass.time);
+                && Objects.equals(time, javaClass.time)
+                && Objects.equals(topLevel, javaClass.topLevel);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(author, commit, parent, path, name, time);
+        return Objects.hash(trackingId, author, commit, parent, path, name, time, topLevel);
     }
 
     @Override
     public String toString() {
-        return "(%s %s %s %s)".formatted(author, commit, path, name);
+        return "%s(id=%d, %s %s %s %s)".formatted(topLevel ? "P" : "N", trackingId, author, commit, path, name);
+    }
+
+    public long getTrackingId() {
+        return trackingId;
+    }
+
+    public void setTrackingId(long trackingId) {
+        this.trackingId = trackingId;
     }
 
     public void addMethod(JavaMethod method) {
@@ -104,23 +116,11 @@ public class JavaClass {
         this.commit = commit;
     }
 
-    public Optional<Path> getAbsoluteOldPath() {
-        if (oldPath == null) {
-            return Optional.empty();
-        } else {
-            return Optional.of(parent.resolve(oldPath));
-        }
-    }
-
-    public Optional<Path> getOldPath() {
-        return Optional.ofNullable(oldPath);
-    }
-
-    public void setOldPath(Path oldPath) {
-        this.oldPath = oldPath;
-    }
-
     public String getName() {
         return name;
+    }
+
+    public boolean isTopLevel() {
+        return topLevel;
     }
 }

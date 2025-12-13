@@ -8,12 +8,12 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 public class JavaClassLocalEntity {
+    @CsvBindByName(column = "trackingId")
+    private long trackingId;
     @CsvBindByName(column = "authors")
     private String author;
     @CsvBindByName(column = "commit", required = true)
     private String commit;
-    @CsvBindByName(column = "oldPath")
-    private String oldPath;
     @CsvBindByName(column = "path", required = true)
     private String path;
     @CsvBindByName(column = "parent", required = true)
@@ -22,6 +22,16 @@ public class JavaClassLocalEntity {
     private String name;
     @CsvCustomBindByName(column = "time", required = true, converter = LocalDateTimeConverter.class)
     private LocalDateTime time;
+    @CsvBindByName(column = "topLevel")
+    private boolean topLevel;
+
+    public long getTrackingId() {
+        return trackingId;
+    }
+
+    public void setTrackingId(long trackingId) {
+        this.trackingId = trackingId;
+    }
 
     public Optional<String> getAuthor() {
         if (author == null || author.isEmpty()) {
@@ -40,16 +50,6 @@ public class JavaClassLocalEntity {
 
     public void setCommit(String commit) {
         this.commit = commit;
-    }
-
-    public Optional<String> getOldPath() {
-        if (oldPath == null || oldPath.isEmpty())
-            return Optional.empty();
-        return Optional.of(oldPath);
-    }
-
-    public void setOldPath(String oldPath) {
-        this.oldPath = oldPath;
     }
 
     public String getParent() {
@@ -82,5 +82,13 @@ public class JavaClassLocalEntity {
 
     public void setTime(LocalDateTime time) {
         this.time = time;
+    }
+
+    public boolean isTopLevel() {
+        return topLevel;
+    }
+
+    public void setTopLevel(boolean topLevel) {
+        this.topLevel = topLevel;
     }
 }

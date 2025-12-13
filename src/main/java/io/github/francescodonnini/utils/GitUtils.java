@@ -7,8 +7,11 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -46,5 +49,24 @@ public class GitUtils {
                 .build()) {
             return new Git(repository);
         }
+    }
+
+    public static Optional<String> getAuthor(RevCommit commit) {
+        var author = commit.getAuthorIdent().getEmailAddress();
+        if (author == null || author.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(author);
+    }
+
+    public static LocalDate getCommitDate(RevCommit commit) {
+        return getCommitTime(commit).toLocalDate();
+    }
+
+    public static LocalDateTime getCommitTime(RevCommit commit) {
+        return commit.getAuthorIdent()
+                .getWhenAsInstant()
+                .atZone(commit.getAuthorIdent().getZoneId())
+                .toLocalDateTime();
     }
 }

@@ -57,6 +57,10 @@ public class JavaMethod {
         return signature;
     }
 
+    public long getTrackingId() {
+        return javaClass.getTrackingId();
+    }
+
     public Path getPath() {
         return javaClass.getPath();
     }

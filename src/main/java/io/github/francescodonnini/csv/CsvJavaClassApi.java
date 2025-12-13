@@ -35,20 +35,15 @@ public class CsvJavaClassApi {
     }
 
     private Optional<JavaClass> fromCsv(JavaClassLocalEntity bean) {
-        var o = bean.getOldPath();
-        Path oldPath = null;
-        if (o.isPresent()) {
-            oldPath = Path.of(o.get());
-        }
         var clazz = new JavaClass(
+                bean.getTrackingId(),
                 bean.getAuthor().orElse(null),
                 bean.getCommit(),
-                oldPath,
                 Path.of(bean.getParent()),
                 Path.of(bean.getPath()),
+                bean.isTopLevel(),
                 bean.getName(),
                 bean.getTime());
-        bean.getOldPath().ifPresent(p -> clazz.setOldPath(Path.of(p)));
         return Optional.of(clazz);
     }
 
@@ -71,7 +66,6 @@ public class CsvJavaClassApi {
         var bean = new JavaClassLocalEntity();
         bean.setCommit(model.getCommit());
         bean.setTime(model.getTime());
-        model.getOldPath().ifPresent(p -> bean.setOldPath(p.toString()));
         bean.setPath(model.getPath().toString());
         bean.setParent(model.getParent().toString());
         bean.setName(model.getName());

@@ -12,8 +12,10 @@ import io.github.francescodonnini.model.JavaMethod;
 import io.github.francescodonnini.model.LineRange;
 
 import javax.tools.JavaCompiler;
+import javax.tools.SimpleJavaFileObject;
 import javax.tools.ToolProvider;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +23,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class JavaMethodExtractor extends TreeScanner<Void, Void> {
+    private static class InMemoryFile extends SimpleJavaFileObject {
+        private final String content;
+
+        public InMemoryFile(String name, String content) {
+            super(URI.create("string:///" + name.replace('.', '/') + Kind.SOURCE.extension), Kind.SOURCE);
+            this.content = content;
+        }
+
+        @Override
+        public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
+            return content;
+        }
+    }
     private final Logger logger = Logger.getLogger(JavaMethodExtractor.class.getName());
     private final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     private CompilationUnitTree compilationUnit;
@@ -45,10 +60,8 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
 
     public void parse(ParseContext context) throws IOException {
         this.context = context;
-        var units = compiler
-                .getStandardFileManager(null, null, null)
-                .getJavaFileObjects(context.getAbsolutePath());
-        var task = (JavacTask) compiler.getTask(null, null, null, null, null, units);
+        var file = new InMemoryFile(context.path().toString(), context.content());
+        var task = (JavacTask) compiler.getTask(null, null, null, null, null, List.of(file));
         setSourcePositions(Trees.instance(task).getSourcePositions());
         for (var cu : task.parse()) {
             setCompilationUnit(cu);
@@ -87,7 +100,7 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
         }
         if (isNamedClass(node)) {
             var parent = currentClass;
-            setNamedClass(node);
+            setNamedClass(node, isPrimary(node));
             var r = super.visitClass(node, unused);
             classes.add(currentClass);
             collectMetrics(node, currentClass);
@@ -95,6 +108,15 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
             return r;
         }
         return null;
+    }
+
+    private boolean isPrimary(ClassTree node) {
+        var fileName = context.getAbsolutePath()
+                .getFileName()
+                .toString();
+        var n = fileName.lastIndexOf('.');
+        fileName = n >= 0 ? fileName.substring(0, n) : fileName;
+        return currentClass == null && node.getSimpleName().toString().equals(fileName);
     }
 
     private boolean isGenerated(ClassTree node) {
@@ -107,13 +129,15 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
         return false;
     }
 
-    private void setNamedClass(ClassTree currentClass) {
+    private void setNamedClass(ClassTree currentClass, boolean primary) {
         this.currentClass = new JavaClass(
+                context.trackingId(),
                 context.commit(),
                 context.parent(),
                 context.path(),
                 currentClass.getSimpleName().toString(),
-                context.time()
+                context.time(),
+                primary
         );
     }
 

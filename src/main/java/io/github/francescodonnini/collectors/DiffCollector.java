@@ -12,7 +12,7 @@ public class DiffCollector {
     private final Logger logger = Logger.getLogger(DiffCollector.class.getName());
     private final List<Release> releases;
     private final List<JavaMethod> methods;
-    private final Map<String, List<JavaMethod>> history = new HashMap<>();
+    private final Map<JavaMethodId, List<JavaMethod>> history = new HashMap<>();
     private final boolean fromStart;
 
     public DiffCollector(List<Release> releases, List<JavaMethod> methods) {
@@ -54,17 +54,12 @@ public class DiffCollector {
         methods.stream()
                 .sorted(Comparator.comparing(a -> a.getJavaClass().getTime()))
                 .filter(m -> isBetween(m, LocalDate.MIN, releases.getLast().releaseDate()))
-                .forEach(m -> history.computeIfAbsent(key(m), s -> new ArrayList<>()).add(m));
+                .forEach(m -> history.computeIfAbsent(JavaMethodId.of(m), s -> new ArrayList<>()).add(m));
     }
 
     private boolean isBetween(JavaMethod m, LocalDate start, LocalDate end) {
         var date = m.getJavaClass().getTime().toLocalDate();
-        return !date.isBefore(start) && !date.isAfter(end);
-    }
-
-
-    private String key(JavaMethod method) {
-        return "%s#%s".formatted(method.getPath(), method.getSignature());
+        return date.isAfter(start) && !date.isAfter(end);
     }
 
     private List<JavaMethod> collect(LocalDate start, LocalDate end) {

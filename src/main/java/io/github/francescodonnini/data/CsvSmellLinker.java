@@ -42,7 +42,7 @@ public class CsvSmellLinker implements SmellLinker {
         }
     }
 
-    private void fillCodeSmells(CsvReportEntity e,Map<String, JavaClass> classes) {
+    private void fillCodeSmells(CsvReportEntity e, Map<String, JavaClass> classes) {
         var clazz = classes.get(e.getFilePath());
         if (clazz == null) {
             return;
@@ -56,9 +56,7 @@ public class CsvSmellLinker implements SmellLinker {
         var index = new HashMap<String, Map<String, JavaClass>>();
         for (var c : classes) {
             var classSet = index.computeIfAbsent(c.getCommit(), s -> new HashMap<>());
-            classSet.put(c.getAbsolutePath().toString(), c);
-            var oldPath = c.getOldPath();
-            oldPath.ifPresent(path -> classSet.put(path.toString(), c));
+            classSet.put(c.getPath().toString(), c);
         }
         return index;
     }

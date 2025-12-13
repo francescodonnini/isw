@@ -77,7 +77,11 @@ public class Dataset {
     }
 
     public Instances validationSet(int start) throws Exception {
-        return trainingSet(start, testRange.start());
+        return validationSet(start, testRange.start());
+    }
+
+    public Instances validationSet(int start, int endExclusive) throws Exception {
+        return trainingSet(start, endExclusive);
     }
 
     private Predicate<Instance> byReleaseRange(Instances data, int start, int endExclusive) {
