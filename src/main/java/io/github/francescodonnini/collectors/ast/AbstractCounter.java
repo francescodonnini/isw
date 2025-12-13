@@ -30,11 +30,10 @@ public abstract class AbstractCounter extends TreeScanner<Void, JavaClass> {
     }
 
     private void setClass(JavaClass clazz) {
-        reset();
         clazz.getMethods().forEach(method -> index.put(method.getSignature(), method));
     }
 
-    private void reset() {
+    public void reset() {
         index.clear();
     }
 }

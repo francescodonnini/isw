@@ -12,10 +12,8 @@ import io.github.francescodonnini.model.JavaMethod;
 import io.github.francescodonnini.model.LineRange;
 
 import javax.tools.JavaCompiler;
-import javax.tools.SimpleJavaFileObject;
 import javax.tools.ToolProvider;
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,19 +21,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class JavaMethodExtractor extends TreeScanner<Void, Void> {
-    private static class InMemoryFile extends SimpleJavaFileObject {
-        private final String content;
-
-        public InMemoryFile(String name, String content) {
-            super(URI.create("string:///" + name.replace('.', '/') + Kind.SOURCE.extension), Kind.SOURCE);
-            this.content = content;
-        }
-
-        @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
-            return content;
-        }
-    }
     private final Logger logger = Logger.getLogger(JavaMethodExtractor.class.getName());
     private final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     private CompilationUnitTree compilationUnit;
@@ -47,11 +32,8 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     private final List<AbstractCounter> counters;
 
     public JavaMethodExtractor(List<AbstractCounter> counters) {
+        logger.log(Level.INFO, "Thread {0}", Thread.currentThread().threadId());
         this.counters = counters;
-    }
-
-    public void reset() {
-        classes.clear();
     }
 
     public List<JavaClass> getClasses() {
@@ -146,7 +128,10 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     }
 
     private void collectMetrics(ClassTree node, JavaClass clazz) {
-        counters.forEach(c -> c.visitClass(node, clazz));
+        counters.forEach(c -> {
+            c.reset();
+            c.visitClass(node, clazz);
+        });
     }
 
     @Override

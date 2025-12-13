@@ -18,8 +18,8 @@ public class NestingDepth extends AbstractCounter {
             m.setNestingDepth(maxNestingDepth);
             return null;
         });
-        currentNestingDepth = oldNestingDepth;
-        maxNestingDepth = oldMaxNestingDepth;
+        currentNestingDepth += oldNestingDepth;
+        maxNestingDepth += oldMaxNestingDepth;
         return v;
     }
 
@@ -76,5 +76,12 @@ public class NestingDepth extends AbstractCounter {
         if (currentNestingDepth > maxNestingDepth) {
             maxNestingDepth = currentNestingDepth;
         }
+    }
+
+    @Override
+    public void reset() {
+        super.reset();
+        currentNestingDepth = 0;
+        maxNestingDepth = 0;
     }
 }

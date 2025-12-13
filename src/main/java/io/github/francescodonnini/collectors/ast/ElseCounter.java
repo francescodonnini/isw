@@ -16,6 +16,7 @@ public class ElseCounter extends AbstractCounter {
             m.setElseCount(oldCounter + counter);
             return null;
         });
+        counter += oldCounter;
         return v;
     }
 
@@ -25,5 +26,11 @@ public class ElseCounter extends AbstractCounter {
             counter++;
         }
         return super.visitIf(node, javaClass);
+    }
+
+    @Override
+    public void reset() {
+        super.reset();
+        counter = 0;
     }
 }

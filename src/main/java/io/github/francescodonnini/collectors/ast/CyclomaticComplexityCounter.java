@@ -17,9 +17,10 @@ public class CyclomaticComplexityCounter extends AbstractCounter {
             super.visitMethod(node, unused);
         }
         update(AstUtils.getSignature(node), m -> {
-            m.setCyclomaticComplexity(oldCounter + counter);
+            m.setCyclomaticComplexity(counter);
             return null;
         });
+        counter = oldCounter;
         return null;
     }
 
@@ -77,5 +78,11 @@ public class CyclomaticComplexityCounter extends AbstractCounter {
     public Void visitWhileLoop(WhileLoopTree node, JavaClass unused) {
         counter++;
         return super.visitWhileLoop(node, unused);
+    }
+
+    @Override
+    public void reset() {
+        super.reset();
+        counter = 1;
     }
 }

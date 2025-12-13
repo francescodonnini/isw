@@ -50,8 +50,12 @@ public class HalsteadComplexityCounter extends AbstractCounter {
 
     @Override
     public Void visitMethod(MethodTree node, JavaClass unused) {
+        var oldOperators = new HashSet<>(operators);
+        var oldOperands = new HashSet<>(operands);
         operands.clear();
         operators.clear();
+        var oldTotalOperators = totalOperators;
+        var oldTotalOperands = totalOperands;
         totalOperators = 0;
         totalOperands = 0;
         var rv = super.visitMethod(node, unused);
@@ -59,6 +63,10 @@ public class HalsteadComplexityCounter extends AbstractCounter {
             m.setHalsteadEffort(getEffort());
             return null;
         });
+        totalOperators += oldTotalOperators;
+        totalOperands += oldTotalOperands;
+        operators.addAll(oldOperators);
+        operands.addAll(oldOperands);
         return rv;
     }
 
@@ -288,5 +296,14 @@ public class HalsteadComplexityCounter extends AbstractCounter {
     private void visitOperator(StatementTree node) {
         operators.add(node.getKind().name());
         totalOperators++;
+    }
+
+    @Override
+    public void reset() {
+        super.reset();
+        totalOperands = 0;
+        totalOperators = 0;
+        operands.clear();
+        operators.clear();
     }
 }

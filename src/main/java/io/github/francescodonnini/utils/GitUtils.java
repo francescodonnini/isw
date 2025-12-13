@@ -3,6 +3,7 @@ package io.github.francescodonnini.utils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 
 import java.io.IOException;
@@ -68,5 +69,14 @@ public class GitUtils {
                 .getWhenAsInstant()
                 .atZone(commit.getAuthorIdent().getZoneId())
                 .toLocalDateTime();
+    }
+
+    public static RevTree getParent(RevCommit commit) {
+        try {
+            return commit.getParent(0).getTree();
+        } catch (IndexOutOfBoundsException e) {
+            logger.log(Level.INFO, "commit %s has no parent".formatted(commit));
+            return null;
+        }
     }
 }

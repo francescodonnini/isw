@@ -14,7 +14,7 @@ class CPDConsumer implements Consumer<CPDReport> {
     private final Map<String, JavaClass> index = new HashMap<>();
 
     CPDConsumer(List<JavaClass> classes) {
-        classes.forEach(c -> this.index.put(c.getAbsolutePath().toString(), c));
+        classes.forEach(c -> this.index.put(c.getPath().toString(), c));
     }
 
     @Override
@@ -27,7 +27,7 @@ class CPDConsumer implements Consumer<CPDReport> {
     }
 
     private void updateCodeDuplication(Mark mark) {
-        var clazz = index.get(mark.getLocation().getFileId().getAbsolutePath());
+        var clazz = index.get(mark.getLocation().getFileId().getOriginalPath());
         if (clazz == null) {
             return;
         }

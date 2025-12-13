@@ -47,7 +47,7 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
                     .resolve(context.getProjectName().toLowerCase());
             var report = context.getReports()
                     .resolve(context.getProjectName());
-            var loader = new DataLoaderImpl(factory, input.getProjectReleases(), source.toString(), report);
+            var loader = new DataLoaderImpl(factory, input.getProjectReleases(), source, report);
             var classes = loader.getClasses();
             new CsvSmellLinker(report).link(classes);
             var methods = new DiffCollector(input.getProjectReleases(), loader.getMethods())
