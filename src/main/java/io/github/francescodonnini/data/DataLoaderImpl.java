@@ -208,7 +208,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
                 if (isGenerated(content)) {
                     continue;
                 }
-                files.add(new ParseContext(trackingId.getTrackingId(path), commit.getName(), projectPath, path, GitUtils.getCommitTime(commit), content));
+                files.add(new ParseContext(trackingId.generateId(path), commit.getName(), projectPath, path, GitUtils.getCommitTime(commit), content));
                 var textFile = TextFile
                         .builderForCharSeq(content, FileId.fromPath(path), languageVersion)
                         .build();
@@ -333,7 +333,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
                 }
                 if (diff.getChangeType().equals(DiffEntry.ChangeType.RENAME) && !oldPath.equals("/dev/null") && !oldPath.equals(path)) {
                     logger.log(Level.INFO, "RENAME %s -> %s".formatted(oldPath, path));
-                    var id = trackingId.updateTrackingId(Path.of(oldPath), Path.of(path));
+                    var id = trackingId.updateId(Path.of(oldPath), Path.of(path));
                     for (var c : index.get(path)) {
                         logger.log(Level.INFO, "class %s is inheriting tracking id %d from class %s".formatted(c, id, oldPath));
                         c.setTrackingId(id);

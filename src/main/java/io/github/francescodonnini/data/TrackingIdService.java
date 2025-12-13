@@ -1,18 +1,19 @@
 package io.github.francescodonnini.data;
 
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class TrackingIdService {
-    private long nextId = 0;
-    private final Map<Path, Long> map = new HashMap<>();
+    private final AtomicLong id = new AtomicLong(0);
+    private final Map<Path, Long> map = new ConcurrentHashMap<>();
 
-    public long getTrackingId(Path path) {
-        return map.computeIfAbsent(path, unused -> nextId++);
+    public long generateId(Path path) {
+        return map.computeIfAbsent(path, unused -> id.getAndIncrement());
     }
 
-    public long updateTrackingId(Path oldPath, Path newPath) {
+    public long updateId(Path oldPath, Path newPath) {
         var id = map.remove(oldPath);
         if (id == null) {
             throw new IllegalArgumentException("file %s has not been tracked yet".formatted(oldPath));
