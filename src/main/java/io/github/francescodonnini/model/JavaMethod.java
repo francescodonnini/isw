@@ -57,8 +57,10 @@ public class JavaMethod {
         return signature;
     }
 
-    public long getTrackingId() {
-        return javaClass.getTrackingId();
+    public boolean isAfter(Release release) {
+        return this.javaClass.getTime()
+                .toLocalDate()
+                .isAfter(release.releaseDate());
     }
 
     public Path getPath() {

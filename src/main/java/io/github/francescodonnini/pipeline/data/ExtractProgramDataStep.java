@@ -16,7 +16,6 @@ import io.github.francescodonnini.pipeline.Step;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,21 +31,12 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
     @Override
     public ProjectInfo execute(ProjectInfo input) throws Exception {
         try {
-            var classApi = new CsvJavaClassApi();
-            var classes = classApi.getLocal(getCurrentClassPath());
-            input.setClasses(classes);
-            var methodApi = new CsvJavaMethodApi();
-            var methods = methodApi
+            var classes = new CsvJavaClassApi().getLocal(getCurrentClassPath());
+            var methods = new CsvJavaMethodApi()
                     .getLocal(getCurrentMethodPath(), classes).stream()
-                    .filter(m -> !m.getJavaClass().getTime().isAfter(input.getProjectReleases().getLast().releaseDate().atStartOfDay()))
+                    .filter(m -> !m.isAfter(input.getProjectReleases().getLast()))
                     .toList();
-            Files.write(
-                    context.getData().resolve("main_tool_signatures.txt"),
-                    classes.stream()
-                            .flatMap(c -> c.getMethods().stream()) // Assuming JavaClass has getMethods()
-                            .map(m -> m.getJavaClass().getName() + "::" + m.getSignature())
-                            .sorted()
-                            .toList());
+            input.setClasses(classes);
             input.setMethods(methods);
         } catch (FileNotFoundException | RuntimeException e) {
             logger.log(Level.WARNING, "cannot find any classes/methods cached files", e);
@@ -57,31 +47,35 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
                     .resolve(context.getProjectName());
             var loader = new DataLoaderImpl(factory, input.getProjectReleases(), source, report);
             var classes = loader.getClasses();
-            new CsvSmellLinker(report).link(classes);
+            saveClasses(classes, "raw");
+            saveMethods(loader.getMethods(), "raw");
+            new CsvSmellLinker(report)
+                    .link(classes);
             var methods = new DiffCollector(input.getProjectReleases(), loader.getMethods())
                     .collect();
-            saveClasses(classes);
-            saveMethods(methods);
+            saveClasses(classes, "nolbl");
+            saveMethods(methods, "nolbl");
+            input.setClasses(classes);
             input.setMethods(methods);
         }
         return input;
     }
 
-    private void saveClasses(List<JavaClass> classes) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
+    private void saveClasses(List<JavaClass> classes, String name) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
         var classApi = new CsvJavaClassApi();
         var path = context.getCache()
                 .resolve(context.getProjectName())
-                .resolve("classes(nolbl).csv")
+                .resolve("classes(%s).csv".formatted(name))
                 .toString();
         classApi.saveLocal(classes, path);
     }
 
 
-    private void saveMethods(List<JavaMethod> methods) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
+    private void saveMethods(List<JavaMethod> methods, String name) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
         var methodApi = new CsvJavaMethodApi();
         var path = context.getCache()
                 .resolve(context.getProjectName())
-                .resolve("methods(nolbl).csv")
+                .resolve("methods(%s).csv".formatted(name))
                 .toString();
         methodApi.saveLocal(methods, path);
     }
