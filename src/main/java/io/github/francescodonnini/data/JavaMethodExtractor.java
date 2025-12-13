@@ -32,7 +32,6 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     private final List<AbstractCounter> counters;
 
     public JavaMethodExtractor(List<AbstractCounter> counters) {
-        logger.log(Level.INFO, "Thread {0}", Thread.currentThread().threadId());
         this.counters = counters;
     }
 

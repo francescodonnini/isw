@@ -398,8 +398,8 @@ public class Metrics {
         return codeDuplcation;
     }
 
-    public void setCodeDuplcation(double codeDuplcation) {
-        this.codeDuplcation = codeDuplcation;
+    public void setCodeDuplication(double codeDuplication) {
+        this.codeDuplcation = codeDuplication;
     }
 
     public void updateCodeDuplication(double codeDuplication) {
@@ -407,7 +407,6 @@ public class Metrics {
             throw new IllegalArgumentException("Code duplication cannot be greater than 1");
         }
         this.codeDuplcation += codeDuplication;
-
     }
 
     public int getHalsteadEffort() {

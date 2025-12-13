@@ -95,7 +95,7 @@ public class CsvJavaMethodApi {
         m.getMetrics().setMaxChurn(bean.getMaxChurn());
         m.getMetrics().setCodeSmells(bean.getCodeSmells());
         bean.getAuthors().forEach(a -> m.getMetrics().addAuthor(a));
-        m.getMetrics().setCodeDuplcation(bean.getCodeDuplication());
+        m.getMetrics().setCodeDuplication(bean.getCodeDuplication());
         m.getMetrics().setHalsteadEffort(bean.getHalsteadEffort());
     }
 
