@@ -16,6 +16,7 @@ import io.github.francescodonnini.pipeline.Step;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,6 +40,13 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
                     .getLocal(getCurrentMethodPath(), classes).stream()
                     .filter(m -> !m.getJavaClass().getTime().isAfter(input.getProjectReleases().getLast().releaseDate().atStartOfDay()))
                     .toList();
+            Files.write(
+                    context.getData().resolve("main_tool_signatures.txt"),
+                    classes.stream()
+                            .flatMap(c -> c.getMethods().stream()) // Assuming JavaClass has getMethods()
+                            .map(m -> m.getJavaClass().getName() + "::" + m.getSignature())
+                            .sorted()
+                            .toList());
             input.setMethods(methods);
         } catch (FileNotFoundException | RuntimeException e) {
             logger.log(Level.WARNING, "cannot find any classes/methods cached files", e);

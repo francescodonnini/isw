@@ -2,11 +2,10 @@ package io.github.francescodonnini;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.body.EnumDeclaration;
-import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.body.TypeDeclaration;
+import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
+import com.github.javaparser.ast.nodeTypes.NodeWithParameters;
 import io.github.francescodonnini.utils.GitUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -14,6 +13,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Stream;
@@ -21,41 +21,45 @@ import java.util.stream.Stream;
 public class CrossCheck {
 
     public static void main(String[] args) throws IOException, GitAPIException {
-        var rootPath = Path.of("/home/francesco/Documents/Università/Ingegneria del Software 2/60/sources/bookkeeper");
+        var rootPath = Path.of("/home/francesco/Documents/Università/ISW/60/sources/bookkeeper");
         try (var git = GitUtils.createGit(rootPath)) {
-        var commits = List.of(
-                "213db5d6a6d55b5b093776a4c54fa5c8ffed5f0d",
-                "a2cd9899405ef7313a50e87a370aecef543ae4eb",
-                "7d8079c446110872d8f6d50eff86268a3cb4e989",
-                "f2bb5603ff33b8ac54bcdf2daddb61cf3e65de80",
-                "dea488afbf4615e4416079f5517a6e3ae1000c17",
-                "0345c8095ee47aefd7d40a07e2a621079c94f4fd",
-                "c9db762707538a99a92852e60b88bed577b01377",
-                "6688d96b52072496202f607f8c55976472f4c9a6",
-                "355ddbc7c13e39c49a58371d467e87aa80f696d7",
-                "089735246f6084e9f68085ab03999394c7158a72",
-                "f5c96ebc9e5952a89f86d0a50093ff65c821701b"
-        );
-        var order = 0;
-        var total = 0L;
-        for (var commit :  commits) {
-            git.checkout()
-                    .setName(commit)
-                    .call();
-            try (Stream<Path> paths = Files.walk(rootPath)) {
-                var count = paths
-                        .filter(p -> p.toString().endsWith(".java"))
-                        .filter(p -> !isGenerated(p))
-                        // Optional: Filter out tests if you only want src/main
-                        // .filter(p -> !p.toString().contains("/src/test/"))
-                        .mapToLong(CrossCheck::countMethodsInFile)
-                        .sum();
-                System.out.printf("Release %d: #methods %d%n", order, count);
-                order++;
-                total += count;
+            var commits = List.of(
+                    "1c90be",
+                    "a2cd98",
+                    "ec430a",
+                    "455aab",
+                    "8dafa9",
+                    "0345c8",
+                    "c9db76",
+                    "6286c3",
+                    "e47fb5",
+                    "089735",
+                    "88a61e"
+            );
+            var all = new ArrayList<String>();
+            var order = 0;
+            var total = 0L;
+            for (var commit :  commits) {
+                git.checkout()
+                        .setName(commit)
+                        .call();
+                try (Stream<Path> paths = Files.walk(rootPath)) {
+                    var count = paths
+                            .filter(p -> p.toString().endsWith(".java"))
+                            .filter(p -> !isGenerated(p))
+                            .mapToLong(p -> countMethodsInFile(p, all))
+                            .sum();
+                    System.out.printf("Release %d: #methods %d%n", order, count);
+                    order++;
+                    total += count;
+                }
             }
-        }
-        System.out.println("Total Methods (excluding anonymous): " + total);
+            Files.write(
+                    Path.of("/home/francesco/Documents/Università/ISW/60/data/ck_tool_signatures.txt"),
+                    all.stream()
+                            .sorted()
+                            .toList());
+            System.out.println("Total Methods (excluding anonymous): " + total);
         }
     }
 
@@ -75,37 +79,64 @@ public class CrossCheck {
     }
 
 
-    private static long countMethodsInFile(Path path) {
+    private static long countMethodsInFile(Path path, List<String> all) {
         try {
+            var list = new ArrayList<String>();
             // Parse the file purely as syntax
-            CompilationUnit cu = StaticJavaParser.parse(path);
-            return cu.findAll(MethodDeclaration.class).stream()
-                    .filter(method -> {
-                        // Check parent to ensure it's not anonymous
-                        // In JavaParser, anonymous classes are usually inside ObjectCreationExpr
-                        var parent = method.getParentNode().orElse(null);
-
-                        // If parent is an ObjectCreationExpr, it's an anonymous class -> Exclude it
-                        if (parent instanceof ObjectCreationExpr) {
-                            return false;
-                        }
-
-                        if (parent instanceof TypeDeclaration) {
-                            if (isClassGenerated((TypeDeclaration<?>) parent)) {
-                                return false;
-                            }
-                        }
-
-                        // Double check: Ensure it belongs to a Class, Interface, or Enum
-                        return parent instanceof ClassOrInterfaceDeclaration || parent instanceof EnumDeclaration;
-                    })
-                    .count();
-
+            var cu = StaticJavaParser.parse(path);
+            cu.findAll(MethodDeclaration.class).stream()
+                    .filter(CrossCheck::isValidMethod)
+                    .forEach(m -> {
+                        var className = getEnclosingClassName(m);
+                        list.add(className + "::" + m.getNameAsString());
+                    });
+            cu.findAll(ConstructorDeclaration.class).stream()
+                    .filter(CrossCheck::isValidConstructor)
+                    .forEach(m -> {
+                        var className = getEnclosingClassName(m);
+                        list.add(className + "::" + m.getNameAsString());
+                    });
+            all.addAll(list);
+            return list.size();
         } catch (Exception e) {
             // If a single file fails (e.g. strict syntax error), log it but DO NOT CRASH
             System.err.println("Failed to parse: " + path);
             return 0;
         }
+    }
+
+    private static String getEnclosingClassName(ConstructorDeclaration method) {
+        return method.findAncestor(TypeDeclaration.class)
+                .map(TypeDeclaration::getNameAsString)
+                .orElse("UnknownClass"); // Should not happen for valid methods
+    }
+
+    private static String getEnclosingClassName(MethodDeclaration method) {
+        return method.findAncestor(TypeDeclaration.class)
+                .map(TypeDeclaration::getNameAsString)
+                .orElse("UnknownClass"); // Should not happen for valid methods
+    }
+
+    private static boolean isValidMethod(MethodDeclaration node) {
+        return isValid(node.getParentNode().orElse(null));
+    }
+
+    private static boolean isValidConstructor(ConstructorDeclaration node) {
+        return isValid(node.getParentNode().orElse(null));
+    }
+
+    private static boolean isValid(Node parent) {
+        if (parent instanceof ObjectCreationExpr) {
+            return false;
+        }
+        if (parent instanceof TypeDeclaration) {
+            if (isClassGenerated((TypeDeclaration<?>) parent)) {
+                return false;
+            }
+        }
+        return parent instanceof ClassOrInterfaceDeclaration
+                || parent instanceof EnumDeclaration
+                || parent instanceof AnnotationDeclaration;
     }
 
     private static boolean isClassGenerated(TypeDeclaration<?> node) {

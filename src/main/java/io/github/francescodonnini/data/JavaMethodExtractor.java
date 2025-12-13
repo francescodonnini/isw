@@ -76,7 +76,7 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     @Override
     public Void visitClass(ClassTree node, Void unused) {
         if (isGenerated(node)) {
-            logger.log(Level.INFO, "skip class %s because it is generated (commit %s)".formatted( context.path(), context.commit().substring(0, 6)));
+            logger.log(Level.INFO, "skip class %s because it is generated (commit %s)".formatted(context.path(), context.commit().substring(0, 6)));
             return null;
         }
         if (isNamedClass(node)) {
