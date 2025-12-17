@@ -196,6 +196,9 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
              var cpd = CpdAnalysis.create(cpdConfig)) {
             walk.addTree(commit.getTree());
             walk.setRecursive(true);
+
+            handleRenames(commit, diffList);
+
             var files = new ArrayList<ParseContext>();
             while (walk.next()) {
                 var path = Path.of(walk.getPathString());
@@ -208,14 +211,13 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
                 if (isGenerated(content)) {
                     continue;
                 }
-                files.add(new ParseContext(trackingId.generateId(path), commit.getName(), projectPath, path, GitUtils.getCommitTime(commit), content));
+                files.add(new ParseContext(trackingId.getId(path), commit.getName(), projectPath, path, GitUtils.getCommitTime(commit), content));
                 var textFile = TextFile
                         .builderForCharSeq(content, FileId.fromPath(path), languageVersion)
                         .build();
                 pmd.files().addFile(textFile);
                 cpd.files().addFile(textFile);
             }
-
             var lists = files.parallelStream()
                             .map(this::parseClass)
                             .filter(c -> !c.isEmpty())
@@ -227,6 +229,19 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
             pmd.performAnalysis();
             cpd.performAnalysis(new CPDConsumer(list));
             addProgramData(list);
+        }
+    }
+
+    private void handleRenames(RevCommit commit, List<DiffEntry> diffList) {
+        for (var diff : diffList) {
+            var oldPath = diff.getOldPath();
+            var path = diff.getNewPath();
+            if (path.endsWith(JAVA_FILE_EXT)) {
+                if (diff.getChangeType().equals(DiffEntry.ChangeType.RENAME) && !oldPath.equals("/dev/null") && !oldPath.equals(path)) {
+                    logger.log(Level.INFO, "(%s) RENAME %s -> %s".formatted(commit.getName().substring(0, 6), oldPath, path));
+                    trackingId.updateId(Path.of(oldPath), Path.of(path));
+                }
+            }
         }
     }
 
@@ -320,7 +335,6 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         var index = classList.stream()
                 .collect(Collectors.groupingBy(c -> c.getPath().toString()));
         for (var diff : diffList) {
-            var oldPath = diff.getOldPath();
             var path = diff.getNewPath();
             // var edits = df.toFileHeader(diff).toEditList();
             // Se il percorso del file modificato non è un file .java allora non è necessario analizzare
@@ -330,14 +344,6 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
                 for (var c : index.get(path)) {
                     author.ifPresent(c::setAuthor);
                     // c.getMethods().removeIf(m -> !EditUtils.isTouched(m, edits));
-                }
-                if (diff.getChangeType().equals(DiffEntry.ChangeType.RENAME) && !oldPath.equals("/dev/null") && !oldPath.equals(path)) {
-                    logger.log(Level.INFO, "RENAME %s -> %s".formatted(oldPath, path));
-                    var id = trackingId.updateId(Path.of(oldPath), Path.of(path));
-                    for (var c : index.get(path)) {
-                        logger.log(Level.INFO, "class %s is inheriting tracking id %d from class %s".formatted(c, id, oldPath));
-                        c.setTrackingId(id);
-                    }
                 }
             }
         }
