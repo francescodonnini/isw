@@ -133,7 +133,11 @@ public class Dataset {
         return trainingIndices;
     }
 
-    public Instances trainingSet(int start, int endExclusive) throws Exception {
+    public Instances trainingSet() {
+        return slice(0, trainingRange().size());
+    }
+
+    public Instances trainingSet(int start, int endExclusive) {
         return slice(start, endExclusive);
     }
 
