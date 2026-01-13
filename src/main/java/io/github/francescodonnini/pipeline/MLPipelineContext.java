@@ -5,7 +5,6 @@ import io.github.francescodonnini.utils.FileUtils;
 
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,6 +20,7 @@ public class MLPipelineContext {
     private final Path results;
     private final double dropFactor;
     private final Set<String> features;
+    private final boolean backwardSearch;
 
     public MLPipelineContext(String projectName, IniSettings settings, boolean inferFeatures) {
         this.projectName = projectName;
@@ -35,7 +35,12 @@ public class MLPipelineContext {
                 .resolve(projectName)
                 .resolve("results");
         FileUtils.createDirectory(results);
+        this.backwardSearch = settings.getBool("forwardSearch", false);
         logInfo();
+    }
+
+    public boolean isBackwardSearch() {
+        return backwardSearch;
     }
 
     private Set<String> getFeatures(IniSettings settings, boolean inferFeatures) {

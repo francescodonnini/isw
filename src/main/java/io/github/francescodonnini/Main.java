@@ -74,7 +74,7 @@ public class Main {
     private static void featureSelectionPipeline(MLPipelineContext context) throws Exception {
         Pipeline.start(new LoadDatasetStep(context))
                 .next(new PreprocessingStep())
-                .next(new FeatureSelectionStep())
+                .next(new FeatureSelectionStep(context))
                 .run(null);
     }
 
