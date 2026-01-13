@@ -41,7 +41,7 @@ public class OrderedHoldOutEvaluator extends HoldOutSubsetEvaluator {
     public double evaluateSubset(BitSet subset) throws Exception {
         if (subset.isEmpty()) {
             logger.log(Level.WARNING, "subset is empty");
-            return 0.0;
+            return defaultValue(metric);
         }
         var remove = new Remove();
         remove.setInvertSelection(true);
@@ -80,6 +80,15 @@ public class OrderedHoldOutEvaluator extends HoldOutSubsetEvaluator {
         };
         logger.log(Level.INFO, "Evaluation result is {0} ({1})", new Object[] {score, filteredAttributes});
         return score;
+    }
+
+    private double defaultValue(String metric) {
+        return switch (metric) {
+            case "accuracy" -> Double.MAX_VALUE;
+            case "auc", "weighted-auc-prc", "auc-prc", "f1", "kappa", "matthews", "pearson", "precision", "recall",
+                 "weighted-auc" -> 0.0;
+            default -> throw new IllegalArgumentException("unknown metric " + metric);
+        };
     }
 
     @Override
