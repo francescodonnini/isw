@@ -25,7 +25,7 @@ public class LoadDatasetStep implements Step<Void, MLWorkloadInfo> {
                 .resolve(context.getProjectName())
                 .resolve("data_%s.arff".formatted(context.getLabellingMethod()));
         var results = createResultsFolder(context.getResults());
-        return new MLWorkloadInfo(new Dataset(dataset, context.getTrainingTestSplit(), context.getDropFactor()), results);
+        return new MLWorkloadInfo(new Dataset(dataset, context.getFeatures(), context.getTrainingTestSplit(), context.getDropFactor()), results);
     }
 
     private Path createResultsFolder(Path parent) throws IOException {

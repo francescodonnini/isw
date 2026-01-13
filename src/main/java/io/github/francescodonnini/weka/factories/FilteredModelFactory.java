@@ -28,13 +28,13 @@ public class FilteredModelFactory implements ModelFactory {
         if (features.isEmpty()) {
             throw new IllegalStateException("features must be set!");
         }
-        var m = new FilteredClassifier();
+        var wrapper = new FilteredClassifier();
         var filter = new Remove();
         filter.setAttributeIndicesArray(features.stream().mapToInt(Attribute::index).toArray());
         filter.setInvertSelection(true);
-        m.setFilter(filter);
-        m.setClassifier(factory.create(model));
-        return m;
+        wrapper.setFilter(filter);
+        wrapper.setClassifier(factory.create(model));
+        return wrapper;
     }
 
     public void reset() {

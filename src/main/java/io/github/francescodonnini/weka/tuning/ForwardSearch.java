@@ -29,7 +29,7 @@ public class ForwardSearch implements FeatureSelection {
         }
         var factory = new FilteredModelFactory();
         var selected = new HashSet<Attribute>();
-        var remaining = new HashSet<>(dataset.getFeatures());
+        var remaining = new HashSet<>(dataset.features());
         var improved = true;
         var currentBestScore = Double.NEGATIVE_INFINITY;
         while (!stop(selected, remaining) && improved) {
@@ -42,7 +42,7 @@ public class ForwardSearch implements FeatureSelection {
 
                 factory.reset();
                 factory.add(candidate);
-                factory.add(dataset.getClassAttribute());
+                factory.add(dataset.classAttribute());
                 var score = train(model, factory);
                 if (score.isPresent() && score.getAsDouble() > currentBestScore) {
                     bestCandidate = feature;
@@ -63,7 +63,7 @@ public class ForwardSearch implements FeatureSelection {
     }
 
     private OptionalDouble train(String model, ModelFactory factory) throws Exception {
-        var trainer = new Trainer(dataset, factory);
+        var trainer = new WalkForwardTrainer(dataset, factory);
         trainer.train(model);
         if (scoreFunction == null) {
             return OptionalDouble.empty();

@@ -14,7 +14,7 @@ public class MLWorkloadInfo {
     private final Set<Attribute> selectedFeatures = new HashSet<>();
 
     public MLWorkloadInfo(Dataset dataset, Path results) throws Exception {
-        this(dataset, dataset.getFeatures(), results);
+        this(dataset, dataset.features(), results);
     }
 
     public MLWorkloadInfo(Dataset dataset, Set<Attribute> features, Path results) {

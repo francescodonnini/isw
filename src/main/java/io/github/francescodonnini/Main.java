@@ -15,7 +15,9 @@ import io.github.francescodonnini.pipeline.ml.FeatureSelectionStep;
 import io.github.francescodonnini.pipeline.ml.LoadDatasetStep;
 import io.github.francescodonnini.pipeline.ml.PreprocessingStep;
 import io.github.francescodonnini.pipeline.ml.TrainingStep;
+import org.apache.commons.configuration2.ex.ConfigurationException;
 
+import java.io.IOException;
 import java.nio.file.Path;
 
 public class Main {
@@ -27,8 +29,10 @@ public class Main {
             case "DATA":
                 dataPipeline(args);
                 break;
+            case "FEATURE_SELECTION":
+                featureSelectionPipeline(args);
             case "ML":
-                mlPipeline(args);
+                trainingPipeline(args);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown option: " + args[0]);
@@ -61,13 +65,26 @@ public class Main {
                 .run(null);
     }
 
-    private static void mlPipeline(String[] args) throws Exception {
+    private static void featureSelectionPipeline(String[] args) throws Exception {
         var settings = new IniSettings(args[1]);
-        var context = new MLPipelineContext(args[2], settings);
-        mlPipeline(context);
+        var context = new MLPipelineContext(args[2], settings, true);
+        featureSelectionPipeline(context);
     }
 
-    private static void mlPipeline(MLPipelineContext context) throws Exception {
+    private static void featureSelectionPipeline(MLPipelineContext context) throws Exception {
+        Pipeline.start(new LoadDatasetStep(context))
+                .next(new PreprocessingStep())
+                .next(new FeatureSelectionStep())
+                .run(null);
+    }
+
+    private static void trainingPipeline(String[] args) throws Exception {
+        var settings = new IniSettings(args[1]);
+        var context = new MLPipelineContext(args[2], settings, false);
+        trainingPipeline(context);
+    }
+
+    private static void trainingPipeline(MLPipelineContext context) throws Exception {
         Pipeline.start(new LoadDatasetStep(context))
                 .next(new PreprocessingStep())
                 .next(new TrainingStep(context))

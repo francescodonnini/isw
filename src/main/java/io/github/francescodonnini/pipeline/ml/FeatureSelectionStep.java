@@ -10,15 +10,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class FeatureSelectionStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
-    private final Logger logger = Logger.getLogger(FeatureSelectionStep.class.getName());
-
     @Override
     public MLWorkloadInfo execute(MLWorkloadInfo input) throws Exception {
         var selector = new BackwardSearch(input.getDataset());
-        selector.setScoreFunction(new ScoreFunction("recall"));
-        var selected = selector.select("RandomForest");
-        logger.log(Level.INFO, "Selected features (%d): %s".formatted(selected.size(), String.join(",", selected.stream().map(Attribute::name).toList())));
-        input.setSelectedFeatures(selected);
+        selector.setScoreFunction(new ScoreFunction("mcc"));
+        input.setSelectedFeatures(selector.select("RandomForest"));
         return input;
     }
 }

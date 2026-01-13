@@ -4,39 +4,35 @@ import io.github.francescodonnini.pipeline.MLPipelineContext;
 import io.github.francescodonnini.pipeline.MLWorkloadInfo;
 import io.github.francescodonnini.pipeline.Step;
 import io.github.francescodonnini.weka.factories.FilteredModelFactory;
-import io.github.francescodonnini.weka.Trainer;
+import io.github.francescodonnini.weka.WalkForwardTrainer;
 import weka.core.Attribute;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
+import java.util.logging.SimpleFormatter;
 
 public class TrainingStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
     private final Logger logger = Logger.getLogger(TrainingStep.class.getName());
     private final MLPipelineContext context;
 
-    public TrainingStep(MLPipelineContext context) {
+    public TrainingStep(MLPipelineContext context) throws IOException {
         this.context = context;
+        var file = new FileHandler("training-step.log", true);
+        file.setFormatter(new SimpleFormatter());
+        logger.addHandler(file);
     }
 
     @Override
     public MLWorkloadInfo execute(MLWorkloadInfo input) throws Exception {
         var factory = new FilteredModelFactory();
-        var features = Arrays.stream("loc,stmt_added_avg,churn,stmt_deleted_max,loc_added_avg,loc_deleted_max,else_added,stmt_added_max,else_count,churn_avg,cyclomatic_complexity,loc_deleted,halstead_effort,nesting_depth,stmt_count,stmt_deleted_avg,churn_max,loc_added_max,smell_count"
-                .split(","))
-                .collect(Collectors.toSet());
-        var selectedFeatures = input.getDataset()
-                .getFeatures().stream()
-                .filter(f -> features.contains(f.name()))
-                .collect(Collectors.toSet());
         createSummary(input.getResults(), input);
-        factory.add(selectedFeatures);
-        factory.add(input.getDataset().getClassAttribute());
-        var trainer = new Trainer(input.getDataset(), factory);
+        factory.add(input.getSelectedFeatures());
+        factory.add(input.getDataset().classAttribute());
+        var trainer = new WalkForwardTrainer(input.getDataset(), factory);
         trainer.train(context.getModel());
         var history = trainer.getHistory();
         logger.log(Level.INFO, "summary for model: {0}", "%s%n%s".formatted(context.getModel(), history.getSummary()));

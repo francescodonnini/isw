@@ -51,9 +51,11 @@ public class History {
         return switch (metric) {
             case "f1" -> e.fMeasure(classIndex);
             case "kappa" -> e.kappa();
+            case "mcc" -> e.matthewsCorrelationCoefficient(classIndex);
             case "precision" -> e.precision(classIndex);
             case "recall" -> e.recall(classIndex);
             case "roc" -> e.areaUnderROC(classIndex);
+            case "roc-pr" -> e.areaUnderPRC(classIndex);
             case "square" -> e.rootMeanSquaredError();
             default -> throw new IllegalArgumentException("Invalid metric: " + metric);
         };
@@ -70,20 +72,19 @@ public class History {
     }
 
     private String row(int i, Evaluation evaluation) {
-        return new StringBuilder()
-                .append(i).append(",")
-                .append(evaluation.numFalseNegatives(classIndex)).append(",")
-                .append(evaluation.numTrueNegatives(classIndex)).append(",")
-                .append(evaluation.numFalsePositives(classIndex)).append(",")
-                .append(evaluation.numTruePositives(classIndex)).append(",")
-                .append(evaluation.precision(classIndex)).append(",")
-                .append(evaluation.fMeasure(classIndex)).append(",")
-                .append(evaluation.recall(classIndex)).append(",")
-                .append(evaluation.kappa()).append(",")
-                .append(evaluation.matthewsCorrelationCoefficient(classIndex)).append(",")
-                .append(evaluation.areaUnderROC(classIndex)).append(",")
-                .append(evaluation.meanAbsoluteError()).append(",")
-                .append(evaluation.rootMeanSquaredError()).append("\n")
-                .toString();
+        return i + "," +
+                evaluation.numFalseNegatives(classIndex) + "," +
+                evaluation.numTrueNegatives(classIndex) + "," +
+                evaluation.numFalsePositives(classIndex) + "," +
+                evaluation.numTruePositives(classIndex) + "," +
+                evaluation.precision(classIndex) + "," +
+                evaluation.fMeasure(classIndex) + "," +
+                evaluation.recall(classIndex) + "," +
+                evaluation.kappa() + "," +
+                evaluation.matthewsCorrelationCoefficient(classIndex) + "," +
+                evaluation.areaUnderROC(classIndex) + "," +
+                evaluation.areaUnderPRC(classIndex) + "," +
+                evaluation.meanAbsoluteError() + "," +
+                evaluation.rootMeanSquaredError() + "\n";
     }
 }

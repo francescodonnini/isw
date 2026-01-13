@@ -4,8 +4,12 @@ import io.github.francescodonnini.config.IniSettings;
 import io.github.francescodonnini.utils.FileUtils;
 
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class MLPipelineContext {
     private final Logger logger = Logger.getLogger(this.getClass().getName());
@@ -16,14 +20,16 @@ public class MLPipelineContext {
     private final Path data;
     private final Path results;
     private final double dropFactor;
+    private final Set<String> features;
 
-    public MLPipelineContext(String projectName, String labellingMethod, double trainingTestSplit, String model, String dataPath, double dropFactor) {
+    public MLPipelineContext(String projectName, IniSettings settings, boolean inferFeatures) {
         this.projectName = projectName;
-        this.labellingMethod = labellingMethod;
-        this.trainingTestSplit = trainingTestSplit;
-        this.model = model;
-        data = Path.of(dataPath);
-        this.dropFactor = dropFactor;
+        this.features = getFeatures(settings, inferFeatures);
+        this.labellingMethod = settings.getString("proportion");
+        this.trainingTestSplit = settings.getDouble("trainingTestSplit", 0.8);
+        this.model = settings.getString("model", "RandomForest");
+        data = Path.of(settings.getString("dataPath"));
+        this.dropFactor = settings.getDouble("%s_dropFactor".formatted(projectName.toLowerCase()));
         FileUtils.createDirectory(data);
         results = data
                 .resolve(projectName)
@@ -32,24 +38,22 @@ public class MLPipelineContext {
         logInfo();
     }
 
-    public MLPipelineContext(String projectName, IniSettings settings) {
-        this(projectName,
-            settings.getString("proportion"),
-            settings.getDouble("trainingTestSplit", 0.8),
-            settings.getString("model", "RandomForest"),
-            settings.getString("dataPath"),
-            settings.getDouble("%s_dropFactor".formatted(projectName.toLowerCase())));
+    private Set<String> getFeatures(IniSettings settings, boolean inferFeatures) {
+        var s = settings.getString("features");
+        if (!inferFeatures && s != null) {
+            return Arrays.stream(s.trim().split(",")).collect(Collectors.toUnmodifiableSet());
+        }
+        return Set.of();
     }
 
     private void logInfo() {
-        var s = new StringBuilder()
-                .append("\n")
-                .append("project name:        ").append(projectName).append("\n")
-                .append("labelling method:    ").append(labellingMethod).append("\n")
-                .append("training test split: ").append(trainingTestSplit).append("\n")
-                .append("data path:           ").append(data.toString()).append("\n")
-                .append("results path:        ").append(results.toString()).append("\n");
-        logger.log(Level.INFO, "{0}", s.toString());
+        String s = "\n" +
+                "project name:        " + projectName + "\n" +
+                "labelling method:    " + labellingMethod + "\n" +
+                "training test split: " + trainingTestSplit + "\n" +
+                "data path:           " + data.toString() + "\n" +
+                "results path:        " + results.toString() + "\n";
+        logger.log(Level.INFO, "{0}", s);
     }
 
     public String getModel() {
@@ -78,5 +82,9 @@ public class MLPipelineContext {
 
     public double getDropFactor() {
         return dropFactor;
+    }
+
+    public Set<String> getFeatures() {
+        return features;
     }
 }
