@@ -1,5 +1,6 @@
 package io.github.francescodonnini.weka;
 
+import io.github.francescodonnini.weka.preprocessing.PreprocessingFunction;
 import weka.core.Attribute;
 import weka.core.Instances;
 import weka.core.converters.ConverterUtils;

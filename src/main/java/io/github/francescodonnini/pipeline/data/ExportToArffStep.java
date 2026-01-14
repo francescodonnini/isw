@@ -3,7 +3,7 @@ package io.github.francescodonnini.pipeline.data;
 import io.github.francescodonnini.pipeline.DataPipelineContext;
 import io.github.francescodonnini.pipeline.ProjectInfo;
 import io.github.francescodonnini.pipeline.Step;
-import io.github.francescodonnini.weka.JavaMethodArffSerializer;
+import io.github.francescodonnini.weka.arff.JavaMethodArffSerializer;
 
 public class ExportToArffStep implements Step<ProjectInfo, ProjectInfo> {
     private final DataPipelineContext context;

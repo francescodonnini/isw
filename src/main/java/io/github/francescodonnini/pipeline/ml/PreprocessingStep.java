@@ -2,7 +2,7 @@ package io.github.francescodonnini.pipeline.ml;
 
 import io.github.francescodonnini.pipeline.MLWorkloadInfo;
 import io.github.francescodonnini.pipeline.Step;
-import io.github.francescodonnini.weka.StandardScaler;
+import io.github.francescodonnini.weka.preprocessing.StandardScaler;
 
 public class PreprocessingStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
     @Override

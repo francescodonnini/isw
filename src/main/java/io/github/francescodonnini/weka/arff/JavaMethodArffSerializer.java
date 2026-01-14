@@ -1,4 +1,4 @@
-package io.github.francescodonnini.weka;
+package io.github.francescodonnini.weka.arff;
 
 import io.github.francescodonnini.model.JavaMethod;
 import io.github.francescodonnini.model.Release;

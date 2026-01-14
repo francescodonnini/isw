@@ -1,12 +1,9 @@
-package io.github.francescodonnini.weka;
+package io.github.francescodonnini.weka.training;
 
-import io.github.francescodonnini.weka.factories.CostSensitiveModelFactory;
+import io.github.francescodonnini.weka.Dataset;
 import io.github.francescodonnini.weka.factories.ModelFactory;
 import weka.classifiers.Evaluation;
-import weka.classifiers.meta.CostSensitiveClassifier;
 import weka.core.Attribute;
-import weka.core.Instance;
-import weka.core.Instances;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,16 +41,8 @@ public class WalkForwardTrainer {
 
     private WalkForwardTrainingIteration train(String modelName, int validationStart, boolean showHistory) {
         try {
-            var trainingSetSlice = dataset
-                    .trainingSet(0, validationStart);
-            var trainingSetClone = new Instances(trainingSetSlice, trainingSetSlice.size());
-            for (var i : trainingSetSlice) {
-                trainingSetClone.add((Instance) i.copy());
-            }
-            var model = new CostSensitiveModelFactory(factory)
-                    .setClassWeights(trainingSetClone)
-                    .create(modelName);
-            model.buildClassifier(trainingSetClone);
+            var model = factory.create(modelName);
+            model.buildClassifier(dataset.trainingSet(0, validationStart));
             var validationSet = dataset.validationSet(validationStart);
             var eval = new Evaluation(validationSet);
             eval.evaluateModel(model, validationSet);

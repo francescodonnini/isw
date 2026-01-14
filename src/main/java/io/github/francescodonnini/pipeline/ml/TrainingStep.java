@@ -4,7 +4,7 @@ import io.github.francescodonnini.pipeline.MLPipelineContext;
 import io.github.francescodonnini.pipeline.MLWorkloadInfo;
 import io.github.francescodonnini.pipeline.Step;
 import io.github.francescodonnini.weka.factories.FilteredModelFactory;
-import io.github.francescodonnini.weka.WalkForwardTrainer;
+import io.github.francescodonnini.weka.training.WalkForwardTrainer;
 import weka.core.Attribute;
 
 import java.io.FileWriter;

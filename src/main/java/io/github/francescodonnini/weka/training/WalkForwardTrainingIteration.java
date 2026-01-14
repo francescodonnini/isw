@@ -1,4 +1,4 @@
-package io.github.francescodonnini.weka;
+package io.github.francescodonnini.weka.training;
 
 import weka.classifiers.Evaluation;
 

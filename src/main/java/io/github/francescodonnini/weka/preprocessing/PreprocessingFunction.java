@@ -1,4 +1,4 @@
-package io.github.francescodonnini.weka;
+package io.github.francescodonnini.weka.preprocessing;
 
 import weka.core.Instances;
 
