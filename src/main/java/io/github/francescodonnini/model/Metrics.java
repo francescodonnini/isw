@@ -35,7 +35,7 @@ public class Metrics {
     private int elseDeleted;
     private final Set<String> authors = new HashSet<>();
     private int codeSmells;
-    private double codeDuplcation;
+    private double codeDuplication;
     private int halsteadEffort;
 
     @Override
@@ -395,18 +395,18 @@ public class Metrics {
     }
 
     public double getCodeDuplication() {
-        return codeDuplcation;
+        return codeDuplication;
     }
 
     public void setCodeDuplication(double codeDuplication) {
-        this.codeDuplcation = codeDuplication;
+        this.codeDuplication = codeDuplication;
     }
 
     public void updateCodeDuplication(double codeDuplication) {
-        if (this.codeDuplcation + codeDuplication > 1) {
+        if (this.codeDuplication + codeDuplication > 1) {
             throw new IllegalArgumentException("Code duplication cannot be greater than 1");
         }
-        this.codeDuplcation += codeDuplication;
+        this.codeDuplication += codeDuplication;
     }
 
     public int getHalsteadEffort() {

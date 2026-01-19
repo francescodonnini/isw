@@ -1,10 +1,10 @@
 package io.github.francescodonnini.pipeline.data;
 
-import io.github.francescodonnini.pipeline.DataPipelineContext;
-import io.github.francescodonnini.pipeline.ProjectInfo;
+import io.github.francescodonnini.pipeline.inputs.DataPipelineContext;
+import io.github.francescodonnini.pipeline.inputs.ProjectInfo;
 import io.github.francescodonnini.pipeline.Step;
 
-public class LoadProjectInfoStep implements Step<Void, ProjectInfo> {
+public class LoadProjectInfoStep implements Step<ProjectInfo, ProjectInfo> {
     private final DataPipelineContext context;
 
     public LoadProjectInfoStep(DataPipelineContext context) {
@@ -12,16 +12,13 @@ public class LoadProjectInfoStep implements Step<Void, ProjectInfo> {
     }
 
     @Override
-    public ProjectInfo execute(Void input) {
+    public ProjectInfo execute(ProjectInfo input) {
         var releases = context.getReleaseApi()
-                .getReleases(context.getProjectName());
-        var remainingReleases = (int) Math.ceil(releases.size() * (1 - context.getDropFactor()));
+                .getReleases(input.getProject());
         var issues = context.getIssueApi()
-                .getIssues(context.getProjectName());
-        var runtime = new ProjectInfo();
-        runtime.setIssues(issues);
-        runtime.setAllReleases(releases);
-        runtime.setProjectReleasesEnd(remainingReleases);
-        return runtime;
+                .getIssues(input.getProject());
+        input.setIssues(issues);
+        input.setAllReleases(releases);
+        return input;
     }
 }

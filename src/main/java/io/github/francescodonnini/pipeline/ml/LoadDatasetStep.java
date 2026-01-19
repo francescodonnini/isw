@@ -1,7 +1,6 @@
 package io.github.francescodonnini.pipeline.ml;
 
-import io.github.francescodonnini.pipeline.MLPipelineContext;
-import io.github.francescodonnini.pipeline.MLWorkloadInfo;
+import io.github.francescodonnini.pipeline.inputs.MLWorkloadInfo;
 import io.github.francescodonnini.pipeline.Step;
 import io.github.francescodonnini.weka.Dataset;
 
@@ -12,20 +11,14 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
-public class LoadDatasetStep implements Step<Void, MLWorkloadInfo> {
-    private final MLPipelineContext context;
-
-    public LoadDatasetStep(MLPipelineContext context) {
-        this.context = context;
-    }
-
+public class LoadDatasetStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
     @Override
-    public MLWorkloadInfo execute(Void input) throws Exception {
-        var dataset = context.getData()
-                .resolve(context.getProjectName())
-                .resolve("data_%s.arff".formatted(context.getLabellingMethod()));
-        var results = createResultsFolder(context.getResults());
-        return new MLWorkloadInfo(new Dataset(dataset, context.getFeatures(), context.getTrainingTestSplit(), context.getDropFactor()), results);
+    public MLWorkloadInfo execute(MLWorkloadInfo input) throws Exception {
+        var datasetPath = input.getDataPath()
+                .resolve(input.getProject())
+                .resolve("data_%s.arff".formatted(input.getProportion()));
+        input.setDataset(new Dataset(datasetPath, input.getFeatures(), input.getTrainTestSplit(), input.getDropFactor()));
+        return input;
     }
 
     private Path createResultsFolder(Path parent) throws IOException {

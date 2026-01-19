@@ -10,6 +10,7 @@ public class CostSensitiveModelFactory implements ModelFactory {
     private final ModelFactory factory;
     private double[] weights = null;
 
+
     public CostSensitiveModelFactory(ModelFactory factory) {
         this.factory = factory;
     }

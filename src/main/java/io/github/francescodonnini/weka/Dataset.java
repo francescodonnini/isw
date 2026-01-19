@@ -17,6 +17,7 @@ public class Dataset {
     private static final int BUGGY_ATTR_INDEX = 0;
     private static final String RELEASE_ATTR = "release";
     private final Logger logger = Logger.getLogger(this.getClass().getName());
+    private final Path path;
     private Instances data;
     private final Map<Integer, Integer> releaseStartIndices = new HashMap<>();
     private final Map<Integer, Integer> releaseGroupCount = new HashMap<>();
@@ -29,6 +30,7 @@ public class Dataset {
             Set<String> features,
             double trainingSplit,
             double dropFactor) throws Exception {
+        path = dataPath;
         var source = new ConverterUtils.DataSource(dataPath.toString());
         loadDataset(source.getDataSet(), features, trainingSplit, dropFactor);
     }
@@ -142,7 +144,7 @@ public class Dataset {
         return slice(start, endExclusive);
     }
 
-    public Instances validationSet(int start) throws Exception {
+    public Instances validationSet(int start) {
         return validationSet(start, start + 1);
     }
 
@@ -155,5 +157,9 @@ public class Dataset {
             var attr = it.nextElement();
             f.preprocess(data, attr.index());
         }
+    }
+
+    public Path getPath() {
+        return path;
     }
 }

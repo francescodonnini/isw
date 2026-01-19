@@ -1,7 +1,6 @@
 package io.github.francescodonnini.pipeline.ml;
 
-import io.github.francescodonnini.pipeline.MLPipelineContext;
-import io.github.francescodonnini.pipeline.MLWorkloadInfo;
+import io.github.francescodonnini.pipeline.inputs.MLWorkloadInfo;
 import io.github.francescodonnini.pipeline.Step;
 import io.github.francescodonnini.weka.OrderedHoldOutEvaluator;
 import weka.attributeSelection.*;
@@ -10,17 +9,13 @@ import weka.classifiers.meta.CostSensitiveClassifier;
 import weka.classifiers.trees.RandomForest;
 import weka.core.Attribute;
 
+import java.io.FileWriter;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class FeatureSelectionStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
     private final Logger logger = Logger.getLogger(FeatureSelectionStep.class.getName());
-    private final MLPipelineContext context;
-
-    public FeatureSelectionStep(MLPipelineContext context) {
-        this.context = context;
-    }
 
     @Override
     public MLWorkloadInfo execute(MLWorkloadInfo input) throws Exception {
@@ -31,12 +26,13 @@ public class FeatureSelectionStep implements Step<MLWorkloadInfo, MLWorkloadInfo
 
         var evaluator = new OrderedHoldOutEvaluator();
         evaluator.setClassifier(classifier);
-        evaluator.setTrainTestSplit(0.8);
-        evaluator.setMetric("kappa");
+        evaluator.setTrainTestSplit(input.getTrainTestSplit());
+        evaluator.setMetric(input.getMetric());
 
         var search = new GreedyStepwise();
-        search.setSearchBackwards(context.isBackwardSearch());
+        search.setSearchBackwards(input.isBackwardSearch());
         search.setNumExecutionSlots(Runtime.getRuntime().availableProcessors());
+        search.setDebuggingOutput(true);
 
         var selector = new AttributeSelection();
         selector.setEvaluator(evaluator);
@@ -45,7 +41,22 @@ public class FeatureSelectionStep implements Step<MLWorkloadInfo, MLWorkloadInfo
         var trainingSet = input.getDataset().trainingSet();
         selector.SelectAttributes(trainingSet);
         var selected = selector.selectedAttributes();
-        logger.log(Level.INFO, "Selected attributes ({0}): {1}", new Object[] {selected.length, String.join(",", Arrays.stream(selected).mapToObj(trainingSet::attribute).map(Attribute::name).toList())});
+
+        try (var file = new FileWriter(input.getResults().toFile(), true)) {
+            var summary = input.getId() + "," +
+                    input.getProject() + "," +
+                    input.getProportion() + "," +
+                    (input.isBackwardSearch() ? "B" : "F") + "," +
+                    input.getModel() + "," +
+                    input.getMetric() + "," +
+                    selected.length + "," +
+                    "\"" + String.join(",", Arrays.stream(selected).mapToObj(trainingSet::attribute).map(Attribute::name).toList()) + "\"\n";
+            logger.log(Level.INFO, "saving summary \"{0}\" to file {1}", new Object[]{
+                summary, input.getResults()
+            });
+            file.write(summary);
+            file.flush();
+        }
         return input;
     }
 

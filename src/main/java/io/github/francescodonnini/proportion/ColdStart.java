@@ -14,14 +14,12 @@ public class ColdStart implements Proportion {
     private final IssueApi issueApi;
     private final List<Issue> issues;
     private final List<Release> releases;
-    private final int projectReleasesEnd;
     private final boolean complete;
 
-    public ColdStart(IssueApi issueApi, List<Issue> issues, List<Release> releases, int projectReleasesEnd, boolean complete) {
+    public ColdStart(IssueApi issueApi, List<Issue> issues, List<Release> releases, boolean complete) {
         this.issueApi = issueApi;
         this.issues = issues;
         this.releases = releases;
-        this.projectReleasesEnd = projectReleasesEnd;
         this.complete = complete;
     }
 
@@ -65,7 +63,7 @@ public class ColdStart implements Proportion {
         var labeled = ProportionUtils.getLabelled(issues);
         var unlabeled = ProportionUtils.getUnlabelled(issues);
         var result = new ArrayList<>(labeled);
-        for (var k = 1; k < projectReleasesEnd; k++) {
+        for (var k = 1; k < releases.size(); k++) {
             final var curr = releases.get(k);
             final var prev = releases.get(k - 1);
             var pAvg = new ArrayList<Double>();

@@ -8,7 +8,6 @@ import io.github.francescodonnini.model.JavaMethod;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -28,7 +27,7 @@ public class CsvSmellLinker implements SmellLinker {
     @Override
     public void link(List<JavaClass> classes) {
         var index = createCommitClassIndex(classes);
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(reportDirectory)) {
+        try (var stream = Files.newDirectoryStream(reportDirectory)) {
             for (Path path : stream) {
                 var fileName = path.getFileName().toString();
                 if (fileName.endsWith(".csv")) {

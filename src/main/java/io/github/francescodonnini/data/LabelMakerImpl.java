@@ -23,6 +23,7 @@ public class LabelMakerImpl implements LabelMaker {
     private final List<Issue> issues;
     private final List<Release> releases;
     private final Map<String, HashSet<String>> releaseMethodMap = new HashMap<>();
+    private Map<String, List<JavaMethod>> idMethodMap;
 
     public LabelMakerImpl(Git git, List<Issue> issues, List<Release> releases) {
         this.issues = issues;
@@ -34,18 +35,26 @@ public class LabelMakerImpl implements LabelMaker {
     public void makeLabels(List<JavaMethod> methods) {
         try {
             createReleaseMethodMap(methods);
+            idMethodMap = methods.stream()
+                    .collect(Collectors.groupingBy(this::getId));
             var df = new DiffFormatter(DisabledOutputStream.INSTANCE);
             df.setRepository(git.getRepository());
             df.setDetectRenames(true);
             var index = methods.stream()
                     .collect(Collectors.groupingBy(m -> m.getJavaClass().getCommit()));
+            var total = issues.size();
+            var current = 0;
             for (var issue : issues) {
+                if (((int)(((double) current / total) * 100)) % 5 == 0) {
+                    logger.log(Level.INFO, "{0}%", (double) current / total * 100);
+                }
                 for (var commit : issue.commits()) {
                     var susceptible = index.getOrDefault(commit.getName(), List.of());
                     if (!susceptible.isEmpty()) {
                         parseCommit(df, susceptible, commit, issue, methods);
                     }
                 }
+                current++;
             }
         } catch (IOException e) {
             logger.log(Level.SEVERE, e.getMessage());
@@ -92,11 +101,11 @@ public class LabelMakerImpl implements LabelMaker {
     }
 
     private void backtrack(JavaMethod m, List<Release> affectedVersions, List<JavaMethod> methods) {
-        methods.stream()
-                .filter(x -> x != m)
-                .filter(x -> getId(x).equals(getId(m)))
-                .filter(x -> isAffected(x, affectedVersions))
-                .forEach(x -> x.setBuggy(true));
+        Optional.ofNullable(idMethodMap.get(getId(m)))
+                .ifPresent(list -> list.stream()
+                        .filter(x -> x != m)
+                        .filter(x -> isAffected(x, affectedVersions))
+                        .forEach(x -> x.setBuggy(true)));
     }
 
     private boolean isAffected(JavaMethod m, List<Release> affectedVersions) {

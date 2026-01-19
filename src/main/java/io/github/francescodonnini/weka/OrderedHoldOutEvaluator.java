@@ -92,17 +92,17 @@ public class OrderedHoldOutEvaluator extends HoldOutSubsetEvaluator {
     }
 
     @Override
-    public double evaluateSubset(BitSet subset, Instances holdOut) throws Exception {
+    public double evaluateSubset(BitSet subset, Instances holdOut) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public double evaluateSubset(BitSet subset, Instance holdOut, boolean retrain) throws Exception {
+    public double evaluateSubset(BitSet subset, Instance holdOut, boolean retrain) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void buildEvaluator(Instances data) throws Exception {
+    public void buildEvaluator(Instances data) {
         this.data = data;
     }
 

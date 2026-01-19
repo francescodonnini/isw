@@ -47,18 +47,23 @@ public class CsvIssueApi {
     }
 
     private List<Issue> getIssues(Map<String, RevCommit> commits, Map<String, Release> releases, Path path) throws FileNotFoundException {
-        var beans = new CsvToBeanBuilder<IssueLocalEntity>(new FileReader(path.toFile()))
-                .withType(IssueLocalEntity.class)
-                .withFieldAsNull(CSVReaderNullFieldIndicator.EMPTY_QUOTES)
-                .build()
-                .parse();
-        var issues = beans.stream()
-                .map(b -> fromCsv(b, commits, releases))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .toList();
-        logger.log(Level.INFO, "Retrieved {0} from cache", issues.size());
-        return issues;
+        try {
+            var beans = new CsvToBeanBuilder<IssueLocalEntity>(new FileReader(path.toFile()))
+                    .withType(IssueLocalEntity.class)
+                    .withFieldAsNull(CSVReaderNullFieldIndicator.EMPTY_QUOTES)
+                    .build()
+                    .parse();
+            var issues = beans.stream()
+                    .map(b -> fromCsv(b, commits, releases))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .toList();
+            logger.log(Level.INFO, "Retrieved {0} from cache", issues.size());
+            return issues;
+        } catch (RuntimeException e) {
+            logger.log(Level.WARNING, e.getMessage(), e);
+            return List.of();
+        }
     }
 
     public void saveLocal(String project, List<Issue> issues) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {

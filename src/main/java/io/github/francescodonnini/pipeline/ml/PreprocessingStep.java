@@ -1,6 +1,6 @@
 package io.github.francescodonnini.pipeline.ml;
 
-import io.github.francescodonnini.pipeline.MLWorkloadInfo;
+import io.github.francescodonnini.pipeline.inputs.MLWorkloadInfo;
 import io.github.francescodonnini.pipeline.Step;
 import io.github.francescodonnini.weka.preprocessing.StandardScaler;
 
