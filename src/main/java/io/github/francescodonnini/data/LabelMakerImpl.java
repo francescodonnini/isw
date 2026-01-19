@@ -22,7 +22,7 @@ public class LabelMakerImpl implements LabelMaker {
     private final Git git;
     private final List<Issue> issues;
     private final List<Release> releases;
-    private final Map<String, HashSet<String>> releaseMethodMap = new HashMap<>();
+    private Map<String, HashSet<String>> releaseMethodMap;
     private Map<String, List<JavaMethod>> idMethodMap;
 
     public LabelMakerImpl(Git git, List<Issue> issues, List<Release> releases) {
@@ -34,9 +34,7 @@ public class LabelMakerImpl implements LabelMaker {
     @Override
     public void makeLabels(List<JavaMethod> methods) {
         try {
-            createReleaseMethodMap(methods);
-            idMethodMap = methods.stream()
-                    .collect(Collectors.groupingBy(this::getId));
+            createMethodIndices(methods);
             var df = new DiffFormatter(DisabledOutputStream.INSTANCE);
             df.setRepository(git.getRepository());
             df.setDetectRenames(true);
@@ -51,7 +49,7 @@ public class LabelMakerImpl implements LabelMaker {
                 for (var commit : issue.commits()) {
                     var susceptible = index.getOrDefault(commit.getName(), List.of());
                     if (!susceptible.isEmpty()) {
-                        parseCommit(df, susceptible, commit, issue, methods);
+                        parseCommit(df, susceptible, commit, issue);
                     }
                 }
                 current++;
@@ -61,16 +59,19 @@ public class LabelMakerImpl implements LabelMaker {
         }
     }
 
-    private void createReleaseMethodMap(List<JavaMethod> methods) {
+    private void createMethodIndices(List<JavaMethod> methods) {
+        releaseMethodMap = new HashMap<>();
         var prev = LocalDate.MIN;
         for (var release : releases) {
             var curr = release.releaseDate();
-            LocalDate finalPrev = prev;
+            final var finalPrev = prev;
             methods.stream()
                     .filter(m -> isBetween(m, finalPrev, curr))
                     .forEach(m -> releaseMethodMap.computeIfAbsent(release.id(), h -> new HashSet<>()).add(getId(m)));
             prev = curr;
         }
+        idMethodMap = methods.stream()
+                .collect(Collectors.groupingBy(this::getId));
     }
 
     private boolean isBetween(JavaMethod m, LocalDate a, LocalDate b) {
@@ -79,7 +80,7 @@ public class LabelMakerImpl implements LabelMaker {
     }
 
 
-    private void parseCommit(DiffFormatter df, List<JavaMethod> susceptible, RevCommit commit, Issue issue, List<JavaMethod> methods) throws IOException {
+    private void parseCommit(DiffFormatter df, List<JavaMethod> susceptible, RevCommit commit, Issue issue) throws IOException {
         var diffList = df.scan(getParent(commit), commit.getTree());
         for (var diff : diffList) {
             var path = diff.getNewPath();
@@ -87,20 +88,20 @@ public class LabelMakerImpl implements LabelMaker {
             susceptible.stream()
                     .filter(m -> m.getPath().toString().equals(path))
                     .filter(m -> EditUtils.isTouched(m, editList, this::match))
-                    .forEach(m -> setBuggy(m, issue, methods));
+                    .forEach(m -> setBuggy(m, issue));
         }
     }
 
-    private void setBuggy(JavaMethod m, Issue issue, List<JavaMethod> methods) {
+    private void setBuggy(JavaMethod m, Issue issue) {
         m.setBuggy(true);
-        backtrack(m, issue.affectedVersions(), methods);
+        backtrack(m, issue.affectedVersions());
     }
 
     private String getId(JavaMethod m) {
         return m.getPath().toString() + m.getSignature();
     }
 
-    private void backtrack(JavaMethod m, List<Release> affectedVersions, List<JavaMethod> methods) {
+    private void backtrack(JavaMethod m, List<Release> affectedVersions) {
         Optional.ofNullable(idMethodMap.get(getId(m)))
                 .ifPresent(list -> list.stream()
                         .filter(x -> x != m)
