@@ -86,6 +86,7 @@ public class DiffCollector {
 
     private void addToHistory(JavaMethod to, JavaMethod from) {
         from.getJavaClass().getAuthor().ifPresent(a -> to.getMetrics().addAuthor(a));
+        to.getMetrics().updateMethodHistories();
         to.getMetrics().addElseCount(from.getMetrics().getElseCount());
         to.getMetrics().addLoc(from.getMetrics().getLineOfCode());
         to.getMetrics().addStatementCount(from.getMetrics().getStatementsCount());
