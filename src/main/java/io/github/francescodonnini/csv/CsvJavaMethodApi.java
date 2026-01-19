@@ -97,6 +97,7 @@ public class CsvJavaMethodApi {
         bean.getAuthors().forEach(a -> m.getMetrics().addAuthor(a));
         m.getMetrics().setCodeDuplication(bean.getCodeDuplication());
         m.getMetrics().setHalsteadEffort(bean.getHalsteadEffort());
+        m.getMetrics().setMethodHistories(bean.getMethodHistories());
     }
 
     public void saveLocal(List<JavaMethod> entries, String path) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
@@ -151,6 +152,7 @@ public class CsvJavaMethodApi {
         bean.setCodeSmells(model.getMetrics().getCodeSmells());
         bean.setCodeDuplication(model.getMetrics().getCodeDuplication());
         bean.setHalsteadEffort(model.getMetrics().getHalsteadEffort());
+        bean.setMethodHistories(model.getMetrics().getMethodHistories());
         return bean;
     }
 }

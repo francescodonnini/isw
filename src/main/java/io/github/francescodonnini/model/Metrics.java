@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public class Metrics {
+    private int methodHistories;
     private int cyclomaticComplexity;
     private int parametersCount;
     private int lineOfCode;
@@ -51,6 +52,18 @@ public class Metrics {
                 ", authors=" + String.join(",", authors) +
                 ", codeSmells=" + codeSmells +
                 '}';
+    }
+
+    public int getMethodHistories() {
+        return methodHistories;
+    }
+
+    public void setMethodHistories(int methodHistories) {
+        this.methodHistories = methodHistories;
+    }
+
+    public void updateMethodHistories() {
+        ++methodHistories;
     }
 
     public int getCyclomaticComplexity() {
