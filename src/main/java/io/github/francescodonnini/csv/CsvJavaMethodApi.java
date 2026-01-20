@@ -148,7 +148,7 @@ public class CsvJavaMethodApi {
         bean.setStatementsDeleted(model.getMetrics().getStatementsDeleted());
         bean.setChurn(model.getMetrics().getChurn());
         bean.setAvgChurn(model.getMetrics().getAvgChurn());
-        bean.setAuthors(new ArrayList<>(model.getMetrics().getAuthors()));
+        bean.setAuthors(new ArrayList<>(model.getMetrics().getAuthorHistory()));
         bean.setCodeSmells(model.getMetrics().getCodeSmells());
         bean.setCodeDuplication(model.getMetrics().getCodeDuplication());
         bean.setHalsteadEffort(model.getMetrics().getHalsteadEffort());

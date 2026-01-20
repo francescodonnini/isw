@@ -34,7 +34,7 @@ public class Metrics {
     private final List<Integer> elseHistory = new ArrayList<>();
     private int elseAdded;
     private int elseDeleted;
-    private final Set<String> authors = new HashSet<>();
+    private final Set<String> authorHistory = new HashSet<>();
     private int codeSmells;
     private double codeDuplication;
     private int halsteadEffort;
@@ -48,8 +48,8 @@ public class Metrics {
                 ", statementsCount=" + statementsCount +
                 ", elseCount=" + elseCount +
                 ", nestingDepth=" + nestingDepth +
-                ", authorsCount=" + authors.size() +
-                ", authors=" + String.join(",", authors) +
+                ", authorsCount=" + authorHistory.size() +
+                ", authors=" + String.join(",", authorHistory) +
                 ", codeSmells=" + codeSmells +
                 '}';
     }
@@ -273,15 +273,15 @@ public class Metrics {
     }
 
     public void addAuthor(String author) {
-        authors.add(author);
+        authorHistory.add(author);
     }
 
-    public Set<String> getAuthors() {
-        return authors;
+    public Set<String> getAuthorHistory() {
+        return authorHistory;
     }
 
     public int getAuthorsCount() {
-        return Math.max(authors.size(), 1);
+        return Math.max(authorHistory.size(), 1);
     }
 
     public int getNestingDepth() {

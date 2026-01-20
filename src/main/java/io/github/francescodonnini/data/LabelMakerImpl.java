@@ -22,8 +22,9 @@ public class LabelMakerImpl implements LabelMaker {
     private final Git git;
     private final List<Issue> issues;
     private final List<Release> releases;
-    private Map<String, HashSet<String>> releaseMethodMap;
+    private Map<String, Set<String>> releaseMethodMap;
     private Map<String, List<JavaMethod>> idMethodMap;
+    private int buggy;
 
     public LabelMakerImpl(Git git, List<Issue> issues, List<Release> releases) {
         this.issues = issues;
@@ -40,19 +41,18 @@ public class LabelMakerImpl implements LabelMaker {
             df.setDetectRenames(true);
             var index = methods.stream()
                     .collect(Collectors.groupingBy(m -> m.getJavaClass().getCommit()));
-            var total = issues.size();
-            var current = 0;
+            var progress = 0;
             for (var issue : issues) {
-                if (((int)(((double) current / total) * 100)) % 5 == 0) {
-                    logger.log(Level.INFO, "{0}%", (double) current / total * 100);
-                }
+                buggy = 0;
                 for (var commit : issue.commits()) {
                     var susceptible = index.getOrDefault(commit.getName(), List.of());
                     if (!susceptible.isEmpty()) {
                         parseCommit(df, susceptible, commit, issue);
                     }
                 }
-                current++;
+                progress++;
+                logger.log(Level.INFO, "{0}/{1} ({2}%)", new Object[]{progress, issues.size(), ((double)progress / issues.size() * 100)});
+                logger.log(Level.INFO, "buggy methods: {0}", buggy);
             }
         } catch (IOException e) {
             logger.log(Level.SEVERE, e.getMessage());
@@ -93,6 +93,7 @@ public class LabelMakerImpl implements LabelMaker {
     }
 
     private void setBuggy(JavaMethod m, Issue issue) {
+        ++buggy;
         m.setBuggy(true);
         backtrack(m, issue.affectedVersions());
     }
@@ -106,12 +107,15 @@ public class LabelMakerImpl implements LabelMaker {
                 .ifPresent(list -> list.stream()
                         .filter(x -> x != m)
                         .filter(x -> isAffected(x, affectedVersions))
-                        .forEach(x -> x.setBuggy(true)));
+                        .forEach(x -> {
+                            x.setBuggy(true);
+                            ++buggy;
+                        }));
     }
 
     private boolean isAffected(JavaMethod m, List<Release> affectedVersions) {
         for (var r : affectedVersions) {
-            if (releaseMethodMap.getOrDefault(r.id(), HashSet.newHashSet(0)).contains(getId(m))) {
+            if (releaseMethodMap.getOrDefault(r.id(), Set.of()).contains(getId(m))) {
                 return true;
             }
         }
