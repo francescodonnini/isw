@@ -242,11 +242,12 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         for (var diff : diffList) {
             var oldPath = diff.getOldPath();
             var path = diff.getNewPath();
-            if (path.endsWith(JAVA_FILE_EXT)) {
-                if (diff.getChangeType().equals(DiffEntry.ChangeType.RENAME) && !oldPath.equals("/dev/null") && !oldPath.equals(path)) {
+            if (path.endsWith(JAVA_FILE_EXT)
+                && diff.getChangeType().equals(DiffEntry.ChangeType.RENAME)
+                && !oldPath.equals("/dev/null")
+                && !oldPath.equals(path)) {
                     logger.log(Level.INFO, "({0}) RENAME {1} -> {2}", new Object[] {commit.getName().substring(0, 6), oldPath, path});
                     trackingId.updateId(Path.of(oldPath), Path.of(path));
-                }
             }
         }
     }
