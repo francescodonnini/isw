@@ -51,14 +51,14 @@ public class OrderedHoldOutEvaluator extends HoldOutSubsetEvaluator {
         eval.evaluateModel(localClassifier, validation);
         var positiveClassIndex = filteredData.classAttribute().indexOfValue("1");
         var score = switch (metric) {
-            case AccuracyMetric.Accuracy -> eval.pctCorrect();
+            case AccuracyMetric.ACCURACY -> eval.pctCorrect();
             case AccuracyMetric.AUC -> eval.areaUnderROC(positiveClassIndex);
             case AccuracyMetric.AUC_PRC -> eval.areaUnderPRC(positiveClassIndex);
             case AccuracyMetric.F1 -> eval.fMeasure(positiveClassIndex);
-            case AccuracyMetric.Kappa -> eval.kappa();
-            case AccuracyMetric.Matthews -> eval.matthewsCorrelationCoefficient(positiveClassIndex);
-            case AccuracyMetric.Precision -> eval.precision(positiveClassIndex);
-            case AccuracyMetric.Recall -> eval.recall(positiveClassIndex);
+            case AccuracyMetric.KAPPA -> eval.kappa();
+            case AccuracyMetric.MATTHEWS -> eval.matthewsCorrelationCoefficient(positiveClassIndex);
+            case AccuracyMetric.PRECISION -> eval.precision(positiveClassIndex);
+            case AccuracyMetric.RECALL -> eval.recall(positiveClassIndex);
         };
         logger.log(Level.INFO, "Evaluation result is {0} ({1})", new Object[] {score, filteredAttributes});
         return score;

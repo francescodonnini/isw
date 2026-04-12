@@ -122,7 +122,7 @@ public class MLWorkloadInfo {
         this.useClassWeights = useClassWeights;
     }
 
-    public boolean UseClassWeights() {
+    public boolean useClassWeights() {
         return useClassWeights;
     }
 }

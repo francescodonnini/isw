@@ -19,10 +19,10 @@ public class ProportionStep implements Step<ProjectInfo, ProjectInfo> {
     @Override
     public ProjectInfo execute(ProjectInfo input) {
         var proportion = switch (input.getProportion()) {
-            case Proportion.ColdStart -> new ColdStart(context.getIssueApi(), input.getIssues(), input.getAllReleases(), true);
-            case Proportion.Incremental -> new Incremental(input.getIssues(), input.getAllReleases(), true);
-            case Proportion.MovingWindow -> new MovingWindow(input.getIssues(), input.getAllReleases(), input.getMovingWindowPercentage());
-            case Proportion.Simple -> new Simple(input.getIssues(), input.getAllReleases());
+            case Proportion.COLD_START -> new ColdStart(context.getIssueApi(), input.getIssues(), input.getAllReleases(), true);
+            case Proportion.INCREMENTAL -> new Incremental(input.getIssues(), input.getAllReleases(), true);
+            case Proportion.MOVING_WINDOW -> new MovingWindow(input.getIssues(), input.getAllReleases(), input.getMovingWindowPercentage());
+            case Proportion.SIMPLE -> new Simple(input.getIssues(), input.getAllReleases());
         };
         input.setIssues(proportion.makeLabels(input.getProject()));
         return input;

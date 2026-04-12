@@ -51,7 +51,7 @@ public class DataCli implements Callable<Integer> {
         var input = new ProjectInfo();
         input.setProject(project);
         input.setProportion(Proportion.from(proportion));
-        if (input.getProportion().equals(Proportion.MovingWindow)) {
+        if (input.getProportion().equals(Proportion.MOVING_WINDOW)) {
             if (window.isEmpty()) {
                 throw new CommandLine.ParameterException(
                         new CommandLine(this).getCommandSpec().commandLine(),

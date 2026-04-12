@@ -26,7 +26,7 @@ public class TrainingStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
         var factory = new FilteredModelFactory();
         factory.add(input.getDataset().features());
         factory.add(input.getDataset().classAttribute());
-        var trainer = new WalkForwardTrainer(input.getDataset(), factory, input.UseClassWeights());
+        var trainer = new WalkForwardTrainer(input.getDataset(), factory, input.useClassWeights());
         var history = trainer.train(input.getModel());
         createSummary(input.getResults(), input);
         history.save(input.getResults().resolve("%s-results.csv".formatted(input.getModel())));
