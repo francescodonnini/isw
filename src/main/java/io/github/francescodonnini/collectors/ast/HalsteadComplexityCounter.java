@@ -66,15 +66,6 @@ public class HalsteadComplexityCounter extends AbstractCounter {
         return rv;
     }
 
-    /*
-     * - Arithmetic: +, -, *, /, %
-     * - Relational: ==, !=, <, >, <=, >=
-     * - Logical: &&, ||, !
-     * - Bitwise: &, |, ^, ~, <<, >>, >>>
-     * - Assignment: =, +=, -=, *=, /=, %=, &=, |=, ^=, <<=, >>=, >>>=
-     * - Unary: ++, -- (pre and post), - (negation), + (unary plus)
-     * - Other: instanceof, ? : (ternary)
-     */
     @Override
     public Void visitBinary(BinaryTree node, JavaClass javaClass) {
         visitOperator(node);
@@ -222,7 +213,6 @@ public class HalsteadComplexityCounter extends AbstractCounter {
      * - Array Access
      * - Type Casting
      */
-
     @Override
     public Void visitMethodInvocation(MethodInvocationTree node, JavaClass javaClass) {
         visitOperator(node);
