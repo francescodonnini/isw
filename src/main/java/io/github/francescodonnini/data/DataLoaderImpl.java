@@ -256,10 +256,10 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         classList.stream()
                 .filter(c -> !c.getMethods().isEmpty())
                 .forEach(c -> {
-            var methods = c.getMethods();
-            this.methods.addAll(methods);
+            var methodList = c.getMethods();
+            this.methods.addAll(methodList);
             classes.add(c);
-            methodsPerRelease.add(methods.size());
+            methodsPerRelease.add(methodList.size());
         });
     }
 
