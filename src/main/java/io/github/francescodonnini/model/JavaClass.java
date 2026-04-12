@@ -8,29 +8,83 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class JavaClass {
-    private long trackingId;
+    public static class Builder {
+        private long trackingId;
+        private String author;
+        private String commit;
+        private Path parent;
+        private Path path;
+        private boolean topLevel;
+        private String name;
+        private LocalDateTime time;
+
+        public JavaClass create() {
+            return new JavaClass(this);
+        }
+
+        public Builder trackingId(long trackingId) {
+            this.trackingId = trackingId;
+            return this;
+        }
+
+        public Builder author(String author) {
+            this.author = author;
+            return this;
+        }
+
+        public Builder commit(String commit) {
+            this.commit = commit;
+            return this;
+        }
+
+        public Builder parent(Path parent) {
+            this.parent = parent;
+            return this;
+        }
+
+        public Builder path(Path path) {
+            this.path = path;
+            return this;
+        }
+
+        public Builder topLevel(boolean topLevel) {
+            this.topLevel = topLevel;
+            return this;
+        }
+
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder time(LocalDateTime time) {
+            this.time = time;
+            return this;
+        }
+    }
+    private final long trackingId;
     private String author;
-    private String commit;
-    private Path parent;
+    private final String commit;
+    private final Path parent;
     private Path path;
     private final boolean topLevel;
     private final String name;
     private final LocalDateTime time;
     private final List<JavaMethod> methods = new ArrayList<>();
 
-    public JavaClass(long trackingId, String commit, Path parent, Path path, String name, LocalDateTime time, boolean topLevel) {
-        this(trackingId,null, commit, parent, path, topLevel, name, time);
+    public static Builder builder() {
+        return new Builder();
     }
 
-    public JavaClass(long trackingId, String author, String commit, Path parent, Path path, boolean topLevel, String name, LocalDateTime time) {
-        this.trackingId = trackingId;
-        this.author = author;
-        this.commit = commit;
-        this.parent = parent;
-        this.path = path;
-        this.topLevel = topLevel;
-        this.name = name;
-        this.time = time;
+    private JavaClass(Builder builder) {
+        this.trackingId = builder.trackingId;
+        this.author = builder.author;
+        this.commit = builder.commit;
+        this.parent = builder.parent;
+        this.path = builder.path;
+        this.topLevel = builder.topLevel;
+        this.name = builder.name;
+        this.time = builder.time;
     }
 
     @Override
@@ -60,10 +114,6 @@ public class JavaClass {
         return trackingId;
     }
 
-    public void setTrackingId(long trackingId) {
-        this.trackingId = trackingId;
-    }
-
     public void addMethod(JavaMethod method) {
         methods.add(method);
     }
@@ -76,10 +126,6 @@ public class JavaClass {
         return parent;
     }
 
-    public void setParent(Path parent) {
-        this.parent = parent;
-    }
-
     public Path getPath() {
         return path;
     }
@@ -90,10 +136,6 @@ public class JavaClass {
 
     public void setPath(Path path) {
         this.path = path;
-    }
-
-    public Path getAbsolutePath() {
-        return parent.resolve(path);
     }
 
     public LocalDateTime getTime() {
@@ -110,10 +152,6 @@ public class JavaClass {
 
     public String getCommit() {
         return commit;
-    }
-
-    public void setCommit(String commit) {
-        this.commit = commit;
     }
 
     public String getName() {

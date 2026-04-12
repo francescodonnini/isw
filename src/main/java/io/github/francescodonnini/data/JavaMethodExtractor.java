@@ -111,15 +111,15 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     }
 
     private void setNamedClass(ClassTree currentClass, boolean primary) {
-        this.currentClass = new JavaClass(
-                context.trackingId(),
-                context.commit(),
-                context.parent(),
-                context.path(),
-                currentClass.getSimpleName().toString(),
-                context.time(),
-                primary
-        );
+        this.currentClass = JavaClass.builder()
+                .trackingId(context.trackingId())
+                .commit(context.commit())
+                .parent(context.parent())
+                .path(context.path())
+                .name(currentClass.getSimpleName().toString())
+                .time(context.time())
+                .topLevel(primary)
+                .create();
     }
 
     private boolean isNamedClass(ClassTree node) {

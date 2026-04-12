@@ -30,21 +30,21 @@ public class CsvJavaClassApi {
                 .build()
                 .parse();
         var methods = new ArrayList<JavaClass>();
-        beans.forEach(bean -> fromCsv(bean).ifPresent(methods::add));
+        beans.forEach(bean -> methods.add(fromCsv(bean)));
         return methods;
     }
 
-    private Optional<JavaClass> fromCsv(JavaClassLocalEntity bean) {
-        var clazz = new JavaClass(
-                bean.getTrackingId(),
-                bean.getAuthor().orElse(null),
-                bean.getCommit(),
-                Path.of(bean.getParent()),
-                Path.of(bean.getPath()),
-                bean.isTopLevel(),
-                bean.getName(),
-                bean.getTime());
-        return Optional.of(clazz);
+    private JavaClass fromCsv(JavaClassLocalEntity bean) {
+        return JavaClass.builder()
+                .trackingId(bean.getTrackingId())
+                .author(bean.getAuthor().orElse(null))
+                .commit(bean.getCommit())
+                .parent(Path.of(bean.getParent()))
+                .path(Path.of(bean.getPath()))
+                .topLevel(bean.isTopLevel())
+                .name(bean.getName())
+                .time(bean.getTime())
+                .create();
     }
 
     public void saveLocal(List<JavaClass> entries, String path) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
