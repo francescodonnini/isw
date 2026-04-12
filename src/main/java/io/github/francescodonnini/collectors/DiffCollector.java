@@ -52,14 +52,14 @@ public class DiffCollector {
         var progress = 0;
         for (var release : releases) {
             var end = release.releaseDate();
-            var methods = collect(start, end, previousEnd);
-            result.addAll(methods);
+            var methodList = collect(start, end, previousEnd);
+            result.addAll(methodList);
             previousEnd = end;
             if (!fromStart) {
                 start = end;
             }
             ++progress;
-            logger.log(Level.INFO, "extracted {0} methods from {1}", new Object[]{methods.size(), release.id()});
+            logger.log(Level.INFO, "extracted {0} methods from {1}", new Object[]{methodList.size(), release.id()});
             logger.log(Level.INFO, "{0}/{1} ({2}%)", new Object[]{progress, releases.size(), ((double)progress / releases.size() * 100)});
         }
         return result;
