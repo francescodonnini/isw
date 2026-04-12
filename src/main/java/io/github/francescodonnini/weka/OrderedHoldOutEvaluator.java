@@ -18,7 +18,7 @@ import java.util.stream.IntStream;
 
 public class OrderedHoldOutEvaluator extends HoldOutSubsetEvaluator {
     private static final Logger logger = Logger.getLogger(OrderedHoldOutEvaluator.class.getName());
-    private Classifier classifier;
+    private transient Classifier classifier;
     private Instances data;
     private AccuracyMetric metric;
     private double trainTestSplit;
