@@ -208,21 +208,19 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
             var files = new ArrayList<ParseContext>();
             while (walk.next()) {
                 var path = Path.of(walk.getPathString());
-                if (!predicate.test(path)) {
-                    continue;
+                if (predicate.test(path)) {
+                    var objectId = walk.getObjectId(0);
+                    var loader = reader.open(objectId);
+                    var content = new String(loader.getBytes(), StandardCharsets.UTF_8);
+                    if (!isGenerated(content)) {
+                        files.add(new ParseContext(trackingId.getId(path), commit.getName(), projectPath, path, GitUtils.getCommitTime(commit), content));
+                        var textFile = TextFile
+                                .builderForCharSeq(content, FileId.fromPath(path), languageVersion)
+                                .build();
+                        pmd.files().addFile(textFile);
+                        cpd.files().addFile(textFile);
+                    }
                 }
-                var objectId = walk.getObjectId(0);
-                var loader = reader.open(objectId);
-                var content = new String(loader.getBytes(), StandardCharsets.UTF_8);
-                if (isGenerated(content)) {
-                    continue;
-                }
-                files.add(new ParseContext(trackingId.getId(path), commit.getName(), projectPath, path, GitUtils.getCommitTime(commit), content));
-                var textFile = TextFile
-                        .builderForCharSeq(content, FileId.fromPath(path), languageVersion)
-                        .build();
-                pmd.files().addFile(textFile);
-                cpd.files().addFile(textFile);
             }
             var lists = files.parallelStream()
                             .map(this::parseClass)
@@ -237,6 +235,8 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
             addProgramData(list);
         }
     }
+
+
 
     private void handleRenames(RevCommit commit, List<DiffEntry> diffList) {
         for (var diff : diffList) {
