@@ -343,14 +343,12 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
                 .collect(Collectors.groupingBy(c -> c.getPath().toString()));
         for (var diff : diffList) {
             var path = diff.getNewPath();
-            // var edits = df.toFileHeader(diff).toEditList();
             // Se il percorso del file modificato non è un file .java allora non è necessario analizzare
             // la modifica.
             if (path.endsWith(JAVA_FILE_EXT) && index.containsKey(path)) {
                 var author = GitUtils.getAuthor(commit);
                 for (var c : index.get(path)) {
                     author.ifPresent(c::setAuthor);
-                    // c.getMethods().removeIf(m -> !EditUtils.isTouched(m, edits));
                 }
             }
         }
