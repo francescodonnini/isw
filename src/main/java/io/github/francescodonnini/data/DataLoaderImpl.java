@@ -186,10 +186,10 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
                 ++i;
             }
             if (last == null) {
-                logger.log(Level.INFO, "no closing commit for release {0}", release.toString());
+                logger.log(Level.INFO, "no closing commit for release {0}", release);
             } else {
                 map.put(last.getName(), release);
-                logger.log(Level.INFO, "commit %s is the last one for release %s".formatted(last.getName().substring(0, 6), release));
+                logger.log(Level.INFO, "commit {0} is the last one for release {1}", new Object[] {last.getName().substring(0, 6), release});
             }
         }
         return map;
@@ -244,7 +244,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
             var path = diff.getNewPath();
             if (path.endsWith(JAVA_FILE_EXT)) {
                 if (diff.getChangeType().equals(DiffEntry.ChangeType.RENAME) && !oldPath.equals("/dev/null") && !oldPath.equals(path)) {
-                    logger.log(Level.INFO, "(%s) RENAME %s -> %s".formatted(commit.getName().substring(0, 6), oldPath, path));
+                    logger.log(Level.INFO, "({0}) RENAME {1} -> {2}", new Object[] {commit.getName().substring(0, 6), oldPath, path});
                     trackingId.updateId(Path.of(oldPath), Path.of(path));
                 }
             }
@@ -276,7 +276,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
 
     private void logProgress(int progress, int total) {
         if (progress % 50 == 0) {
-            logger.log(Level.INFO, () -> "%d/%d (%.2f%%)".formatted(progress, total, progress * 100. / total));
+            logger.log(Level.INFO, "{0}/{1} ({2:.2f}%)", new Object[]{progress, total, progress * 100. / total});
         }
     }
 
