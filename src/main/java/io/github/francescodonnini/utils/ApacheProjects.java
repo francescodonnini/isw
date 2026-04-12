@@ -1,15 +1,9 @@
 package io.github.francescodonnini.utils;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class ApacheProjects {
-    private static final Logger logger = Logger.getLogger(ApacheProjects.class.getName());
-
     public static final List<String> PROJECTS = List.of(
             "Accumulo", "ActiveMQ", "Airavata", "Ambari", "Ant", "Any23",
             "Archiva", "Aries", "Avro", "Axis2", "Beam", "Bigtop", "BookKeeper",
@@ -57,20 +51,5 @@ public class ApacheProjects {
         return PROJECTS.stream()
                 .filter(p -> !p.equalsIgnoreCase(exclude))
                 .toList();
-    }
-
-    public static void main(String[] args) throws IOException, InterruptedException {
-        for (String project : PROJECTS) {
-            var name = project.toLowerCase()
-                    .replace(" ", "-");
-            var parent = Path.of("/home/francesco/Documents/Università/Ingegneria del Software 2/60/sources");
-            var dest = parent.resolve(name);
-            if (!dest.toFile().exists()) {
-                var p = new ProcessBuilder()
-                        .command("git", "clone", remoteUrl(name), dest.toString())
-                        .start();
-                logger.log(Level.INFO, "{}", "command %s terminated with error %d".formatted(p.info(), p.waitFor()));
-            }
-        }
     }
 }
