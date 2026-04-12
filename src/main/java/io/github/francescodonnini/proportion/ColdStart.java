@@ -53,11 +53,11 @@ public class ColdStart implements Proportion {
     private List<Issue> makeLabelsRealistic(String projectName) {
         var pIssues = new HashMap<String, List<Issue>>();
         for (var project : ApacheProjects.PROJECTS) {
-            var issues = issueApi.getIssues(ApacheProjects.jiraKey(project)).stream()
+            var issueList = issueApi.getIssues(ApacheProjects.jiraKey(project)).stream()
                     .filter(issue -> !issue.affectedVersions().isEmpty())
                     .toList();
-            if (!issues.isEmpty()) {
-                pIssues.put(project, issues);
+            if (!issueList.isEmpty()) {
+                pIssues.put(project, issueList);
             }
         }
         var labeled = ProportionUtils.getLabelled(issues);
