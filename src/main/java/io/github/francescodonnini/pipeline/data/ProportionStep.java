@@ -17,11 +17,11 @@ public class ProportionStep implements Step<ProjectInfo, ProjectInfo> {
 
     @Override
     public ProjectInfo execute(ProjectInfo input) {
-        var proportion = switch (input.getProportion()) {
-            case "ColdStart" -> new ColdStart(context.getIssueApi(), input.getIssues(), input.getAllReleases(), true);
-            case "Incremental" -> new Incremental(input.getIssues(), input.getAllReleases(), true);
-            case "MovingWindow" -> new MovingWindow(input.getIssues(), input.getAllReleases(), input.getMovingWindowPercentage());
-            case "Simple" -> new Simple(input.getIssues(), input.getAllReleases());
+        var proportion = switch (input.getProportion().toLowerCase()) {
+            case "coldstart" -> new ColdStart(context.getIssueApi(), input.getIssues(), input.getAllReleases(), true);
+            case "incremental" -> new Incremental(input.getIssues(), input.getAllReleases(), true);
+            case "movingwindow" -> new MovingWindow(input.getIssues(), input.getAllReleases(), input.getMovingWindowPercentage());
+            case "simple" -> new Simple(input.getIssues(), input.getAllReleases());
             default -> throw new IllegalStateException("unknown proportion method " + input.getProportion());
         };
         input.setIssues(proportion.makeLabels(input.getProject()));
