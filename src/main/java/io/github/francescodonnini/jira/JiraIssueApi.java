@@ -212,7 +212,7 @@ public class JiraIssueApi {
     // checkForConsistency controlla se la tripla (affectedVersions, openingVersion, fixVersion) è consistente, cioè:
     // - IV < FV
     // - IV <= OV
-    // - AV <= FV
+    // - AV < FV
     private boolean checkForConsistency(List<Release> affectedVersions, Release openingVersion, Release fixVersion) {
         if (affectedVersions.isEmpty()) {
             return true;
