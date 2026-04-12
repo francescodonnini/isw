@@ -276,7 +276,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
 
     private void logProgress(int progress, int total) {
         if (progress % 50 == 0) {
-            logger.log(Level.INFO, "{0}/{1} ({2:.2f}%)", new Object[]{progress, total, progress * 100. / total});
+            logger.log(Level.INFO, "{0}/{1} ({2, number, #.##}%%)", new Object[]{progress, total, progress * 100. / total});
         }
     }
 
