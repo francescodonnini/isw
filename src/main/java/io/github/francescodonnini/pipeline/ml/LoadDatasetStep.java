@@ -5,12 +5,7 @@ import io.github.francescodonnini.pipeline.inputs.MLWorkloadInfo;
 import io.github.francescodonnini.pipeline.Step;
 import io.github.francescodonnini.weka.Dataset;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 public class LoadDatasetStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
-    private final Logger logger = Logger.getLogger(LoadDatasetStep.class.getName());
-
     @Override
     public MLWorkloadInfo execute(MLWorkloadInfo input) throws PipelineException {
         var datasetPath = input.getDataPath()
@@ -20,7 +15,6 @@ public class LoadDatasetStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
             input.setDataset(new Dataset(datasetPath, input.getFeatures(), input.getTrainTestSplit(), input.getDropFactor()));
             return input;
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "cannot load dataset", e);
             throw new PipelineException(e);
         }
     }

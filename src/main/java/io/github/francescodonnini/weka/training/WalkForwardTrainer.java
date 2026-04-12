@@ -7,6 +7,7 @@ import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.core.Attribute;
 
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -34,7 +35,15 @@ public class WalkForwardTrainer {
             .stream()
             .skip(1L)
             .limit(dataset.trainingRange().size() - 1L)
-            .map(validationStart -> train(modelName, validationStart, showHistory))
+            .map(validationStart -> {
+                try {
+                    return Optional.of(train(modelName, validationStart, showHistory));
+                } catch (TrainingException e) {
+                    logger.log(Level.SEVERE, e.getMessage(), e);
+                    return Optional.<WalkForwardTrainingIteration>empty();
+                }
+            })
+            .flatMap(Optional::stream)
             .sorted(java.util.Comparator.comparingInt(WalkForwardTrainingIteration::release))
             .forEachOrdered(r -> history.add(r.evaluation()));
         var featureList = dataset.features().stream().map(Attribute::name).toList();
@@ -42,7 +51,7 @@ public class WalkForwardTrainer {
         return history;
     }
 
-    private WalkForwardTrainingIteration train(String modelName, int validationStart, boolean showHistory) {
+    private WalkForwardTrainingIteration train(String modelName, int validationStart, boolean showHistory) throws TrainingException {
         try {
             var trainingSet = dataset.trainingSet(0, validationStart);
             Classifier model;
@@ -62,8 +71,7 @@ public class WalkForwardTrainer {
             }
             return new WalkForwardTrainingIteration(validationStart, eval);
         } catch (Exception e) {
-            logger.log(Level.WARNING, e.getMessage(), e);
-            throw new RuntimeException(e);
+            throw new TrainingException(e);
         }
     }
 }

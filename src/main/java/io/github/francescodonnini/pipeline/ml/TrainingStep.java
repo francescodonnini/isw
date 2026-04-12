@@ -10,7 +10,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.logging.FileHandler;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
@@ -35,7 +34,6 @@ public class TrainingStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
             history.save(input.getResults().resolve("%s-results.csv".formatted(input.getModel())));
             return input;
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "cannot save results", e);
             throw new PipelineException(e);
         }
     }
@@ -53,7 +51,6 @@ public class TrainingStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
             logger.info(s);
             summary.write(s);
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "cannot save summary", e);
             throw new PipelineException(e);
         }
     }

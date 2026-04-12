@@ -24,7 +24,7 @@ public class FilteredModelFactory implements ModelFactory {
     }
 
     @Override
-    public Classifier create(String model) throws Exception {
+    public Classifier create(String model) throws ModelFactoryException {
         if (features.isEmpty()) {
             throw new IllegalStateException("features must be set!");
         }
@@ -35,9 +35,5 @@ public class FilteredModelFactory implements ModelFactory {
         wrapper.setFilter(filter);
         wrapper.setClassifier(factory.create(model));
         return wrapper;
-    }
-
-    public void reset() {
-        features.clear();
     }
 }

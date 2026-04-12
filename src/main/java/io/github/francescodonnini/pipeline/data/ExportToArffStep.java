@@ -7,11 +7,8 @@ import io.github.francescodonnini.pipeline.Step;
 import io.github.francescodonnini.weka.arff.JavaMethodArffSerializer;
 
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class ExportToArffStep implements Step<ProjectInfo, ProjectInfo> {
-    private final Logger logger = Logger.getLogger(ExportToArffStep.class.getName());
     private final DataPipelineContext context;
 
     public ExportToArffStep(DataPipelineContext context) {
@@ -31,7 +28,6 @@ public class ExportToArffStep implements Step<ProjectInfo, ProjectInfo> {
             new JavaMethodArffSerializer()
                     .toArff(path, input.getAllReleases(), input.getMethods());
         } catch (IOException e) {
-            logger.log(Level.SEVERE, e.getMessage());
             throw new PipelineException("cannot convert dataset to arff", e);
         }
         return input;

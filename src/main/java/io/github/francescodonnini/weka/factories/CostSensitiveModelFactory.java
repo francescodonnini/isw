@@ -27,7 +27,7 @@ public class CostSensitiveModelFactory implements ModelFactory {
     }
 
     @Override
-    public Classifier create(String model) throws Exception {
+    public Classifier create(String model) throws ModelFactoryException {
         var wrapper = new CostSensitiveClassifier();
         var m = new CostMatrix(2);
         m.setElement(0, 0, 0.0);
