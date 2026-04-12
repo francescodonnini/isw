@@ -40,7 +40,7 @@ import java.util.stream.StreamSupport;
 public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
     private static final String JAVA_FILE_EXT = ".java";
     private static final String JAVA_VERSION_ID = "22";
-    private static final String PMD_RULESET = "rulesets/java/quickstart.xml";
+    private static final String PMD_RULESET = "io/github/francescodonnini/data/sonar-ruleset.xml";
 
     private final Logger logger = Logger.getLogger(DataLoaderImpl.class.getName());
     // projectPath è il percorso delle repository dove leggere i file da cui creare le entry per il dataset.
@@ -150,7 +150,13 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
                 loadData(commit, diffList, filter);
 
                 if (lastRelease != null) {
-                    logger.log(Level.INFO, "A total of %d has been read for release %s (commit %s)".formatted(methodsPerRelease.stream().mapToInt(i -> i).sum(), lastRelease, commit.getName()));
+                    logger.log(Level.INFO,
+                            "A total of {0} has been read for release {1} (commit {2})",
+                            new Object[] {
+                                    methodsPerRelease.stream().mapToInt(i -> i).sum(),
+                                    lastRelease,
+                                    commit.getName()
+                    });
                     methodsPerRelease.clear();
                     filter.reset();
                 }
