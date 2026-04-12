@@ -4,6 +4,7 @@ import io.github.francescodonnini.config.IniSettings;
 import io.github.francescodonnini.pipeline.Pipeline;
 import io.github.francescodonnini.pipeline.data.*;
 import io.github.francescodonnini.pipeline.inputs.MLWorkloadInfo;
+import io.github.francescodonnini.pipeline.inputs.Proportion;
 import io.github.francescodonnini.pipeline.ml.FeatureSelectionStep;
 import io.github.francescodonnini.pipeline.ml.LoadDatasetStep;
 import io.github.francescodonnini.pipeline.ml.PreprocessingStep;
@@ -58,7 +59,7 @@ public class FeatureSelectionCli implements Callable<Integer> {
         input.setResults(results);
         input.setId(workloadId());
         input.setProject(project);
-        input.setProportion(proportion);
+        input.setProportion(Proportion.from(proportion));
         input.setTrainTestSplit(settings.getDouble("trainingTestSplit", 0.8));
         input.setDropFactor(dropFactor);
         input.setModel(model);

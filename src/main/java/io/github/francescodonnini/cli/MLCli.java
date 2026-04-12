@@ -4,6 +4,7 @@ import io.github.francescodonnini.config.IniSettings;
 import io.github.francescodonnini.pipeline.Pipeline;
 import io.github.francescodonnini.pipeline.data.*;
 import io.github.francescodonnini.pipeline.inputs.MLWorkloadInfo;
+import io.github.francescodonnini.pipeline.inputs.Proportion;
 import io.github.francescodonnini.pipeline.ml.LoadDatasetStep;
 import io.github.francescodonnini.pipeline.ml.PreprocessingStep;
 import io.github.francescodonnini.pipeline.ml.TrainingStep;
@@ -34,13 +35,16 @@ public class MLCli implements Callable<Integer> {
     @CommandLine.Option(names = {"-M", "--model"}, required = true, description = "The machine learning model")
     private String model;
 
+    @CommandLine.Option(names = {"-W"}, defaultValue = "false", description = "Use class weights")
+    private boolean useClassWeights;
+
     @Override
     public Integer call() throws Exception {
         var settings = new IniSettings(iniFile.getAbsolutePath());
         var input = new MLWorkloadInfo();
         input.setDataPath(settings.getString("dataPath"));
         input.setProject(project);
-        input.setProportion(proportion);
+        input.setProportion(Proportion.from(proportion));
         input.setTrainTestSplit(settings.getDouble("trainingTestSplit", 0.8));
         if (dropFactor < 0 || dropFactor > 1) {
             throw new CommandLine.ParameterException(
@@ -51,6 +55,7 @@ public class MLCli implements Callable<Integer> {
         input.setDropFactor(dropFactor);
         input.setModel(model);
         input.setFeatures(Arrays.stream(settings.getString("features").split(",")).collect(Collectors.toSet()));
+        input.setUseClassWeights(useClassWeights);
         Pipeline.start(new LoadDatasetStep())
                 .next(new PreprocessingStep())
                 .next(new TrainingStep())

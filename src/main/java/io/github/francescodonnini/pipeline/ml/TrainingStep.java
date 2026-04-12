@@ -2,7 +2,6 @@ package io.github.francescodonnini.pipeline.ml;
 
 import io.github.francescodonnini.pipeline.inputs.MLWorkloadInfo;
 import io.github.francescodonnini.pipeline.Step;
-import io.github.francescodonnini.weka.factories.CostSensitiveModelFactory;
 import io.github.francescodonnini.weka.factories.FilteredModelFactory;
 import io.github.francescodonnini.weka.training.WalkForwardTrainer;
 
@@ -27,12 +26,9 @@ public class TrainingStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
         var factory = new FilteredModelFactory();
         factory.add(input.getDataset().features());
         factory.add(input.getDataset().classAttribute());
-        var wrapper = new CostSensitiveModelFactory(factory);
-        var trainer = new WalkForwardTrainer(input.getDataset(), wrapper);
+        var trainer = new WalkForwardTrainer(input.getDataset(), factory, input.UseClassWeights());
         var history = trainer.train(input.getModel());
-
         createSummary(input.getResults(), input);
-
         history.save(input.getResults().resolve("%s-results.csv".formatted(input.getModel())));
         return input;
     }

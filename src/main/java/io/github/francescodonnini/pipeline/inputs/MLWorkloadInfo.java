@@ -11,7 +11,7 @@ public class MLWorkloadInfo {
     private String id;
     private Path dataPath;
     private String project;
-    private String proportion;
+    private Proportion proportion;
     private final Set<String> features = new HashSet<>();
     private double trainTestSplit;
     private double dropFactor;
@@ -20,6 +20,7 @@ public class MLWorkloadInfo {
     private String model;
     private boolean backwardSearch;
     private AccuracyMetric metric;
+    private boolean useClassWeights;
 
     public Path getDataPath() {
         return dataPath;
@@ -37,11 +38,11 @@ public class MLWorkloadInfo {
         this.project = project;
     }
 
-    public String getProportion() {
+    public Proportion getProportion() {
         return proportion;
     }
 
-    public void setProportion(String proportion) {
+    public void setProportion(Proportion proportion) {
         this.proportion = proportion;
     }
 
@@ -115,5 +116,13 @@ public class MLWorkloadInfo {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public void setUseClassWeights(boolean useClassWeights) {
+        this.useClassWeights = useClassWeights;
+    }
+
+    public boolean UseClassWeights() {
+        return useClassWeights;
     }
 }

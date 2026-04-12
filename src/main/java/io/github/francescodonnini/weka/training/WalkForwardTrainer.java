@@ -3,6 +3,7 @@ package io.github.francescodonnini.weka.training;
 import io.github.francescodonnini.weka.Dataset;
 import io.github.francescodonnini.weka.factories.CostSensitiveModelFactory;
 import io.github.francescodonnini.weka.factories.ModelFactory;
+import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.core.Attribute;
 
@@ -13,11 +14,13 @@ public class WalkForwardTrainer {
     private final Logger logger = Logger.getLogger(WalkForwardTrainer.class.getName());
     private final Dataset dataset;
     private final ModelFactory factory;
+    private final boolean useClassWeights;
 
 
-    public WalkForwardTrainer(Dataset dataset, ModelFactory factory) {
+    public WalkForwardTrainer(Dataset dataset, ModelFactory factory, boolean useClassWeights) {
         this.dataset = dataset;
         this.factory = factory;
+        this.useClassWeights = useClassWeights;
     }
 
     public History train(String modelName) {
@@ -42,9 +45,14 @@ public class WalkForwardTrainer {
     private WalkForwardTrainingIteration train(String modelName, int validationStart, boolean showHistory) {
         try {
             var trainingSet = dataset.trainingSet(0, validationStart);
-            var model = new CostSensitiveModelFactory(factory)
-                    .setClassWeights(trainingSet)
-                    .create(modelName);
+            Classifier model;
+            if (useClassWeights) {
+                model = new CostSensitiveModelFactory(factory)
+                        .setClassWeights(trainingSet)
+                        .create(modelName);
+            } else {
+                model = factory.create(modelName);
+            }
             model.buildClassifier(trainingSet);
             var validationSet = dataset.validationSet(validationStart);
             var eval = new Evaluation(validationSet);
