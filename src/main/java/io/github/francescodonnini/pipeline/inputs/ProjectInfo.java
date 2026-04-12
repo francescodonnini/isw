@@ -85,16 +85,4 @@ public class ProjectInfo {
     public void setFromStart(boolean fromStart) {
         this.fromStart = fromStart;
     }
-
-    public ProjectInfo withFromStart(boolean b) {
-        var copy = new ProjectInfo();
-        copy.setFromStart(b);
-        copy.setProject(getProject());
-        copy.setProportion(getProportion());
-        copy.setMovingWindowPercentage(getMovingWindowPercentage());
-        copy.setIssues(getIssues());
-        copy.setMethods(getMethods());
-        copy.setAllReleases(getAllReleases());
-        return copy;
-    }
 }
