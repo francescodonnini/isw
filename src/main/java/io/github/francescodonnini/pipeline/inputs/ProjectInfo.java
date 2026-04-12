@@ -10,7 +10,7 @@ import java.util.List;
 
 public class ProjectInfo {
     private String project;
-    private String proportion;
+    private Proportion proportion;
     private double movingWindowPercentage;
     private final List<Release> releases = new ArrayList<>();
     private final List<JavaClass> classes = new ArrayList<>();
@@ -74,11 +74,11 @@ public class ProjectInfo {
         this.movingWindowPercentage = movingWindowPercentage;
     }
 
-    public String getProportion() {
+    public Proportion getProportion() {
         return proportion;
     }
 
-    public void setProportion(String proportion) {
+    public void setProportion(Proportion proportion) {
         this.proportion = proportion;
     }
 

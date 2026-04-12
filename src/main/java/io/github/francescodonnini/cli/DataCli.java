@@ -15,6 +15,7 @@ import io.github.francescodonnini.pipeline.Pipeline;
 import io.github.francescodonnini.pipeline.data.*;
 import io.github.francescodonnini.pipeline.inputs.DataPipelineContext;
 import io.github.francescodonnini.pipeline.inputs.ProjectInfo;
+import io.github.francescodonnini.pipeline.inputs.Proportion;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import picocli.CommandLine;
 
@@ -49,8 +50,8 @@ public class DataCli implements Callable<Integer> {
         var context = dataPipelineContext();
         var input = new ProjectInfo();
         input.setProject(project);
-        input.setProportion(proportion);
-        if (input.getProportion().equals("MovingWindow")) {
+        input.setProportion(Proportion.from(proportion));
+        if (input.getProportion().equals(Proportion.MovingWindow)) {
             if (window.isEmpty()) {
                 throw new CommandLine.ParameterException(
                         new CommandLine(this).getCommandSpec().commandLine(),
