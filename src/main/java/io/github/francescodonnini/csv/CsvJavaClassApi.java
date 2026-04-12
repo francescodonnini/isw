@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class CsvJavaClassApi {
     public List<JavaClass> getLocal(String path) throws FileNotFoundException {
