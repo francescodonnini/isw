@@ -1,17 +1,17 @@
 package io.github.francescodonnini.pipeline.inputs;
 
 public enum Proportion {
-    ColdStart,
-    Incremental,
-    MovingWindow,
-    Simple;
+    COLD_START,
+    INCREMENTAL,
+    MOVING_WINDOW,
+    SIMPLE;
 
     public static Proportion from(String s) {
         return switch (s.toLowerCase()) {
-            case "cold-start" -> ColdStart;
-            case "incremental" -> Incremental;
-            case "moving-window" -> MovingWindow;
-            case "simple" -> Simple;
+            case "cold-start" -> COLD_START;
+            case "incremental" -> INCREMENTAL;
+            case "moving-window" -> MOVING_WINDOW;
+            case "simple" -> SIMPLE;
             default -> throw new IllegalArgumentException("unknown proportion method " + s);
         };
     }
