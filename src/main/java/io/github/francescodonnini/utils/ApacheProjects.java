@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 public class ApacheProjects {
+    private ApacheProjects() {}
+
     public static final List<String> PROJECTS = List.of(
             "Accumulo", "ActiveMQ", "Airavata", "Ambari", "Ant", "Any23",
             "Archiva", "Aries", "Avro", "Axis2", "Beam", "Bigtop", "BookKeeper",
