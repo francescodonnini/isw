@@ -7,6 +7,7 @@ import io.github.francescodonnini.pipeline.inputs.MLWorkloadInfo;
 import io.github.francescodonnini.pipeline.ml.FeatureSelectionStep;
 import io.github.francescodonnini.pipeline.ml.LoadDatasetStep;
 import io.github.francescodonnini.pipeline.ml.PreprocessingStep;
+import io.github.francescodonnini.weka.AccuracyMetric;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -62,7 +63,7 @@ public class FeatureSelectionCli implements Callable<Integer> {
         input.setDropFactor(dropFactor);
         input.setModel(model);
         input.setBackwardSearch(backward);
-        input.setMetric(metric);
+        input.setMetric(AccuracyMetric.fromString(metric));
         Pipeline.start(new LoadDatasetStep())
                 .next(new PreprocessingStep())
                 .next(new FeatureSelectionStep())

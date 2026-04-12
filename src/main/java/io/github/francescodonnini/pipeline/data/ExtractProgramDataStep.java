@@ -21,6 +21,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
+    private static final String NO_LABEL = "nolbl";
     private final Logger logger = Logger.getLogger(ExtractProgramDataStep.class.getName());
     private final DataPipelineContext context;
 
@@ -32,9 +33,9 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
     public ProjectInfo execute(ProjectInfo input) throws Exception {
         try {
             var classes = new CsvJavaClassApi()
-                    .getLocal(cachedClassesPath(input, "nolbl"));
+                    .getLocal(cachedClassesPath(input, NO_LABEL));
             var methods = new CsvJavaMethodApi()
-                    .getLocal(cachedMethodsPath(input, "nolbl"), classes).stream()
+                    .getLocal(cachedMethodsPath(input, NO_LABEL), classes).stream()
                     .filter(m -> !m.isAfter(input.getProjectReleases().getLast()))
                     .toList();
             input.setClasses(classes);
@@ -81,8 +82,8 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
                 .link(info.getClasses());
         var methods = new DiffCollector(info.getProjectReleases(), info.getMethods(), info.isFromStart())
                 .collect();
-        saveClasses(info.getClasses(), cachedClassesPath(info, "nolbl"));
-        saveMethods(methods, cachedMethodsPath(info, "nolbl"));
+        saveClasses(info.getClasses(), cachedClassesPath(info, NO_LABEL));
+        saveMethods(methods, cachedMethodsPath(info, NO_LABEL));
         info.setMethods(methods);
     }
 
