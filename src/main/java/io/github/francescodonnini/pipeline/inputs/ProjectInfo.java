@@ -31,10 +31,6 @@ public class ProjectInfo {
         this.releases.addAll(allReleases);
     }
 
-    public List<Release> getProjectReleases() {
-        return releases;
-    }
-
     public void setClasses(List<JavaClass> classes) {
         this.classes.clear();
         this.classes.addAll(classes);

@@ -36,7 +36,7 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
                     .getLocal(cachedClassesPath(input, NO_LABEL));
             var methods = new CsvJavaMethodApi()
                     .getLocal(cachedMethodsPath(input, NO_LABEL), classes).stream()
-                    .filter(m -> !m.isAfter(input.getProjectReleases().getLast()))
+                    .filter(m -> !m.isAfter(input.getAllReleases().getLast()))
                     .toList();
             input.setClasses(classes);
             input.setMethods(methods);
@@ -53,7 +53,7 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
                     .getLocal(destinationPath("classes", "raw", info));
             var methods = new CsvJavaMethodApi()
                     .getLocal(destinationPath("methods","raw", info), classes).stream()
-                    .filter(m -> !m.isAfter(info.getProjectReleases().getLast()))
+                    .filter(m -> !m.isAfter(info.getAllReleases().getLast()))
                     .toList();
             info.setClasses(classes);
             info.setMethods(methods);
@@ -64,7 +64,7 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
                     .resolve(info.getProject().toLowerCase());
             var report = context.getReports()
                     .resolve(info.getProject());
-            var loader = new DataLoaderImpl(factory, info.getProjectReleases(), source, report);
+            var loader = new DataLoaderImpl(factory, info.getAllReleases(), source, report);
             var classes = loader.getClasses();
             saveClasses(classes, cachedClassesPath(info, "raw"));
             var methods = loader.getMethods();
@@ -80,7 +80,7 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
                 .resolve(info.getProject());
         new CsvSmellLinker(report)
                 .link(info.getClasses());
-        var methods = new DiffCollector(info.getProjectReleases(), info.getMethods(), info.isFromStart())
+        var methods = new DiffCollector(info.getAllReleases(), info.getMethods(), info.isFromStart())
                 .collect();
         saveClasses(info.getClasses(), cachedClassesPath(info, NO_LABEL));
         saveMethods(methods, cachedMethodsPath(info, NO_LABEL));

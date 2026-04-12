@@ -22,7 +22,7 @@ public class ExportToArffStep implements Step<ProjectInfo, ProjectInfo> {
                 .resolve(input.getProject())
                 .resolve("%s.arff".formatted(name));
         new JavaMethodArffSerializer()
-                .toArff(path, input.getProjectReleases(), input.getMethods());
+                .toArff(path, input.getAllReleases(), input.getMethods());
         return input;
     }
 }
