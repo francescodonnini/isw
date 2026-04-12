@@ -32,8 +32,8 @@ public class WalkForwardTrainer {
         dataset
             .trainingRange()
             .stream()
-            .skip(1)
-            .limit(dataset.trainingRange().size() - 1)
+            .skip(1L)
+            .limit(dataset.trainingRange().size() - 1L)
             .map(validationStart -> train(modelName, validationStart, showHistory))
             .sorted(java.util.Comparator.comparingInt(WalkForwardTrainingIteration::release))
             .forEachOrdered(r -> history.add(r.evaluation()));

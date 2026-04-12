@@ -1,7 +1,6 @@
 package io.github.francescodonnini;
 
 import io.github.francescodonnini.cli.DataCli;
-import io.github.francescodonnini.cli.FeatureSelectionCli;
 import io.github.francescodonnini.cli.MLCli;
 import picocli.CommandLine;
 
@@ -16,9 +15,6 @@ public class Main {
         switch (args[0]) {
             case "data":
                 new CommandLine(new DataCli()).execute(slice);
-                break;
-            case "feature_selection":
-                new CommandLine(new FeatureSelectionCli()).execute(slice);
                 break;
             case "ml":
                 new CommandLine(new MLCli()).execute(slice);

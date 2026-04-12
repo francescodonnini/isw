@@ -203,7 +203,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
             walk.addTree(commit.getTree());
             walk.setRecursive(true);
 
-            handleRenames(commit, diffList);
+            handleRenames(diffList);
 
             var files = new ArrayList<ParseContext>();
             while (walk.next()) {
@@ -238,7 +238,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
 
 
 
-    private void handleRenames(RevCommit commit, List<DiffEntry> diffList) {
+    private void handleRenames(List<DiffEntry> diffList) {
         for (var diff : diffList) {
             var oldPath = diff.getOldPath();
             var path = diff.getNewPath();
@@ -246,7 +246,6 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
                 && diff.getChangeType().equals(DiffEntry.ChangeType.RENAME)
                 && !oldPath.equals("/dev/null")
                 && !oldPath.equals(path)) {
-                    logger.log(Level.INFO, "({0}) RENAME {1} -> {2}", new Object[] {commit.getName().substring(0, 6), oldPath, path});
                     trackingId.updateId(Path.of(oldPath), Path.of(path));
             }
         }

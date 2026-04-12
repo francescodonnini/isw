@@ -18,7 +18,7 @@ public class Pipeline<I,O> {
         });
     }
 
-    public O run(I input) throws Exception {
+    public O run(I input) throws PipelineException {
         return current.execute(input);
     }
 }

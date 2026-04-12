@@ -10,6 +10,7 @@ import io.github.francescodonnini.data.CsvSmellLinker;
 import io.github.francescodonnini.data.DataLoaderImpl;
 import io.github.francescodonnini.model.JavaClass;
 import io.github.francescodonnini.model.JavaMethod;
+import io.github.francescodonnini.pipeline.PipelineException;
 import io.github.francescodonnini.pipeline.inputs.DataPipelineContext;
 import io.github.francescodonnini.pipeline.inputs.ProjectInfo;
 import io.github.francescodonnini.pipeline.Step;
@@ -30,7 +31,7 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
     }
 
     @Override
-    public ProjectInfo execute(ProjectInfo input) throws Exception {
+    public ProjectInfo execute(ProjectInfo input) throws PipelineException {
         try {
             var classes = new CsvJavaClassApi()
                     .getLocal(cachedClassesPath(input, NO_LABEL));
@@ -43,11 +44,14 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
         } catch (FileNotFoundException | RuntimeException e) {
             logger.log(Level.WARNING, "cannot find any classes/methods cached files", e);
             tryGetRawData(input);
+        } catch (Exception e) {
+            // Catch any other unexpected CSV/IO errors and wrap them
+            throw new PipelineException("Unexpected error reading cached program data", e);
         }
         return input;
     }
 
-    private void tryGetRawData(ProjectInfo info) throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {
+    private void tryGetRawData(ProjectInfo info) throws PipelineException {
         try {
             var classes = new CsvJavaClassApi()
                     .getLocal(destinationPath("classes", "raw", info));
@@ -59,6 +63,12 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
             info.setMethods(methods);
             calculateChanges(info);
         } catch (FileNotFoundException | RuntimeException e) {
+            loadRawData(info);
+        }
+    }
+
+    private void loadRawData(ProjectInfo info) throws PipelineException {
+        try {
             var factory = new AbstractCounterFactoryImpl();
             var source = context.getSources()
                     .resolve(info.getProject().toLowerCase());
@@ -72,10 +82,12 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
             info.setClasses(classes);
             info.setMethods(methods);
             calculateChanges(info);
+        } catch (IOException e) {
+            throw new PipelineException("cannot load raw data", e);
         }
     }
 
-    private void calculateChanges(ProjectInfo info) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
+    private void calculateChanges(ProjectInfo info) throws PipelineException {
         var report = context.getReports()
                 .resolve(info.getProject());
         new CsvSmellLinker(report)
@@ -87,15 +99,23 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
         info.setMethods(methods);
     }
 
-    private void saveClasses(List<JavaClass> classes, String path) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
-        new CsvJavaClassApi()
-                .saveLocal(classes, path);
+    private void saveClasses(List<JavaClass> classes, String path) throws PipelineException {
+        try {
+            new CsvJavaClassApi()
+                    .saveLocal(classes, path);
+        } catch (CsvDataTypeMismatchException | CsvRequiredFieldEmptyException | IOException e) {
+            throw new PipelineException(e);
+        }
     }
 
 
-    private void saveMethods(List<JavaMethod> methods, String path) throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
-        new CsvJavaMethodApi()
-                .saveLocal(methods, path);
+    private void saveMethods(List<JavaMethod> methods, String path) throws PipelineException {
+        try {
+            new CsvJavaMethodApi()
+                    .saveLocal(methods, path);
+        } catch (CsvDataTypeMismatchException | CsvRequiredFieldEmptyException | IOException e) {
+            throw new PipelineException(e);
+        }
     }
 
     private String cachedClassesPath(ProjectInfo info, String desc) {

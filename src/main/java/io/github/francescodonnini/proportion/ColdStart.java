@@ -41,13 +41,12 @@ public class ColdStart implements Proportion {
                     .ifPresent(pAvg::add);
         }
         var m = median(pAvg);
-        if (m.isEmpty()) {
-            return List.of();
-        }
-        return ProportionUtils.applyP(
-                ProportionUtils.getUnlabelled(issues),
-                m.get(),
-                releases);
+        return m.map(p ->
+                        ProportionUtils.applyP(
+                            ProportionUtils.getUnlabelled(issues),
+                            p,
+                            releases))
+                .orElseGet(List::of);
     }
 
     private List<Issue> makeLabelsRealistic(String projectName) {
