@@ -320,7 +320,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
             extractor.parse(ctx);
             return extractor.getClasses();
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error parsing file " + ctx.path(), e);
+            logger.log(Level.SEVERE, e, () -> "Error parsing file " + ctx.path());
             return List.of();
         }
     }
