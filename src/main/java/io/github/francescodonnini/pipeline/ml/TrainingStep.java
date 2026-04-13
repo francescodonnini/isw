@@ -8,6 +8,7 @@ import io.github.francescodonnini.weka.training.WalkForwardTrainer;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
@@ -29,9 +30,11 @@ public class TrainingStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
         factory.add(input.getDataset().classAttribute());
         var trainer = new WalkForwardTrainer(input.getDataset(), factory, input.useClassWeights());
         var history = trainer.train(input.getModel());
-        createSummary(input.getResultsPath(), input);
+
         try {
-            history.save(input.getResultsPath().resolve("%s-results.csv".formatted(input.getModel())));
+            var parent = Files.createDirectories(input.getResultsPath());
+            createSummary(parent, input);
+            history.save(parent.resolve("%s-results.csv".formatted(input.getModel())));
             return input;
         } catch (IOException e) {
             throw new PipelineException(e);
