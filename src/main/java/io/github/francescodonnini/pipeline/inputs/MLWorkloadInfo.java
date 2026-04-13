@@ -1,6 +1,5 @@
 package io.github.francescodonnini.pipeline.inputs;
 
-import io.github.francescodonnini.weka.AccuracyMetric;
 import io.github.francescodonnini.weka.Dataset;
 
 import java.nio.file.Path;
@@ -18,16 +17,14 @@ public class MLWorkloadInfo {
     private Dataset dataset;
     private Path results;
     private String model;
-    private boolean backwardSearch;
-    private AccuracyMetric metric;
     private boolean useClassWeights;
 
     public Path getDataPath() {
         return dataPath;
     }
 
-    public void setDataPath(String dataPath) {
-        this.dataPath = Path.of(dataPath);
+    public void setDataPath(Path dataPath) {
+        this.dataPath = dataPath;
     }
 
     public String getProject() {
@@ -78,11 +75,11 @@ public class MLWorkloadInfo {
         this.dataset = dataset;
     }
 
-    public Path getResults() {
+    public Path getResultsPath() {
         return results;
     }
 
-    public void setResults(Path results) {
+    public void setResultsPath(Path results) {
         this.results = results;
     }
 
@@ -92,22 +89,6 @@ public class MLWorkloadInfo {
 
     public void setModel(String model) {
         this.model = model;
-    }
-
-    public boolean isBackwardSearch() {
-        return backwardSearch;
-    }
-
-    public void setBackwardSearch(boolean backwardSearch) {
-        this.backwardSearch = backwardSearch;
-    }
-
-    public AccuracyMetric getMetric() {
-        return metric;
-    }
-
-    public void setMetric(AccuracyMetric metric) {
-        this.metric = metric;
     }
 
     public String getId() {

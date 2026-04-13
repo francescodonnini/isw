@@ -10,6 +10,9 @@ import io.github.francescodonnini.pipeline.ml.TrainingStep;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
@@ -41,7 +44,8 @@ public class MLCli implements Callable<Integer> {
     public Integer call() throws Exception {
         var settings = new IniSettings(iniFile.getAbsolutePath());
         var input = new MLWorkloadInfo();
-        input.setDataPath(settings.getString("dataPath"));
+        var dataPath = Path.of(settings.getString("dataPath"));
+        input.setDataPath(dataPath);
         input.setProject(project);
         input.setProportion(Proportion.from(proportion));
         input.setTrainTestSplit(settings.getDouble("trainingTestSplit", 0.8));
@@ -55,6 +59,15 @@ public class MLCli implements Callable<Integer> {
         input.setModel(model);
         input.setFeatures(Arrays.stream(settings.getString("features").split(",")).collect(Collectors.toSet()));
         input.setUseClassWeights(useClassWeights);
+
+        var now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+        String dirName = now.format(formatter);
+        var resultsPath = dataPath
+                .resolve(input.getProject())
+                .resolve("results")
+                .resolve(dirName);
+        input.setResultsPath(resultsPath);
         Pipeline.start(new LoadDatasetStep())
                 .next(new PreprocessingStep())
                 .next(new TrainingStep())

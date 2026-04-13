@@ -1,5 +1,6 @@
 package io.github.francescodonnini;
 
+import io.github.francescodonnini.cli.CLI;
 import io.github.francescodonnini.cli.DataCli;
 import io.github.francescodonnini.cli.MLCli;
 import picocli.CommandLine;
@@ -12,15 +13,13 @@ public class Main {
             throw new IllegalArgumentException("expected at least two arguments but got " + args.length);
         }
         var slice = Arrays.copyOfRange(args, 1, args.length);
-        switch (args[0]) {
-            case "data":
+        switch (CLI.from(args[0])) {
+            case CLI.DATA:
                 new CommandLine(new DataCli()).execute(slice);
                 break;
-            case "ml":
+            case CLI.ML:
                 new CommandLine(new MLCli()).execute(slice);
                 break;
-            default:
-                throw new IllegalArgumentException("Unknown option: " + args[0]);
         }
     }
 }
