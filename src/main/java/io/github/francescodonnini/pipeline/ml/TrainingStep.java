@@ -50,6 +50,7 @@ public class TrainingStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
                     "Train-Test Split: " + info.getTrainTestSplit() + "\n" +
                     "Drop Factor:      " + info.getDropFactor() + "\n" +
                     "Model:            " + info.getModel() + "\n" +
+                    "Class Weights:    " + (info.useClassWeights() ? "Y" : "N") + "\n" +
                     "Features:         " + String.join(",", info.getFeatures()) + "\n";
             logger.info(s);
             summary.write(s);
