@@ -67,7 +67,6 @@ public class EvaluationStep  implements Step<MLWorkloadInfo, MLWorkloadInfo> {
             writer.write(eval.precision(classIndex) + "," +
                     eval.recall(classIndex) + "," +
                     eval.fMeasure(classIndex) + "," +
-                    eval.kappa() + "," +
                     eval.areaUnderROC(classIndex) + "\n");
         } catch (IOException e) {
             throw new PipelineException(e);
