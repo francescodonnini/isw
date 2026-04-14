@@ -1,6 +1,7 @@
 package io.github.francescodonnini.cli;
 
 import io.github.francescodonnini.config.IniSettings;
+import io.github.francescodonnini.config.ProjectSettings;
 import io.github.francescodonnini.pipeline.Pipeline;
 import io.github.francescodonnini.pipeline.inputs.MLWorkloadInfo;
 import io.github.francescodonnini.pipeline.inputs.Proportion;
@@ -13,9 +14,9 @@ import java.io.File;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
+import java.util.HashSet;
+import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 
 @CommandLine.Command(
         name = "ml",
@@ -42,7 +43,7 @@ public class MLCli implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        var settings = new IniSettings(iniFile.getAbsolutePath());
+        var settings = new ProjectSettings(new IniSettings(iniFile.getAbsolutePath()), project);
         var input = new MLWorkloadInfo();
         var dataPath = Path.of(settings.getString("dataPath"));
         input.setDataPath(dataPath);
@@ -57,12 +58,12 @@ public class MLCli implements Callable<Integer> {
         }
         input.setDropFactor(dropFactor);
         input.setModel(model);
-        input.setFeatures(Arrays.stream(settings.getString("features").split(",")).collect(Collectors.toSet()));
+        input.setFeatures(new HashSet<>(settings.getList("features", String.class)));
         input.setUseClassWeights(useClassWeights);
 
         var now = LocalDateTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
-        String dirName = now.format(formatter);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        String dirName = now.format(formatter) + randomString();
         var resultsPath = dataPath
                 .resolve(input.getProject())
                 .resolve("results")
@@ -73,5 +74,12 @@ public class MLCli implements Callable<Integer> {
                 .next(new TrainingStep())
                 .run(input);
         return 0;
+    }
+
+    private String randomString() {
+        return UUID.randomUUID()
+                .toString()
+                .replace("-", "")
+                .substring(0, 6);
     }
 }

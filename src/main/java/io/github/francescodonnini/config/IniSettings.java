@@ -1,10 +1,12 @@
 package io.github.francescodonnini.config;
 
 import org.apache.commons.configuration2.INIConfiguration;
+import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.List;
 
 public class IniSettings implements Settings {
     private final INIConfiguration ini;
@@ -12,8 +14,14 @@ public class IniSettings implements Settings {
     public IniSettings(String filePath) throws IOException, ConfigurationException {
         try (var reader = new FileReader(filePath)) {
             ini = new INIConfiguration();
+            ini.setListDelimiterHandler(new DefaultListDelimiterHandler(','));
             ini.read(reader);
         }
+    }
+
+    @Override
+    public boolean hasKey(String key) {
+        return ini.containsKey(key);
     }
 
     @Override
@@ -64,5 +72,10 @@ public class IniSettings implements Settings {
     @Override
     public String getString(String key, String defaultValue) {
         return ini.getString(key, defaultValue);
+    }
+
+    @Override
+    public <T> List<T> getList(String key, Class<T> cls) {
+        return ini.getList(cls, key);
     }
 }

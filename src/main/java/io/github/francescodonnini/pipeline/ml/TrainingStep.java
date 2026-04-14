@@ -34,7 +34,8 @@ public class TrainingStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
         try {
             var parent = Files.createDirectories(input.getResultsPath());
             createSummary(parent, input);
-            history.save(parent.resolve("%s-results.csv".formatted(input.getModel())));
+            var fileName = "%s-%s.csv".formatted(input.getModel(), input.useClassWeights() ? "W" : "NW");
+            history.save(parent.resolve(fileName));
             return input;
         } catch (IOException e) {
             throw new PipelineException(e);
