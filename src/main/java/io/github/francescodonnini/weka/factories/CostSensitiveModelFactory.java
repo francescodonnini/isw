@@ -1,6 +1,5 @@
 package io.github.francescodonnini.weka.factories;
 
-import io.github.francescodonnini.pipeline.ml.ClassWeights;
 import weka.classifiers.Classifier;
 import weka.classifiers.CostMatrix;
 import weka.classifiers.meta.CostSensitiveClassifier;
@@ -35,7 +34,7 @@ public class CostSensitiveModelFactory implements ModelFactory {
         m.setElement(0, 1, weights[0]);
         m.setElement(1, 0, weights[1]);
         wrapper.setCostMatrix(m);
-        wrapper.setMinimizeExpectedCost(false);
+        wrapper.setMinimizeExpectedCost(true);
         wrapper.setClassifier(factory.create(model));
         return wrapper;
     }

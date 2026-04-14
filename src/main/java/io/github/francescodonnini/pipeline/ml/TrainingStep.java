@@ -6,7 +6,6 @@ import io.github.francescodonnini.pipeline.Step;
 import io.github.francescodonnini.weka.factories.FilteredModelFactory;
 import io.github.francescodonnini.weka.training.WalkForwardTrainer;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,11 +14,11 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 public class TrainingStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
-    private final Logger logger = Logger.getLogger(TrainingStep.class.getName());
 
     public TrainingStep() throws IOException {
         var file = new FileHandler("training-step.log", true);
         file.setFormatter(new SimpleFormatter());
+        Logger logger = Logger.getLogger(TrainingStep.class.getName());
         logger.addHandler(file);
     }
 
@@ -43,20 +42,6 @@ public class TrainingStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
     }
 
     private void createSummary(Path parent, MLWorkloadInfo info) throws PipelineException {
-        try (var summary = new FileWriter(parent.resolve("SUMMARY").toFile())) {
-            String s =
-                    "Project:          " + info.getProject() + "\n" +
-                    "Dataset Path:     " + info.getDataset().getPath() + "\n" +
-                    "Proportion:       " + info.getProportion() + "\n" +
-                    "Train-Test Split: " + info.getTrainTestSplit() + "\n" +
-                    "Drop Factor:      " + info.getDropFactor() + "\n" +
-                    "Model:            " + info.getModel() + "\n" +
-                    "Class Weights:    " + (info.useClassWeights() ? "Y" : "N") + "\n" +
-                    "Features:         " + String.join(",", info.getFeatures()) + "\n";
-            logger.info(s);
-            summary.write(s);
-        } catch (IOException e) {
-            throw new PipelineException(e);
-        }
+        ReportingUtils.summary(parent.resolve("SUMMARY"), info);
     }
 }

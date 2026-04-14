@@ -5,6 +5,7 @@ import io.github.francescodonnini.config.ProjectSettings;
 import io.github.francescodonnini.pipeline.Pipeline;
 import io.github.francescodonnini.pipeline.inputs.MLWorkloadInfo;
 import io.github.francescodonnini.pipeline.inputs.Proportion;
+import io.github.francescodonnini.pipeline.ml.EvaluationStep;
 import io.github.francescodonnini.pipeline.ml.LoadDatasetStep;
 import io.github.francescodonnini.pipeline.ml.PreprocessingStep;
 import io.github.francescodonnini.pipeline.ml.TrainingStep;
@@ -32,14 +33,20 @@ public class MLCli implements Callable<Integer> {
     @CommandLine.Option(names = {"-R", "--proportion"}, required = true, description = "The labeling method")
     private String proportion;
 
-    @CommandLine.Option(names = {"-f", "--drop"}, required = true, description = "How many releases to drop (percentage)")
-    private Double dropFactor;
-
     @CommandLine.Option(names = {"-M", "--model"}, required = true, description = "The machine learning model")
     private String model;
 
     @CommandLine.Option(names = {"-W"}, defaultValue = "false", description = "Use class weights")
     private boolean useClassWeights;
+
+    @CommandLine.Option(names = {"-T", "--test"}, required = true, description = "Run name")
+    private String runName;
+
+    @CommandLine.Option(names = {"-S", "--features"}, defaultValue = "allFeatures", description = "Feature set")
+    private String featureSet;
+
+    @CommandLine.Option(names = "-E", description = "Evaluate model")
+    private boolean evaluate;
 
     @Override
     public Integer call() throws Exception {
@@ -50,6 +57,7 @@ public class MLCli implements Callable<Integer> {
         input.setProject(project);
         input.setProportion(Proportion.from(proportion));
         input.setTrainTestSplit(settings.getDouble("trainingTestSplit", 0.8));
+        var dropFactor = settings.getDouble("dropFactor");
         if (dropFactor < 0 || dropFactor > 1) {
             throw new CommandLine.ParameterException(
                     new CommandLine(this).getCommandSpec().commandLine(),
@@ -58,21 +66,28 @@ public class MLCli implements Callable<Integer> {
         }
         input.setDropFactor(dropFactor);
         input.setModel(model);
-        input.setFeatures(new HashSet<>(settings.getList("features", String.class)));
+        input.setFeatures(new HashSet<>(settings.getList(featureSet, String.class)));
         input.setUseClassWeights(useClassWeights);
-
         var now = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         String dirName = now.format(formatter) + randomString();
         var resultsPath = dataPath
                 .resolve(input.getProject())
                 .resolve("results")
+                .resolve(runName)
                 .resolve(dirName);
         input.setResultsPath(resultsPath);
-        Pipeline.start(new LoadDatasetStep())
-                .next(new PreprocessingStep())
-                .next(new TrainingStep())
-                .run(input);
+        if (evaluate) {
+            Pipeline.start(new LoadDatasetStep())
+                    .next(new PreprocessingStep())
+                    .next(new EvaluationStep())
+                    .run(input);
+        } else {
+            Pipeline.start(new LoadDatasetStep())
+                    .next(new PreprocessingStep())
+                    .next(new TrainingStep())
+                    .run(input);
+        }
         return 0;
     }
 

@@ -162,4 +162,8 @@ public class Dataset {
     public Path getPath() {
         return path;
     }
+
+    public Instances testSet() {
+        return slice(testIndices.getFirst(), testIndices.getLast() + 1);
+    }
 }

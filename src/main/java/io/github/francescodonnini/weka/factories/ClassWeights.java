@@ -1,4 +1,4 @@
-package io.github.francescodonnini.pipeline.ml;
+package io.github.francescodonnini.weka.factories;
 
 import java.util.List;
 
