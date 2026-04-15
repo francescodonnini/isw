@@ -15,7 +15,7 @@ public class Main {
         }
         var slice = Arrays.copyOfRange(args, 1, args.length);
         switch (CLI.from(args[0])) {
-            case ANALYZE:
+            case CLI.ANALYZE:
                 new CommandLine(new AnalysisCli()).execute(slice);
                 break;
             case CLI.DATA:
