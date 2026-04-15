@@ -9,4 +9,8 @@ public class PipelineException extends Exception {
     public PipelineException(Throwable cause) {
         super(cause);
     }
+
+    public PipelineException(String message) {
+        super(message);
+    }
 }

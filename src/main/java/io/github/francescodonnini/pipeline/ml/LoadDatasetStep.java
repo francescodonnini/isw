@@ -5,16 +5,17 @@ import io.github.francescodonnini.pipeline.inputs.MLWorkloadInfo;
 import io.github.francescodonnini.pipeline.Step;
 import io.github.francescodonnini.weka.Dataset;
 
+import java.nio.file.Path;
+
 public class LoadDatasetStep implements Step<MLWorkloadInfo, MLWorkloadInfo> {
+    private final Path datasetPath;
+
+    public LoadDatasetStep(Path datasetPath) {
+        this.datasetPath = datasetPath;
+    }
+
     @Override
     public MLWorkloadInfo execute(MLWorkloadInfo input) throws PipelineException {
-        var datasetPath = input.getDataPath()
-                .resolve(input.getProject());
-        if (input.fromStart()) {
-            datasetPath = datasetPath.resolve("data_%s_fromStart.arff".formatted(input.getProportion()));
-        } else {
-            datasetPath = datasetPath.resolve("data_%s.arff".formatted(input.getProportion()));
-        }
         try {
             input.setDataset(new Dataset(datasetPath, input.getFeatures(), input.getTrainTestSplit(), input.getDropFactor()));
             return input;

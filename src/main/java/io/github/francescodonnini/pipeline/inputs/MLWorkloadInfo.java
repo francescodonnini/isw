@@ -8,7 +8,6 @@ import java.util.Set;
 
 public class MLWorkloadInfo {
     private String id;
-    private Path dataPath;
     private String project;
     private Proportion proportion;
     private final Set<String> features = new HashSet<>();
@@ -18,23 +17,6 @@ public class MLWorkloadInfo {
     private Path results;
     private String model;
     private boolean useClassWeights;
-    private boolean fromStart;
-
-    public void setFromStart(boolean fromStart) {
-        this.fromStart = fromStart;
-    }
-
-    public boolean fromStart() {
-        return fromStart;
-    }
-
-    public Path getDataPath() {
-        return dataPath;
-    }
-
-    public void setDataPath(Path dataPath) {
-        this.dataPath = dataPath;
-    }
 
     public String getProject() {
         return project;
