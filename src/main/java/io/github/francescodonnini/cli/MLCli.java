@@ -48,6 +48,9 @@ public class MLCli implements Callable<Integer> {
     @CommandLine.Option(names = "-E", description = "Evaluate model")
     private boolean evaluate;
 
+    @CommandLine.Option(names = {"--fromStart"}, defaultValue = "false", description = "Use change metrics from the initial release")
+    private boolean fromStart;
+
     @Override
     public Integer call() throws Exception {
         var settings = new ProjectSettings(new IniSettings(iniFile.getAbsolutePath()), project);
@@ -68,6 +71,7 @@ public class MLCli implements Callable<Integer> {
         input.setModel(model);
         input.setFeatures(new HashSet<>(settings.getList(featureSet, String.class)));
         input.setUseClassWeights(useClassWeights);
+        input.setFromStart(fromStart);
         var now = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         String dirName = now.format(formatter) + randomString();

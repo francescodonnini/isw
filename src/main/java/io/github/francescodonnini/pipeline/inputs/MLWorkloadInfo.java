@@ -18,6 +18,15 @@ public class MLWorkloadInfo {
     private Path results;
     private String model;
     private boolean useClassWeights;
+    private boolean fromStart;
+
+    public void setFromStart(boolean fromStart) {
+        this.fromStart = fromStart;
+    }
+
+    public boolean fromStart() {
+        return fromStart;
+    }
 
     public Path getDataPath() {
         return dataPath;

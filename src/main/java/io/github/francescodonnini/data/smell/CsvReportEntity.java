@@ -1,4 +1,4 @@
-package io.github.francescodonnini.data;
+package io.github.francescodonnini.data.smell;
 
 import com.opencsv.bean.CsvBindByName;
 

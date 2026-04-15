@@ -1,6 +1,10 @@
 package io.github.francescodonnini.data;
 
 import io.github.francescodonnini.collectors.ast.*;
+import io.github.francescodonnini.data.pmd.CPDConsumer;
+import io.github.francescodonnini.data.pmd.CPDFactory;
+import io.github.francescodonnini.data.pmd.JavaLanguage;
+import io.github.francescodonnini.data.pmd.PMDFactory;
 import io.github.francescodonnini.model.JavaClass;
 import io.github.francescodonnini.model.JavaMethod;
 import io.github.francescodonnini.model.Release;
@@ -10,27 +14,30 @@ import net.sourceforge.pmd.PMDConfiguration;
 import net.sourceforge.pmd.PmdAnalysis;
 import net.sourceforge.pmd.cpd.CPDConfiguration;
 import net.sourceforge.pmd.cpd.CpdAnalysis;
-import net.sourceforge.pmd.lang.LanguageRegistry;
-import net.sourceforge.pmd.lang.LanguageVersion;
 import net.sourceforge.pmd.lang.document.FileId;
 import net.sourceforge.pmd.lang.document.TextFile;
-import net.sourceforge.pmd.renderers.CSVRenderer;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
+import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,19 +46,14 @@ import java.util.stream.StreamSupport;
 
 public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
     private static final String JAVA_FILE_EXT = ".java";
-    private static final String JAVA_VERSION_ID = "22";
-    private static final String PMD_RULESET = "io/github/francescodonnini/data/sonar-ruleset.xml";
-
     private final Logger logger = Logger.getLogger(DataLoaderImpl.class.getName());
     // projectPath è il percorso delle repository dove leggere i file da cui creare le entry per il dataset.
     private final Path  projectPath;
     private final Path reportsPath;
     private final Git git;
     private final TrackingIdService trackingId = new TrackingIdService();
-    private final LanguageVersion languageVersion;
     private final PMDConfiguration pmdConfig;
     private final CPDConfiguration cpdConfig;
-
     private final AbstractCounterFactory factory;
     private final List<JavaClass> classes = new ArrayList<>();
     private final List<JavaMethod> methods = new ArrayList<>();
@@ -69,18 +71,8 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         this.reportsPath = reportsPath;
         this.releases = releases;
         this.git = GitUtils.createGit(projectPath);
-        languageVersion = LanguageRegistry.PMD.getLanguageVersionById("java", JAVA_VERSION_ID);
-        if (languageVersion == null) {
-            throw new IllegalStateException("Language Java 22 not found");
-        }
-        pmdConfig = new PMDConfiguration();
-        pmdConfig.setDefaultLanguageVersion(languageVersion);
-        pmdConfig.addRuleSet(PMD_RULESET);
-        cpdConfig = new CPDConfiguration();
-        cpdConfig.setMinimumTileSize(100);
-        cpdConfig.setDefaultLanguageVersion(languageVersion);
-        cpdConfig.setIgnoreIdentifiers(true);
-        cpdConfig.setIgnoreLiterals(true);
+        pmdConfig = PMDFactory.create();
+        cpdConfig = CPDFactory.create();
     }
 
     @Override
@@ -123,7 +115,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         var lastCommitPerRelease = mapLastCommitPerRelease(commits);
         logger.log(Level.INFO, "total commits: {0}", commits.size());
 
-        var filter = new PathFilter();
+        var filter = new PathPredicate();
         try (var df = new DiffFormatter(DisabledOutputStream.INSTANCE)) {
             df.setRepository(git.getRepository());
             df.setDetectRenames(true);
@@ -209,17 +201,8 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
             while (walk.next()) {
                 var path = Path.of(walk.getPathString());
                 if (predicate.test(path)) {
-                    var objectId = walk.getObjectId(0);
-                    var loader = reader.open(objectId);
-                    var content = new String(loader.getBytes(), StandardCharsets.UTF_8);
-                    if (!isGenerated(content)) {
-                        files.add(new ParseContext(trackingId.getId(path), commit.getName(), projectPath, path, GitUtils.getCommitTime(commit), content));
-                        var textFile = TextFile
-                                .builderForCharSeq(content, FileId.fromPath(path), languageVersion)
-                                .build();
-                        pmd.files().addFile(textFile);
-                        cpd.files().addFile(textFile);
-                    }
+                    prepareFile(walk, reader, commit, pmd, cpd)
+                            .ifPresent(files::add);
                 }
             }
             var lists = files.parallelStream()
@@ -236,6 +219,33 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         }
     }
 
+    private Optional<ParseContext> prepareFile(
+            TreeWalk walk,
+            ObjectReader reader,
+            RevCommit commit,
+            PmdAnalysis pmd,
+            CpdAnalysis cpd) throws IOException {
+        var path = Path.of(walk.getPathString());
+        var objectId = walk.getObjectId(0);
+        var loader = reader.open(objectId);
+        var content = new String(loader.getBytes(), StandardCharsets.UTF_8);
+        if (AutoGenerated.isGenerated(content)) {
+            return Optional.empty();
+        }
+
+        var textFile = TextFile
+                .builderForCharSeq(content, FileId.fromPath(path), JavaLanguage.LANGUAGE_VERSION)
+                .build();
+        pmd.files().addFile(textFile);
+        cpd.files().addFile(textFile);
+        return Optional.of(new ParseContext(
+                trackingId.getId(path),
+                commit.getName(),
+                projectPath,
+                path,
+                GitUtils.getCommitTime(commit),
+                content));
+    }
 
 
     private void handleRenames(List<DiffEntry> diffList) {
@@ -266,12 +276,8 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         if (!reportName.endsWith(".csv")) {
             reportName += ".csv";
         }
-        var renderer = new CSVRenderer();
-        renderer.setWriter(Files.newBufferedWriter(reportsPath.resolve(reportName)));
-        pmdConfig.setReportFile(reportsPath.resolve(reportName));
-        var pmd = PmdAnalysis.create(pmdConfig);
-        pmd.addRenderer(renderer);
-        return pmd;
+        var reportPath = reportsPath.resolve(reportName);
+        return PMDFactory.create(reportPath, pmdConfig);
     }
 
     private void logProgress(int progress, int total) {
@@ -295,22 +301,6 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
             }
         }
         return touchedFiles;
-    }
-
-    private boolean isGenerated(String content) throws IOException {
-        try (var reader = new BufferedReader(new StringReader(content))) {
-            return reader
-                    .lines()
-                    .limit(100)
-                    .anyMatch(this::hasAutogeneratedCodeHint);
-        }
-    }
-
-    private boolean hasAutogeneratedCodeHint(String line) {
-        line = line.toLowerCase();
-        return line.contains("generated by the protocol buffer compiler")
-                || line.contains("do not edit!")
-                || line.contains("autogenerated by thrift");
     }
 
     private List<JavaClass> parseClass(ParseContext ctx) {

@@ -1,5 +1,6 @@
 package io.github.francescodonnini;
 
+import io.github.francescodonnini.cli.AnalysisCli;
 import io.github.francescodonnini.cli.CLI;
 import io.github.francescodonnini.cli.DataCli;
 import io.github.francescodonnini.cli.MLCli;
@@ -14,6 +15,9 @@ public class Main {
         }
         var slice = Arrays.copyOfRange(args, 1, args.length);
         switch (CLI.from(args[0])) {
+            case ANALYZE:
+                new CommandLine(new AnalysisCli()).execute(slice);
+                break;
             case CLI.DATA:
                 new CommandLine(new DataCli()).execute(slice);
                 break;

@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
-class PathFilter implements Predicate<Path> {
+class PathPredicate implements Predicate<Path> {
     private boolean lastCommitPerRelease = false;
     private final Set<String> commitChangeSet = new HashSet<>();
     private final Set<String> releaseChangeSet = new HashSet<>();

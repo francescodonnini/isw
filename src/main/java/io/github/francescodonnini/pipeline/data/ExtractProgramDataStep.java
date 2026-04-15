@@ -6,7 +6,7 @@ import io.github.francescodonnini.collectors.DiffCollector;
 import io.github.francescodonnini.collectors.ast.AbstractCounterFactoryImpl;
 import io.github.francescodonnini.csv.CsvJavaClassApi;
 import io.github.francescodonnini.csv.CsvJavaMethodApi;
-import io.github.francescodonnini.data.CsvSmellLinker;
+import io.github.francescodonnini.data.smell.CsvSmellLinker;
 import io.github.francescodonnini.data.DataLoaderImpl;
 import io.github.francescodonnini.model.JavaClass;
 import io.github.francescodonnini.model.JavaMethod;
