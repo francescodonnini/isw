@@ -19,7 +19,7 @@ public abstract class AbstractSmellLinker implements SmellLinker {
     protected final Logger logger = Logger.getLogger(getClass().getName());
     protected final Path reportsDir;
 
-    public AbstractSmellLinker(Path reportsDir) {
+    protected AbstractSmellLinker(Path reportsDir) {
         this.reportsDir = reportsDir;
     }
 
