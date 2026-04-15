@@ -182,8 +182,8 @@ public class JiraIssueApi {
 
 
     private LocalDate getCommitDate(RevCommit commit) {
-        return commit.getAuthorIdent().getWhen().toInstant()
-                .atZone(commit.getAuthorIdent().getTimeZone().toZoneId())
+        return commit.getAuthorIdent().getWhenAsInstant()
+                .atZone(commit.getAuthorIdent().getZoneId())
                 .toLocalDate();
     }
 
