@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public class ReportingUtils {
+    private ReportingUtils() {}
+
     public static void summary(Path path, MLWorkloadInfo info) throws PipelineException {
         try (var summary = new FileWriter(path.toFile())) {
             String s =
