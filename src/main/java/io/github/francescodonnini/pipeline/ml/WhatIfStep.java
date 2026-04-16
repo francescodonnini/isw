@@ -77,7 +77,7 @@ public class WhatIfStep implements Step<MLWorkloadInfo, Void> {
             Evaluation evalBPlus,
             Evaluation evalC, int classIndex) throws PipelineException {
         try (var writer = new FileWriter(path.toFile())) {
-            writer.write("subset,true_positives,predicted_positives\n");
+            writer.write("subset,A,E\n");
             writeRow(writer, "A", evalA, classIndex);
             writeRow(writer, "B", evalB, classIndex);
             writeRow(writer, "B+", evalBPlus, classIndex);
@@ -89,7 +89,8 @@ public class WhatIfStep implements Step<MLWorkloadInfo, Void> {
 
     private void writeRow(FileWriter writer, String subset, Evaluation eval, int classIndex) throws IOException {
         var tp = eval.numTruePositives(classIndex);
-        var predictedPositives = tp + eval.numFalsePositives(classIndex);
-        writer.write(subset + "," + tp + "," + predictedPositives + "\n");
+        var actual = tp + eval.numFalsePositives(classIndex);
+        var expected = eval.numFalseNegatives(classIndex) + tp;
+        writer.write(subset + "," + actual + "," + expected + "\n");
     }
 }
