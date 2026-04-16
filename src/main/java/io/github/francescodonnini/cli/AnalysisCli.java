@@ -12,6 +12,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -30,7 +31,8 @@ public class AnalysisCli implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        Path reportsDir = Files.createTempDirectory("pmd-reports");
+        Path reportsDir = Files.createTempDirectory(Paths.get("."), "pmd-reports");
+        reportsDir.toFile().deleteOnExit();
 
         var allClasses = new HashMap<String, List<JavaClass>>();
         for (var javaFile : javaFiles) {
