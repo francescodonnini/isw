@@ -91,7 +91,7 @@ public class MLCli implements Callable<Integer> {
 
     private void setTrainTestSplit(MLWorkloadInfo info, double split) {
         if (smellEval) {
-            info.setTrainTestSplit(0);
+            info.setTrainTestSplit(1);
         } else if (split < 0 || split > 1) {
             throw new CommandLine.ParameterException(new CommandLine(this).getCommandSpec().commandLine(), "Training test split must be between 0 and 1");
         } else {
