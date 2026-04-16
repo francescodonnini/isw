@@ -89,8 +89,8 @@ public class WhatIfStep implements Step<MLWorkloadInfo, Void> {
 
     private void writeRow(FileWriter writer, String subset, Evaluation eval, int classIndex) throws IOException {
         var tp = eval.numTruePositives(classIndex);
-        var actual = tp + eval.numFalsePositives(classIndex);
-        var expected = eval.numFalseNegatives(classIndex) + tp;
+        var actual = tp + eval.numFalseNegatives(classIndex);
+        var expected = tp + eval.numFalsePositives(classIndex);
         writer.write(subset + "," + actual + "," + expected + "\n");
     }
 }
