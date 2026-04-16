@@ -1,6 +1,5 @@
 package io.github.francescodonnini.data;
 
-import io.github.francescodonnini.collectors.ast.*;
 import io.github.francescodonnini.data.pmd.CPDConsumer;
 import io.github.francescodonnini.data.pmd.CPDFactory;
 import io.github.francescodonnini.data.pmd.JavaLanguage;
