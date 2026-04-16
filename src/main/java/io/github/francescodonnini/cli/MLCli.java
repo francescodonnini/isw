@@ -65,15 +65,8 @@ public class MLCli implements Callable<Integer> {
 
         input.setProject(project);
         input.setProportion(Proportion.from(proportion));
-        input.setTrainTestSplit(settings.getDouble("trainingTestSplit", 0.8));
-        var dropFactor = settings.getDouble("dropFactor");
-        if (dropFactor < 0 || dropFactor > 1) {
-            throw new CommandLine.ParameterException(
-                    new CommandLine(this).getCommandSpec().commandLine(),
-                    "Error: The option (-D|--drop) must be between 0 and 1"
-            );
-        }
-        input.setDropFactor(dropFactor);
+        setTrainTestSplit(input, settings.getDouble("trainingTestSplit", 0.8));
+        setDropFactor(input, settings.getDouble("dropFactor"));
         setModel(input, model);
         input.setFeatures(new HashSet<>(settings.getList(featureSet, String.class)));
         input.setUseClassWeights(useClassWeights);
@@ -94,6 +87,23 @@ public class MLCli implements Callable<Integer> {
                     .run(input);
         }
         return 0;
+    }
+
+    private void setTrainTestSplit(MLWorkloadInfo info, double split) {
+        if (smellEval) {
+            info.setTrainTestSplit(0);
+        } else if (split < 0 || split > 1) {
+            throw new CommandLine.ParameterException(new CommandLine(this).getCommandSpec().commandLine(), "Training test split must be between 0 and 1");
+        } else {
+            info.setTrainTestSplit(split);
+        }
+    }
+
+    private void setDropFactor(MLWorkloadInfo info, double dropFactor) {
+        if (dropFactor < 0 || dropFactor > 1) {
+            throw new CommandLine.ParameterException(new CommandLine(this).getCommandSpec().commandLine(), "Error: The option (-D|--drop) must be between 0 and 1");
+        }
+        info.setDropFactor(dropFactor);
     }
 
     private void setModel(MLWorkloadInfo info, String model) throws PipelineException {
