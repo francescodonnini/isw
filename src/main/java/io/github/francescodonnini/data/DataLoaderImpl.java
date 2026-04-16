@@ -54,7 +54,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
     private final TrackingIdService trackingId = new TrackingIdService();
     private final PMDConfiguration pmdConfig;
     private final CPDConfiguration cpdConfig;
-    private final AbstractCounterFactory factory;
+    private final JavaMethodExtractorFactory factory;
     private final List<JavaClass> classes = new ArrayList<>();
     private final List<JavaMethod> methods = new ArrayList<>();
     private boolean dataLoaded = false;
@@ -62,7 +62,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
     private final List<Integer> methodsPerRelease = new ArrayList<>();
 
     public DataLoaderImpl(
-            AbstractCounterFactory factory,
+            JavaMethodExtractorFactory factory,
             List<Release> releases,
             Path projectPath,
             Path reportsPath) throws IOException {
@@ -305,23 +305,13 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
 
     private List<JavaClass> parseClass(ParseContext ctx) {
         try {
-            var extractor = new JavaMethodExtractor(createCounters(factory));
+            var extractor = factory.create();
             extractor.parse(ctx);
             return extractor.getClasses();
         } catch (IOException e) {
             logger.log(Level.SEVERE, e, () -> "Error parsing file " + ctx.path());
             return List.of();
         }
-    }
-
-    private List<AbstractCounter> createCounters(AbstractCounterFactory factory) {
-        return List.of(
-                factory.build(CyclomaticComplexityCounter.class),
-                factory.build(InputParametersCounter.class),
-                factory.build(StatementsCounter.class),
-                factory.build(ElseCounter.class),
-                factory.build(NestingDepth.class),
-                factory.build(HalsteadComplexityCounter.class));
     }
 
     private void parseCommit(List<JavaClass> classList, RevCommit commit, List<DiffEntry> diffList) {

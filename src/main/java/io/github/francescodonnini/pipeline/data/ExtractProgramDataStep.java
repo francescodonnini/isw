@@ -3,9 +3,10 @@ package io.github.francescodonnini.pipeline.data;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import io.github.francescodonnini.collectors.DiffCollector;
-import io.github.francescodonnini.collectors.ast.AbstractCounterFactoryImpl;
+import io.github.francescodonnini.collectors.ast.*;
 import io.github.francescodonnini.csv.CsvJavaClassApi;
 import io.github.francescodonnini.csv.CsvJavaMethodApi;
+import io.github.francescodonnini.data.JavaMethodExtractorFactory;
 import io.github.francescodonnini.data.smell.CsvSmellLinker;
 import io.github.francescodonnini.data.DataLoaderImpl;
 import io.github.francescodonnini.model.JavaClass;
@@ -69,12 +70,15 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
 
     private void loadRawData(ProjectInfo info) throws PipelineException {
         try {
-            var factory = new AbstractCounterFactoryImpl();
             var source = context.getSources()
                     .resolve(info.getProject().toLowerCase());
             var report = context.getReports()
                     .resolve(info.getProject());
-            var loader = new DataLoaderImpl(factory, info.getAllReleases(), source, report);
+            var loader = new DataLoaderImpl(
+                    JavaMethodExtractorFactory.defaultFactory(new AbstractCounterFactoryImpl()),
+                    info.getAllReleases(),
+                    source,
+                    report);
             var classes = loader.getClasses();
             saveClasses(classes, cachedClassesPath(info, "raw"));
             var methods = loader.getMethods();

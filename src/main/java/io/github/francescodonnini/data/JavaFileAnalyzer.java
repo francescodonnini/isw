@@ -27,9 +27,9 @@ public class JavaFileAnalyzer {
     private final Path reportsPath;
     private final PMDConfiguration pmdConfig;
     private final CPDConfiguration cpdConfig;
-    private final AbstractCounterFactory factory;
+    private final JavaMethodExtractorFactory factory;
 
-    public JavaFileAnalyzer(AbstractCounterFactory factory, Path projectPath, Path reportsPath) {
+    public JavaFileAnalyzer(JavaMethodExtractorFactory factory, Path projectPath, Path reportsPath) {
         this.factory = factory;
         this.reportsPath = reportsPath;
         this.projectPath = projectPath;
@@ -78,22 +78,12 @@ public class JavaFileAnalyzer {
 
     private List<JavaClass> parseClass(ParseContext ctx) {
         try {
-            var extractor = new JavaMethodExtractor(createCounters(factory));
+            var extractor = factory.create();
             extractor.parse(ctx);
             return extractor.getClasses();
         } catch (IOException e) {
             logger.log(Level.SEVERE, e, () -> "Error parsing file " + ctx.path());
             return List.of();
         }
-    }
-
-    private List<AbstractCounter> createCounters(AbstractCounterFactory factory) {
-        return List.of(
-                factory.build(CyclomaticComplexityCounter.class),
-                factory.build(InputParametersCounter.class),
-                factory.build(StatementsCounter.class),
-                factory.build(ElseCounter.class),
-                factory.build(NestingDepth.class),
-                factory.build(HalsteadComplexityCounter.class));
     }
 }

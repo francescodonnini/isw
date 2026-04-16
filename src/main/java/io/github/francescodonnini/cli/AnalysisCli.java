@@ -36,7 +36,10 @@ public class AnalysisCli implements Callable<Integer> {
         for (var javaFile : javaFiles) {
             var outputPath = javaFile.getPath() + ".csv";
             var projectPath = javaFile.getParentFile().toPath();
-            var loader = new JavaFileAnalyzer(new AbstractCounterFactoryImpl(), projectPath, reportsDir);
+            var loader = new JavaFileAnalyzer(
+                    JavaMethodExtractorFactory.defaultFactory(new AbstractCounterFactoryImpl()),
+                    projectPath,
+                    reportsDir);
             var classes = loader.analyzeFile(javaFile.toPath());
             if (classes.isEmpty()) {
                 logger.log(Level.INFO, "No classes found");
