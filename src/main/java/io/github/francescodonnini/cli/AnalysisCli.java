@@ -71,7 +71,7 @@ public class AnalysisCli implements Callable<Integer> {
                 .map(Path::toFile)
                 .forEach(file -> {
                     if (!file.delete()) {
-                        logger.log(Level.WARNING, "Failed to delete " + file);
+                        logger.log(Level.WARNING, "Failed to delete {0}", file);
                     }
                 });
         } catch (IOException e) {
