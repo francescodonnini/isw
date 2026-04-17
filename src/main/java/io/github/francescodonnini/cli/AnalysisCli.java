@@ -68,10 +68,11 @@ public class AnalysisCli implements Callable<Integer> {
     private void deleteOnExit(Path directory) {
         try (var walk = Files.walk(directory)) {
             walk.sorted(Comparator.reverseOrder())
-                .map(Path::toFile)
-                .forEach(file -> {
-                    if (!file.delete()) {
-                        logger.log(Level.WARNING, "Failed to delete {0}", file);
+                .forEach(path -> {
+                    try {
+                        Files.delete(path);
+                    } catch (IOException e) {
+                        logger.log(Level.WARNING, e.getMessage(), e);
                     }
                 });
         } catch (IOException e) {
