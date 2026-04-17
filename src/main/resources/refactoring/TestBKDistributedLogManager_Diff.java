@@ -85,7 +85,7 @@ public class TestBKDistributedLogManager extends TestDistributedLogBase {
             writer.closeAndComplete();
             BKLogWriteHandler blplm = dlm.createWriteHandler(true);
             assertNotNull(zkc.exists(blplm.completedLedgerZNode(start, txid - 1,
-                                                                perStreamLogWriter.getLogSegmentSequenceNumber()), false));
+                    perStreamLogWriter.getLogSegmentSequenceNumber()), false));
             FutureUtils.result(blplm.asyncClose());
         }
 
@@ -217,8 +217,8 @@ public class TestBKDistributedLogManager extends TestDistributedLogBase {
             BKLogWriteHandler blplm = dlm.createWriteHandler(true);
 
             assertNotNull(
-                zkc.exists(blplm.completedLedgerZNode(start, txid - 1,
-                                                      perStreamLogWriter.getLogSegmentSequenceNumber()), false));
+                    zkc.exists(blplm.completedLedgerZNode(start, txid - 1,
+                            perStreamLogWriter.getLogSegmentSequenceNumber()), false));
             FutureUtils.result(blplm.asyncClose());
         }
 
@@ -268,7 +268,7 @@ public class TestBKDistributedLogManager extends TestDistributedLogBase {
             out = (BKSyncLogWriter)dlm.startLogSegmentNonPartitioned();
             out.write(DLMTestUtil.getLogRecordInstance(txid));
             fail("Shouldn't be able to start another journal from " + txid
-                + " when one already exists");
+                    + " when one already exists");
         } catch (Exception ioe) {
             LOG.info("Caught exception as expected", ioe);
         } finally {
@@ -281,7 +281,7 @@ public class TestBKDistributedLogManager extends TestDistributedLogBase {
             out = (BKSyncLogWriter)dlm.startLogSegmentNonPartitioned();
             out.write(DLMTestUtil.getLogRecordInstance(txid));
             fail("Shouldn't be able to start another journal from " + txid
-                + " when one already exists");
+                    + " when one already exists");
         } catch (TransactionIdOutOfOrderException rste) {
             LOG.info("Caught exception as expected", rste);
         } finally {
@@ -312,7 +312,7 @@ public class TestBKDistributedLogManager extends TestDistributedLogBase {
         DLMTestUtil.BKLogPartitionWriteHandlerAndClients bkdlm1 =
                 createNewBKDLM(conf, "distrlog-dualWriter");
         try {
-             createNewBKDLM(conf, "distrlog-dualWriter");
+            createNewBKDLM(conf, "distrlog-dualWriter");
             fail("Shouldn't have been able to open the second writer");
         } catch (OwnershipAcquireFailedException ioe) {
             assertEquals(ioe.getCurrentOwner(), DistributedLogConstants.UNKNOWN_CLIENT_ID);
@@ -353,8 +353,8 @@ public class TestBKDistributedLogManager extends TestDistributedLogBase {
             out.closeAndComplete();
             BKLogWriteHandler blplm = ((BKDistributedLogManager) (dlm)).createWriteHandler(true);
             assertNotNull(
-                zkc.exists(blplm.completedLedgerZNode(start, txid - 1,
-                                                      perStreamLogWriter.getLogSegmentSequenceNumber()), false));
+                    zkc.exists(blplm.completedLedgerZNode(start, txid - 1,
+                            perStreamLogWriter.getLogSegmentSequenceNumber()), false));
             FutureUtils.result(blplm.asyncClose());
         }
         BKSyncLogWriter out = (BKSyncLogWriter)dlm.startLogSegmentNonPartitioned();
@@ -430,14 +430,14 @@ public class TestBKDistributedLogManager extends TestDistributedLogBase {
             BKLogWriteHandler blplm = ((BKDistributedLogManager) (dlm)).createWriteHandler(true);
 
             assertNotNull(
-                zkc.exists(blplm.completedLedgerZNode(start, txid - 1,
-                                                      writer.getLogSegmentSequenceNumber()), false));
+                    zkc.exists(blplm.completedLedgerZNode(start, txid - 1,
+                            writer.getLogSegmentSequenceNumber()), false));
             BKLogSegmentWriter perStreamLogWriter = blplm.startLogSegment(txid - 1);
             blplm.completeAndCloseLogSegment(perStreamLogWriter.getLogSegmentSequenceNumber(),
                     perStreamLogWriter.getLogSegmentId(), txid - 1, txid - 1, 0);
             assertNotNull(
-                zkc.exists(blplm.completedLedgerZNode(txid - 1, txid - 1,
-                                                      perStreamLogWriter.getLogSegmentSequenceNumber()), false));
+                    zkc.exists(blplm.completedLedgerZNode(txid - 1, txid - 1,
+                            perStreamLogWriter.getLogSegmentSequenceNumber()), false));
             FutureUtils.result(blplm.asyncClose());
         }
 
@@ -638,13 +638,13 @@ public class TestBKDistributedLogManager extends TestDistributedLogBase {
                 writer.closeAndComplete();
                 BKLogWriteHandler blplm = ((BKDistributedLogManager) (dlm)).createWriteHandler(true);
                 assertNotNull(zkc.exists(blplm.completedLedgerZNode(start, txid - 1,
-                                                                    perStreamLogWriter.getLogSegmentSequenceNumber()), false));
+                        perStreamLogWriter.getLogSegmentSequenceNumber()), false));
                 FutureUtils.result(blplm.asyncClose());
             } else {
                 writer.markEndOfStream();
                 BKLogWriteHandler blplm = ((BKDistributedLogManager) (dlm)).createWriteHandler(true);
                 assertNotNull(zkc.exists(blplm.completedLedgerZNode(start, DistributedLogConstants.MAX_TXID,
-                                                                    perStreamLogWriter.getLogSegmentSequenceNumber()), false));
+                        perStreamLogWriter.getLogSegmentSequenceNumber()), false));
                 FutureUtils.result(blplm.asyncClose());
             }
         }
@@ -773,7 +773,7 @@ public class TestBKDistributedLogManager extends TestDistributedLogBase {
         boolean exceptionEncountered = false;
         try {
             LogRecord op = new LogRecord(txid, DLMTestUtil.repeatString(
-                                DLMTestUtil.repeatString("abcdefgh", 256), 512).getBytes());
+                    DLMTestUtil.repeatString("abcdefgh", 256), 512).getBytes());
             out.write(op);
         } catch (LogRecordTooLongException exc) {
             exceptionEncountered = true;
@@ -828,7 +828,7 @@ public class TestBKDistributedLogManager extends TestDistributedLogBase {
             writer.closeAndComplete();
             BKLogWriteHandler blplm = ((BKDistributedLogManager) (dlm)).createWriteHandler(true);
             assertNotNull(zkc.exists(blplm.completedLedgerZNode(start, txid - 1,
-                                                                perStreamLogWriter.getLogSegmentSequenceNumber()), false));
+                    perStreamLogWriter.getLogSegmentSequenceNumber()), false));
             FutureUtils.result(blplm.asyncClose());
         }
 
@@ -890,14 +890,14 @@ public class TestBKDistributedLogManager extends TestDistributedLogBase {
             BKLogWriteHandler blplm = ((BKDistributedLogManager) (dlm)).createWriteHandler(true);
 
             assertNotNull(
-                zkc.exists(blplm.completedLedgerZNode(start, txid - 1,
-                                                      perStreamLogWriter.getLogSegmentSequenceNumber()), false));
+                    zkc.exists(blplm.completedLedgerZNode(start, txid - 1,
+                            perStreamLogWriter.getLogSegmentSequenceNumber()), false));
             BKLogSegmentWriter writer = blplm.startLogSegment(txid - 1);
             blplm.completeAndCloseLogSegment(writer.getLogSegmentSequenceNumber(),
                     writer.getLogSegmentId(), txid - 1, txid - 1, 0);
             assertNotNull(
-                zkc.exists(blplm.completedLedgerZNode(txid - 1, txid - 1,
-                                                      writer.getLogSegmentSequenceNumber()), false));
+                    zkc.exists(blplm.completedLedgerZNode(txid - 1, txid - 1,
+                            writer.getLogSegmentSequenceNumber()), false));
             FutureUtils.result(blplm.asyncClose());
         }
 
@@ -1090,189 +1090,169 @@ public class TestBKDistributedLogManager extends TestDistributedLogBase {
         String name = "distrlog-truncation-validation";
         URI uri = createDLMURI("/" + name);
         ZooKeeperClient zookeeperClient = ZooKeeperClientBuilder.newBuilder()
-            .uri(uri)
-            .zkAclId(null)
-            .sessionTimeoutMs(10000).build();
+                .uri(uri).zkAclId(null).sessionTimeoutMs(10000).build();
         OrderedScheduler scheduler = OrderedScheduler.newBuilder()
-                .name("test-truncation-validation")
-                .corePoolSize(1)
-                .build();
+                .name("test-truncation-validation").corePoolSize(1).build();
+
         DistributedLogConfiguration confLocal = new DistributedLogConfiguration();
         confLocal.loadConf(conf);
         confLocal.setDLLedgerMetadataLayoutVersion(LogSegmentMetadata.LEDGER_METADATA_CURRENT_LAYOUT_VERSION);
         confLocal.setOutputBufferSize(0);
 
         LogSegmentMetadataStore metadataStore = new ZKLogSegmentMetadataStore(confLocal, zookeeperClient, scheduler);
-
         BKDistributedLogManager dlm = createNewDLM(confLocal, name);
-        DLSN truncDLSN = DLSN.InitialDLSN;
-        DLSN beyondTruncDLSN = DLSN.InitialDLSN;
-        long beyondTruncTxId = 1;
+
+        WriteCheckpoints checkpoints = writeTestRecords(dlm);
+
+        verifySyncReadByDLSN(dlm, DLSN.InitialDLSN, DLSN.InitialDLSN);
+
+        String segmentsPath = ZKLogMetadata.getLogSegmentsPath(uri, name, confLocal.getUnpartitionedStreamName());
+        readAndLogSegments(zookeeperClient, segmentsPath, "Read segments before truncating first segment : {}");
+        truncateSegment(confLocal, metadataStore, 1L);
+        readAndLogSegments(zookeeperClient, segmentsPath, "Read segments after truncated first segment : {}");
+
+        DLSN expectedDlsnAfterFirstTrunc = new DLSN(2, 0, 0);
+        verifySyncReadByDLSN(dlm, DLSN.InitialDLSN, expectedDlsnAfterFirstTrunc);
+        verifySyncReadByTxId(dlm, 1, expectedDlsnAfterFirstTrunc, -1);
+
+        markSegment(confLocal, metadataStore, 1L);
+        readAndLogSegments(zookeeperClient, segmentsPath, "Read segments after marked first segment as active : {}");
+
+        truncateSegment(confLocal, metadataStore, 2L);
+        readAndLogSegments(zookeeperClient, segmentsPath, "Read segments after truncated second segment : {}");
+
+        verifyTruncationExceptionEncountered(dlm);
+        markSegment(confLocal, metadataStore, 2L);
+
+        BKAsyncLogWriter writer = dlm.startAsyncLogSegmentNonPartitioned();
+        Assert.assertTrue(Await.result(writer.truncate(checkpoints.truncDLSN)));
+
+        verifySegmentTruncationStates(writer.getCachedWriteHandler(), checkpoints.truncDLSN);
+
+        Map<Long, LogSegmentMetadata> segmentList = DLMTestUtil.readLogSegments(zookeeperClient, segmentsPath);
+        Assert.assertTrue(segmentList.get(checkpoints.truncDLSN.getLogSegmentSequenceNo())
+                .getMinActiveDLSN().compareTo(checkpoints.truncDLSN) == 0);
+
+        verifySyncReadByDLSN(dlm, DLSN.InitialDLSN, checkpoints.truncDLSN);
+        verifySyncReadByTxId(dlm, 1, checkpoints.truncDLSN, -1);
+        verifyAsyncReadByDLSN(dlm, DLSN.InitialDLSN, checkpoints.truncDLSN);
+
+        verifySyncReadByDLSN(dlm, checkpoints.beyondTruncDLSN, checkpoints.beyondTruncDLSN);
+        verifySyncReadByTxId(dlm, checkpoints.beyondTruncTxId, checkpoints.beyondTruncDLSN, checkpoints.beyondTruncTxId);
+        verifyAsyncReadByDLSN(dlm, checkpoints.beyondTruncDLSN, checkpoints.beyondTruncDLSN);
+
+        zookeeperClient.close();
+    }
+
+    private WriteCheckpoints writeTestRecords(BKDistributedLogManager dlm) throws Exception {
+        WriteCheckpoints checkpoints = new WriteCheckpoints();
         long txid = 1;
         for (long i = 0; i < 3; i++) {
-            long start = txid;
             BKAsyncLogWriter writer = dlm.startAsyncLogSegmentNonPartitioned();
             for (long j = 1; j <= 10; j++) {
                 LogRecord record = DLMTestUtil.getLargeLogRecordInstance(txid++);
                 Future<DLSN> dlsn = writer.write(record);
 
                 if (i == 1 && j == 2) {
-                    truncDLSN = Await.result(dlsn);
+                    checkpoints.truncDLSN = Await.result(dlsn);
                 } else if (i == 2 && j == 3) {
-                    beyondTruncDLSN = Await.result(dlsn);
-                    beyondTruncTxId = record.getTransactionId();
+                    checkpoints.beyondTruncDLSN = Await.result(dlsn);
+                    checkpoints.beyondTruncTxId = record.getTransactionId();
                 } else if (j == 10) {
                     Await.ready(dlsn);
                 }
             }
-
             writer.close();
         }
+        return checkpoints;
+    }
 
-        {
-            LogReader reader = dlm.getInputStream(DLSN.InitialDLSN);
-            LogRecordWithDLSN record = reader.readNext(false);
-            assertTrue((record != null) && (record.getDlsn().compareTo(DLSN.InitialDLSN) == 0));
-            reader.close();
+    private void readAndLogSegments(ZooKeeperClient zookeeperClient, String segmentsPath, String formatMessage) {
+        Map<Long, LogSegmentMetadata> segmentList = DLMTestUtil.readLogSegments(zookeeperClient, segmentsPath);
+        LOG.info(formatMessage, segmentList);
+    }
+
+    private void markSegment(DistributedLogConfiguration conf, LogSegmentMetadataStore metadataStore, LogSegmentMetadata segment) throws Exception {
+        updateSegmentStatus(conf, metadataStore, segment, false);
+    }
+
+    private void truncateSegment(DistributedLogConfiguration conf, LogSegmentMetadataStore metadataStore, LogSegmentMetadata segment) throws Exception {
+        updateSegmentStatus(conf, metadataStore, segment, true);
+    }
+
+    private void updateSegmentStatus(DistributedLogConfiguration conf, LogSegmentMetadataStore metadataStore, LogSegmentMetadata segment, boolean truncate) throws Exception {
+        MetadataUpdater updater = LogSegmentMetadataStoreUpdater.createMetadataUpdater(conf, metadataStore);
+        if (truncate) {
+            FutureUtils.result(updater.setLogSegmentTruncated(segment));
+        } else {
+            FutureUtils.result(updater.setLogSegmentActive(segment));
         }
+    }
 
-        Map<Long, LogSegmentMetadata> segmentList = DLMTestUtil.readLogSegments(zookeeperClient,
-                ZKLogMetadata.getLogSegmentsPath(uri, name, confLocal.getUnpartitionedStreamName()));
+    private void verifySyncReadByDLSN(BKDistributedLogManager dlm, DLSN startDlsn, DLSN expectedDlsn) throws Exception {
+        LogReader reader = dlm.getInputStream(startDlsn);
+        LogRecordWithDLSN record = reader.readNext(false);
+        assertTrue(record != null);
+        assertEquals(0, record.getDlsn().compareTo(expectedDlsn));
+        reader.close();
+    }
 
-        LOG.info("Read segments before truncating first segment : {}", segmentList);
-
-        MetadataUpdater updater = LogSegmentMetadataStoreUpdater.createMetadataUpdater(
-                confLocal, metadataStore);
-        FutureUtils.result(updater.setLogSegmentTruncated(segmentList.get(1L)));
-
-        segmentList = DLMTestUtil.readLogSegments(zookeeperClient,
-                ZKLogMetadata.getLogSegmentsPath(uri, name, confLocal.getUnpartitionedStreamName()));
-
-        LOG.info("Read segments after truncated first segment : {}", segmentList);
-
-        {
-            LogReader reader = dlm.getInputStream(DLSN.InitialDLSN);
-            LogRecordWithDLSN record = reader.readNext(false);
-            assertTrue((record != null) && (record.getDlsn().compareTo(new DLSN(2, 0, 0)) == 0));
-            reader.close();
+    private void verifySyncReadByTxId(BKDistributedLogManager dlm, long startTxId, DLSN expectedDlsn, long expectedTxId) throws Exception {
+        LogReader reader = dlm.getInputStream(startTxId);
+        LogRecordWithDLSN record = reader.readNext(false);
+        assertTrue(record != null);
+        assertEquals(0, record.getDlsn().compareTo(expectedDlsn));
+        if (expectedTxId != -1) {
+            assertEquals(expectedTxId, record.getTransactionId());
         }
+        reader.close();
+    }
 
-        {
-            LogReader reader = dlm.getInputStream(1);
-            LogRecordWithDLSN record = reader.readNext(false);
-            assertTrue((record != null) && (record.getDlsn().compareTo(new DLSN(2, 0, 0)) == 0));
-            reader.close();
-        }
+    private void verifyAsyncReadByDLSN(BKDistributedLogManager dlm, DLSN startDlsn, DLSN expectedDlsn) throws Exception {
+        AsyncLogReader reader = dlm.getAsyncLogReader(startDlsn);
+        LogRecordWithDLSN record = Await.result(reader.readNext());
+        assertTrue(record != null);
+        assertEquals(expectedDlsn, record.getDlsn());
+        Utils.close(reader);
+    }
 
-        updater = LogSegmentMetadataStoreUpdater.createMetadataUpdater(confLocal, metadataStore);
-        FutureUtils.result(updater.setLogSegmentActive(segmentList.get(1L)));
-
-        segmentList = DLMTestUtil.readLogSegments(zookeeperClient,
-                ZKLogMetadata.getLogSegmentsPath(uri, name, confLocal.getUnpartitionedStreamName()));
-
-        LOG.info("Read segments after marked first segment as active : {}", segmentList);
-
-        updater = LogSegmentMetadataStoreUpdater.createMetadataUpdater(confLocal, metadataStore);
-        FutureUtils.result(updater.setLogSegmentTruncated(segmentList.get(2L)));
-
-        segmentList = DLMTestUtil.readLogSegments(zookeeperClient,
-                ZKLogMetadata.getLogSegmentsPath(uri, name, confLocal.getUnpartitionedStreamName()));
-
-        LOG.info("Read segments after truncated second segment : {}", segmentList);
-
-        {
-            AsyncLogReader reader = dlm.getAsyncLogReader(DLSN.InitialDLSN);
-            long expectedTxId = 1L;
-            boolean exceptionEncountered = false;
-            try {
-                for (int i = 0; i < 3 * 10; i++) {
-                    LogRecordWithDLSN record = Await.result(reader.readNext());
-                    DLMTestUtil.verifyLargeLogRecord(record);
-                    assertEquals(expectedTxId, record.getTransactionId());
-                    expectedTxId++;
-                }
-            } catch (AlreadyTruncatedTransactionException exc) {
-                exceptionEncountered = true;
+    private void verifyTruncationExceptionEncountered(BKDistributedLogManager dlm) throws Exception {
+        AsyncLogReader reader = dlm.getAsyncLogReader(DLSN.InitialDLSN);
+        long expectedTxId = 1L;
+        boolean exceptionEncountered = false;
+        try {
+            for (int i = 0; i < 3 * 10; i++) {
+                LogRecordWithDLSN record = Await.result(reader.readNext());
+                DLMTestUtil.verifyLargeLogRecord(record);
+                assertEquals(expectedTxId, record.getTransactionId());
+                expectedTxId++;
             }
-            assertTrue(exceptionEncountered);
-            Utils.close(reader);
+        } catch (AlreadyTruncatedTransactionException exc) {
+            exceptionEncountered = true;
         }
+        assertTrue(exceptionEncountered);
+        Utils.close(reader);
+    }
 
-        updater = LogSegmentMetadataStoreUpdater.createMetadataUpdater(conf, metadataStore);
-        FutureUtils.result(updater.setLogSegmentActive(segmentList.get(2L)));
-
-        BKAsyncLogWriter writer = dlm.startAsyncLogSegmentNonPartitioned();
-        Assert.assertTrue(Await.result(writer.truncate(truncDLSN)));
-        BKLogWriteHandler handler = writer.getCachedWriteHandler();
+    private void verifySegmentTruncationStates(BKLogWriteHandler handler, DLSN truncDLSN) throws Exception {
         List<LogSegmentMetadata> cachedSegments = handler.getFullLedgerList(false, false);
         for (LogSegmentMetadata segment: cachedSegments) {
             if (segment.getLastDLSN().compareTo(truncDLSN) < 0) {
                 Assert.assertTrue(segment.isTruncated());
-                Assert.assertTrue(!segment.isPartiallyTruncated());
+                Assert.assertFalse(segment.isPartiallyTruncated());
             } else if (segment.getFirstDLSN().compareTo(truncDLSN) < 0) {
-                Assert.assertTrue(!segment.isTruncated());
+                Assert.assertFalse(segment.isTruncated());
                 Assert.assertTrue(segment.isPartiallyTruncated());
             } else {
-                Assert.assertTrue(!segment.isTruncated());
-                Assert.assertTrue(!segment.isPartiallyTruncated());
+                Assert.assertFalse(segment.isTruncated());
+                Assert.assertFalse(segment.isPartiallyTruncated());
             }
         }
+    }
 
-        segmentList = DLMTestUtil.readLogSegments(zookeeperClient,
-                ZKLogMetadata.getLogSegmentsPath(uri, name, conf.getUnpartitionedStreamName()));
-
-        Assert.assertTrue(segmentList.get(truncDLSN.getLogSegmentSequenceNo()).getMinActiveDLSN().compareTo(truncDLSN) == 0);
-
-        {
-            LogReader reader = dlm.getInputStream(DLSN.InitialDLSN);
-            LogRecordWithDLSN record = reader.readNext(false);
-            assertTrue(record != null);
-            assertEquals(truncDLSN, record.getDlsn());
-            reader.close();
-        }
-
-        {
-            LogReader reader = dlm.getInputStream(1);
-            LogRecordWithDLSN record = reader.readNext(false);
-            assertTrue(record != null);
-            assertEquals(truncDLSN, record.getDlsn());
-            reader.close();
-        }
-
-        {
-            AsyncLogReader reader = dlm.getAsyncLogReader(DLSN.InitialDLSN);
-            LogRecordWithDLSN record = Await.result(reader.readNext());
-            assertTrue(record != null);
-            assertEquals(truncDLSN, record.getDlsn());
-            Utils.close(reader);
-        }
-
-
-        {
-            LogReader reader = dlm.getInputStream(beyondTruncDLSN);
-            LogRecordWithDLSN record = reader.readNext(false);
-            assertTrue(record != null);
-            assertEquals(beyondTruncDLSN, record.getDlsn());
-            reader.close();
-        }
-
-        {
-            LogReader reader = dlm.getInputStream(beyondTruncTxId);
-            LogRecordWithDLSN record = reader.readNext(false);
-            assertTrue(record != null);
-            assertEquals(beyondTruncDLSN, record.getDlsn());
-            assertEquals(beyondTruncTxId, record.getTransactionId());
-            reader.close();
-        }
-
-        {
-            AsyncLogReader reader = dlm.getAsyncLogReader(beyondTruncDLSN);
-            LogRecordWithDLSN record = Await.result(reader.readNext());
-            assertTrue(record != null);
-            assertEquals(beyondTruncDLSN, record.getDlsn());
-            Utils.close(reader);
-        }
-
-        zookeeperClient.close();
+    private static class WriteCheckpoints {
+        DLSN truncDLSN = DLSN.InitialDLSN;
+        DLSN beyondTruncDLSN = DLSN.InitialDLSN;
+        long beyondTruncTxId = 1;
     }
 }

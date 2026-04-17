@@ -54,7 +54,7 @@ public final class ActionLinksPanel<T extends Serializable> extends Panel {
         this.pageRef = pageRef;
 
         setOutputMarkupId(true);
-        
+
         super.add(new Fragment("panelClaim", "emptyFragment", this));
         super.add(new Fragment("panelManageResources", "emptyFragment", this));
         super.add(new Fragment("panelManageUsers", "emptyFragment", this));
@@ -95,628 +95,115 @@ public final class ActionLinksPanel<T extends Serializable> extends Panel {
             final String entitlements,
             final boolean enabled) {
 
-        Fragment fragment = null;
-
         switch (type) {
-
             case CLAIM:
-                fragment = new Fragment("panelClaim", "fragmentClaim", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("claimLink", pageRef) {
-
-                    private static final long serialVersionUID = -7978723352517770644L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelClaim", "fragmentClaim", "claimLink", false, null);
             case MANAGE_RESOURCES:
-                fragment = new Fragment("panelManageResources", "fragmentManageResources", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("manageResourcesLink", pageRef) {
-
-                    private static final long serialVersionUID = -6957616042924610291L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelManageResources", "fragmentManageResources", "manageResourcesLink", false, null);
             case MANAGE_USERS:
-                fragment = new Fragment("panelManageUsers", "fragmentManageUsers", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("manageUsersLink", pageRef) {
-
-                    private static final long serialVersionUID = -6957616042924610292L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelManageUsers", "fragmentManageUsers", "manageUsersLink", false, null);
             case MANAGE_GROUPS:
-                fragment = new Fragment("panelManageGroups", "fragmentManageGroups", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("manageGroupsLink", pageRef) {
-
-                    private static final long serialVersionUID = -6957616042924610293L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelManageGroups", "fragmentManageGroups", "manageGroupsLink", false, null);
             case MAPPING:
-                fragment = new Fragment("panelMapping", "fragmentMapping", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("mappingLink", pageRef) {
-
-                    private static final long serialVersionUID = -7978723352517770644L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelMapping", "fragmentMapping", "mappingLink", false, null);
             case ACCOUNT_LINK:
-                fragment = new Fragment("panelAccountLink", "fragmentAccountLink", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("accountLinkLink", pageRef) {
-
-                    private static final long serialVersionUID = -7978723352517770644L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelAccountLink", "fragmentAccountLink", "accountLinkLink", false, null);
             case RESET_TIME:
-                fragment = new Fragment("panelResetTime", "fragmentResetTime", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("resetTimeLink", pageRef) {
-
-                    private static final long serialVersionUID = -7978723352517770644L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelResetTime", "fragmentResetTime", "resetTimeLink", false, null);
             case CLONE:
-                fragment = new Fragment("panelClone", "fragmentClone", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("cloneLink", pageRef) {
-
-                    private static final long serialVersionUID = -7978723352517770644L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelClone", "fragmentClone", "cloneLink", false, null);
             case CREATE:
-                fragment = new Fragment("panelCreate", "fragmentCreate", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("createLink", pageRef) {
-
-                    private static final long serialVersionUID = -7978723352517770644L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelCreate", "fragmentCreate", "createLink", false, null);
             case RESET:
-                fragment = new Fragment("panelReset", "fragmentReset", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("resetLink", pageRef) {
-
-                    private static final long serialVersionUID = -6957616042924610290L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                });
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelReset", "fragmentReset", "resetLink", false, null);
             case EDIT:
-                fragment = new Fragment("panelEdit", "fragmentEdit", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("editLink", pageRef) {
-
-                    private static final long serialVersionUID = -7978723352517770644L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelEdit", "fragmentEdit", "editLink", false, null);
             case USER_TEMPLATE:
-                fragment = new Fragment("panelUserTemplate", "fragmentUserTemplate", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("userTemplateLink", pageRef) {
-
-                    private static final long serialVersionUID = -7978723352517770644L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelUserTemplate", "fragmentUserTemplate", "userTemplateLink", false, null);
             case GROUP_TEMPLATE:
-                fragment = new Fragment("panelGroupTemplate", "fragmentGroupTemplate", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("groupTemplateLink", pageRef) {
-
-                    private static final long serialVersionUID = -7978723352517770644L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelGroupTemplate", "fragmentGroupTemplate", "groupTemplateLink", false, null);
             case ENABLE:
-                fragment = new Fragment("panelEnable", "fragmentEnable", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("enableLink", pageRef) {
-
-                    private static final long serialVersionUID = -7978723352517770644L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelEnable", "fragmentEnable", "enableLink", false, null);
             case SEARCH:
-                fragment = new Fragment("panelSearch", "fragmentSearch", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("searchLink", pageRef) {
-
-                    private static final long serialVersionUID = -7978723352517770644L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelSearch", "fragmentSearch", "searchLink", false, null);
             case EXECUTE:
-                fragment = new Fragment("panelExecute", "fragmentExecute", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("executeLink", pageRef) {
-
-                    private static final long serialVersionUID = -7978723352517770644L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelExecute", "fragmentExecute", "executeLink", false, null);
             case DRYRUN:
-                fragment = new Fragment("panelDryRun", "fragmentDryRun", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("dryRunLink", pageRef) {
-
-                    private static final long serialVersionUID = -7978723352517770644L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelDryRun", "fragmentDryRun", "dryRunLink", false, null);
             case DELETE:
-                fragment = new Fragment("panelDelete", "fragmentDelete", this);
-
-                fragment.addOrReplace(new IndicatingOnConfirmAjaxLink<Void>("deleteLink", pageRef) {
-
-                    private static final long serialVersionUID = -7978723352517770644L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelDelete", "fragmentDelete", "deleteLink", true, null);
             case SELECT:
-                fragment = new Fragment("panelSelect", "fragmentSelect", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("selectLink", pageRef) {
-
-                    private static final long serialVersionUID = -7978723352517770644L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelSelect", "fragmentSelect", "selectLink", false, null);
             case EXPORT:
-                fragment = new Fragment("panelExport", "fragmentExport", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("exportLink", pageRef) {
-
-                    private static final long serialVersionUID = -7978723352517770644L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelExport", "fragmentExport", "exportLink", false, null);
             case SUSPEND:
-                fragment = new Fragment("panelSuspend", "fragmentSuspend", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("suspendLink", pageRef) {
-
-                    private static final long serialVersionUID = -6957616042924610291L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelSuspend", "fragmentSuspend", "suspendLink", false, null);
             case REACTIVATE:
-                fragment = new Fragment("panelReactivate", "fragmentReactivate", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("reactivateLink", pageRef) {
-
-                    private static final long serialVersionUID = -6957616042924610292L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelReactivate", "fragmentReactivate", "reactivateLink", false, null);
             case RELOAD:
-                fragment = new Fragment("panelReload", "fragmentReload", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("reloadLink", pageRef) {
-
-                    private static final long serialVersionUID = -6957616042924610293L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelReload", "fragmentReload", "reloadLink", false, null);
             case CHANGE_VIEW:
-                fragment = new Fragment("panelChangeView", "fragmentChangeView", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("changeViewLink", pageRef) {
-
-                    private static final long serialVersionUID = -6957616042924610292L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelChangeView", "fragmentChangeView", "changeViewLink", false, null);
             case UNLINK:
-                fragment = new Fragment("panelUnlink", "fragmentUnlink", this);
-
-                fragment.addOrReplace(new IndicatingOnConfirmAjaxLink<Void>("unlinkLink", pageRef, "confirmUnlink") {
-
-                    private static final long serialVersionUID = -6957616042924610293L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelUnlink", "fragmentUnlink", "unlinkLink", true, "confirmUnlink");
             case LINK:
-                fragment = new Fragment("panelLink", "fragmentLink", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("linkLink", pageRef) {
-
-                    private static final long serialVersionUID = -6957616042924610303L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelLink", "fragmentLink", "linkLink", false, null);
             case UNASSIGN:
-                fragment = new Fragment("panelUnassign", "fragmentUnassign", this);
-
-                fragment.addOrReplace(
-                        new IndicatingOnConfirmAjaxLink<Void>("unassignLink", pageRef, "confirmUnassign") {
-
-                            private static final long serialVersionUID = -6957616042924610294L;
-
-                            @Override
-                            protected void onClickInternal(final AjaxRequestTarget target) {
-                                link.onClick(target, model.getObject());
-                            }
-
-                            @Override
-                            public String getAjaxIndicatorMarkupId() {
-                                return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                            }
-                        }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelUnassign", "fragmentUnassign", "unassignLink", true, "confirmUnassign");
             case ASSIGN:
-                fragment = new Fragment("panelAssign", "fragmentAssign", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("assignLink", pageRef) {
-
-                    private static final long serialVersionUID = -6957616042924610304L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelAssign", "fragmentAssign", "assignLink", false, null);
             case DEPROVISION:
-                fragment = new Fragment("panelDeprovision", "fragmentDeprovision", this);
-
-                fragment.addOrReplace(
-                        new IndicatingOnConfirmAjaxLink<Void>("deprovisionLink", pageRef, "confirmDeprovision") {
-
-                            private static final long serialVersionUID = -6957616042924610295L;
-
-                            @Override
-                            protected void onClickInternal(final AjaxRequestTarget target) {
-                                link.onClick(target, model.getObject());
-                            }
-
-                            @Override
-                            public String getAjaxIndicatorMarkupId() {
-                                return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                            }
-                        }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
-
+                return buildFragment(link, entitlements, enabled, "panelDeprovision", "fragmentDeprovision", "deprovisionLink", true, "confirmDeprovision");
             case PROVISION:
-                fragment = new Fragment("panelProvision", "fragmentProvision", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("provisionLink", pageRef) {
-
-                    private static final long serialVersionUID = -6957616042924610305L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
+                return buildFragment(link, entitlements, enabled, "panelProvision", "fragmentProvision", "provisionLink", false, null);
             case ZOOM_IN:
-                fragment = new Fragment("panelZoomIn", "fragmentZoomIn", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("zoomInLink", pageRef) {
-
-                    private static final long serialVersionUID = -6957616042924610305L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
+                return buildFragment(link, entitlements, enabled, "panelZoomIn", "fragmentZoomIn", "zoomInLink", false, null);
             case ZOOM_OUT:
-                fragment = new Fragment("panelZoomOut", "fragmentZoomOut", this);
-
-                fragment.addOrReplace(new ClearIndicatingAjaxLink<Void>("zoomOutLink", pageRef) {
-
-                    private static final long serialVersionUID = -6957616042924610305L;
-
-                    @Override
-                    protected void onClickInternal(final AjaxRequestTarget target) {
-                        link.onClick(target, model.getObject());
-                    }
-
-                    @Override
-                    public String getAjaxIndicatorMarkupId() {
-                        return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId();
-                    }
-                }.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload()));
-                break;
+                return buildFragment(link, entitlements, enabled, "panelZoomOut", "fragmentZoomOut", "zoomOutLink", false, null);
             default:
-            // do nothing
+                return this;
+        }
+    }
+
+    private ActionLinksPanel<T> buildFragment(
+            final ActionLink<T> link,
+            final String entitlements,
+            final boolean enabled,
+            final String panelId,
+            final String fragmentId,
+            final String linkId,
+            final boolean isConfirm,
+            final String confirmMessage) {
+
+        Fragment fragment = new Fragment(panelId, fragmentId, this);
+
+        if (isConfirm) {
+            IndicatingOnConfirmAjaxLink<Void> confirmLink = confirmMessage == null
+                    ? new IndicatingOnConfirmAjaxLink<Void>(linkId, pageRef) {
+                private static final long serialVersionUID = 1L;
+                @Override protected void onClickInternal(final AjaxRequestTarget target) { link.onClick(target, model.getObject()); }
+                @Override public String getAjaxIndicatorMarkupId() { return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId(); }
+            }
+                    : new IndicatingOnConfirmAjaxLink<Void>(linkId, pageRef, confirmMessage) {
+                private static final long serialVersionUID = 1L;
+                @Override protected void onClickInternal(final AjaxRequestTarget target) { link.onClick(target, model.getObject()); }
+                @Override public String getAjaxIndicatorMarkupId() { return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId(); }
+            };
+            confirmLink.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload());
+            fragment.addOrReplace(confirmLink);
+        } else {
+            ClearIndicatingAjaxLink<Void> standardLink = new ClearIndicatingAjaxLink<Void>(linkId, pageRef) {
+                private static final long serialVersionUID = 1L;
+                @Override protected void onClickInternal(final AjaxRequestTarget target) { link.onClick(target, model.getObject()); }
+                @Override public String getAjaxIndicatorMarkupId() { return disableIndicator ? StringUtils.EMPTY : super.getAjaxIndicatorMarkupId(); }
+            };
+            standardLink.feedbackPanelAutomaticReload(link.feedbackPanelAutomaticReload());
+            fragment.addOrReplace(standardLink);
         }
 
-        if (fragment != null) {
-            fragment.setEnabled(enabled);
-            MetaDataRoleAuthorizationStrategy.authorize(fragment, ENABLE, entitlements);
-            super.addOrReplace(fragment);
-        }
+        fragment.setEnabled(enabled);
+        MetaDataRoleAuthorizationStrategy.authorize(fragment, ENABLE, entitlements);
+        super.addOrReplace(fragment);
 
         return this;
     }
@@ -837,7 +324,7 @@ public final class ActionLinksPanel<T extends Serializable> extends Panel {
                 super.addOrReplace(new Fragment("panelZoomOut", "emptyFragment", this));
                 break;
             default:
-            // do nothing
+                // do nothing
         }
     }
 
