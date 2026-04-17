@@ -13,7 +13,7 @@ public class ElseCounter extends AbstractCounter {
         counter = 0;
         var v = super.visitMethod(node, javaClass);
         update(AstUtils.getSignature(node), m -> {
-            m.setElseCount(oldCounter + counter);
+            m.setElseCount(counter);
             return null;
         });
         counter += oldCounter;

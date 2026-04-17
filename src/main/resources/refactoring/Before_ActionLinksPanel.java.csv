@@ -1,0 +1,14 @@
+path,class,signature,loc,halstead,stmt_count,nesting_depth,cyclomatic_complexity,smells,else_count,duplication,parameters_count
+refactoring/Before_ActionLinksPanel.java,Builder,"<init>(PageReference)",2,16,1,0,1,0,0,0.0,1
+refactoring/Before_ActionLinksPanel.java,Builder,"Builder<T> setDisableIndicator(boolean)",3,99,2,0,1,0,0,0.0,1
+refactoring/Before_ActionLinksPanel.java,Builder,"Builder<T> add(ActionLink<T>,ActionLink.ActionType,String)",6,132,1,0,1,0,0,0.0,3
+refactoring/Before_ActionLinksPanel.java,Builder,"Builder<T> add(ActionLink<T>,ActionLink.ActionType,String,boolean)",7,228,1,0,1,0,0,0.0,4
+refactoring/Before_ActionLinksPanel.java,Builder,"Builder<T> addWithRoles(ActionLink<T>,ActionLink.ActionType,String)",6,132,1,0,1,0,0,0.0,3
+refactoring/Before_ActionLinksPanel.java,Builder,"Builder<T> addWithRoles(ActionLink<T>,ActionLink.ActionType,String,boolean)",7,224,2,0,1,0,0,0.0,4
+refactoring/Before_ActionLinksPanel.java,Builder,"ActionLinksPanel<T> build(String)",2,27,1,0,1,0,0,0.0,1
+refactoring/Before_ActionLinksPanel.java,Builder,"ActionLinksPanel<T> build(String,T)",15,2996,6,1,3,0,0,0.0,2
+refactoring/Before_ActionLinksPanel.java,ActionLinksPanel,"<init>(String,IModel<T>,PageReference)",39,15840,36,0,1,2,0,0.0,3
+refactoring/Before_ActionLinksPanel.java,ActionLinksPanel,"ActionLinksPanel<T> add(ActionLink<T>,ActionLink.ActionType,String,boolean)",629,560868,231,1,35,3,0,0.8238095238095238,4
+refactoring/Before_ActionLinksPanel.java,ActionLinksPanel,"void remove(ActionLink.ActionType)",117,22030,59,1,31,2,0,0.0,1
+refactoring/Before_ActionLinksPanel.java,ActionLinksPanel,"ActionLinksPanel<T> setDisableIndicator(boolean)",3,99,2,0,1,0,0,0.0,1
+refactoring/Before_ActionLinksPanel.java,ActionLinksPanel,"<T extends Serializable> Builder<T> builder(PageReference)",2,28,1,0,1,0,0,0.0,1
