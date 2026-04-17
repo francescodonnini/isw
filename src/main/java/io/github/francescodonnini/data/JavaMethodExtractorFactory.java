@@ -7,7 +7,7 @@ import java.util.List;
 
 public class JavaMethodExtractorFactory {
     private final AbstractCounterFactory factory;
-    private final List<AbstractCounter> counters = new ArrayList<>();
+    private final List<Class<? extends AbstractCounter>> counters = new ArrayList<>();
 
     public static JavaMethodExtractorFactory defaultFactory(AbstractCounterFactory factory) {
         return new JavaMethodExtractorFactory(factory)
@@ -23,12 +23,15 @@ public class JavaMethodExtractorFactory {
         this.factory = factory;
     }
 
-    public <T> JavaMethodExtractorFactory counter(Class<T> clazz) {
-        counters.add(factory.build(clazz));
+    public <T extends AbstractCounter> JavaMethodExtractorFactory counter(Class<T> clazz) {
+        counters.add(clazz);
         return this;
     }
 
     public JavaMethodExtractor create() {
-        return new JavaMethodExtractor(counters);
+        return new JavaMethodExtractor(
+                counters.stream()
+                        .map(factory::build)
+                        .toList());
     }
 }
