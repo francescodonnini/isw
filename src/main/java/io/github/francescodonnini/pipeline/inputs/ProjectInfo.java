@@ -19,7 +19,7 @@ public class ProjectInfo {
     private boolean fromStart;
 
     public List<Release> getAllReleases() {
-        return releases;
+        return releases.subList(0, 26);
     }
 
     public void setAllReleases(List<Release> allReleases) {

@@ -278,7 +278,7 @@ public class RevisionDataExtractor {
     private List<RevisionJavaClass> parseClass(ParseContext ctx) {
         try {
             var extractor = factory.create();
-            var classes = extractor.run(ctx.getAbsolutePath(), ctx.content());
+            var classes = extractor.run(ctx.path(), ctx.content());
             classes.forEach(c -> setContext(c, ctx));
             return classes;
         } catch (IOException e) {

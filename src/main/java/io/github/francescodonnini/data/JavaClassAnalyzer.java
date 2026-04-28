@@ -54,14 +54,7 @@ public class JavaClassAnalyzer extends TreeScanner<Void, Void> {
 
     @Override
     public Void visitNewClass(NewClassTree node, Void unused) {
-        if (isAnonymousClass(node)) {
-            return super.visitNewClass(node, unused);
-        }
         return super.visitNewClass(node, unused);
-    }
-
-    private boolean isAnonymousClass(NewClassTree node) {
-        return node.getClassBody() != null;
     }
 
     @Override
@@ -72,17 +65,16 @@ public class JavaClassAnalyzer extends TreeScanner<Void, Void> {
 
         if (isNamedClass(node)) {
             var parent = current;
+            var content = getContent(node).orElse("");
             current = RevisionJavaClass.builder()
                     .path(path)
-                    .content(getContent(node).orElse("(empty)"))
                     .name(className(node))
                     .topLevel(isPrimary(node))
                     .metrics(new ComplexityClassMetrics())
                     .build();
             var r = super.visitClass(node, unused);
-
             classes.add(current);
-            collectMetrics(node, current);
+            collectMetrics(node, current, content);
             current = parent;
             return r;
         }
@@ -116,11 +108,12 @@ public class JavaClassAnalyzer extends TreeScanner<Void, Void> {
         return node.getSimpleName() != null && !node.getSimpleName().isEmpty();
     }
 
-    private void collectMetrics(ClassTree node, RevisionJavaClass clazz) {
+    private void collectMetrics(ClassTree node, RevisionJavaClass clazz, String content) {
         counters.forEach(c -> {
             c.reset();
             c.visitClass(node, clazz);
         });
+        clazz.getMetrics().setLoc(new LineNumberCounter(content).count());
     }
 
     private Optional<String> getContent(Tree node) {

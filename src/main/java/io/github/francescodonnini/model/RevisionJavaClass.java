@@ -7,18 +7,12 @@ import java.util.Optional;
 public class RevisionJavaClass {
     public static class Builder {
         private Path path;
-        private String content;
         private boolean topLevel;
         private String name;
         private ComplexityClassMetrics metrics;
 
         public Builder path(Path path) {
             this.path = path;
-            return this;
-        }
-
-        public Builder content(String content) {
-            this.content = content;
             return this;
         }
 

@@ -8,7 +8,7 @@ public record ClassID(long trackingId, String className) {
     public static ClassID of(RevisionJavaClass c) {
         var name = c.getName();
         if (c.isTopLevel()) {
-            name = "P";
+            name += "[P]";
         }
         return new ClassID(c.getTrackingId(), name);
     }

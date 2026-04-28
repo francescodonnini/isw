@@ -85,10 +85,9 @@ public class LabelMakerImpl implements LabelMaker {
 
 
     private void parseCommit(DiffFormatter df, List<ReleaseJavaClass> susceptible, RevCommit commit, Issue issue) throws IOException {
-        var parent = Path.of(git.getRepository().getDirectory().getParent());
         var diffList = df.scan(getParent(commit), commit.getTree());
         for (var diff : diffList) {
-            var path = parent.resolve(diff.getNewPath());
+            var path = Path.of(diff.getNewPath());
             susceptible.stream()
                     .filter(c -> c.getPath().equals(path))
                     .forEach(c -> setBuggy(c, issue));

@@ -36,7 +36,7 @@ public class MovingWindow implements Proportion {
                 window.add(queue.poll());
             }
             ProportionUtils.calculateP(window)
-                    .ifPresent(p -> result.add(ProportionUtils.applyP(i, p, releases)));
+                    .ifPresent(p -> ProportionUtils.applyP(i, p, releases).ifPresent(result::add));
         }
         return result;
     }

@@ -4,6 +4,7 @@ import io.github.francescodonnini.model.Issue;
 import io.github.francescodonnini.model.Release;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.function.Predicate;
 
@@ -25,11 +26,17 @@ public class ProportionUtils {
     public static List<Issue> applyP(List<Issue> issues, double p, List<Release> releases) {
         return issues.stream()
                 .map(issue -> ProportionUtils.applyP(issue, p, releases))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .toList();
     }
 
-    public static Issue applyP(Issue i, double p, List<Release> releases) {
-        return i.withAffectedVersions(releases.subList(Math.max(0, injectedVersion(i, p)), i.fixVersion().order()));
+    public static Optional<Issue> applyP(Issue i, double p, List<Release> releases) {
+        if (i.fixVersion().order() >= releases.size()) {
+            return Optional.empty();
+        }
+        return Optional.of(i.withAffectedVersions(releases.subList(Math.max(0, injectedVersion(i, p)), i.fixVersion().order())));
+
     }
 
     private static int injectedVersion(Issue i, double p) {

@@ -25,6 +25,13 @@ public class JavaMethodArffSerializer {
             numericAttribute(off, "loc_added");
             numericAttribute(off, "loc_added_avg");
             numericAttribute(off, "loc_added_max");
+            numericAttribute(off, "num_of_revisions");
+            numericAttribute(off, "num_of_fixes");
+            numericAttribute(off, "num_of_authors");
+            numericAttribute(off, "change_set");
+            numericAttribute(off, "change_set_avg");
+            numericAttribute(off, "change_set_max");
+            numericAttribute(off, "age");
             numericAttribute(off, "release");
             off.write("@DATA\n");
             for (var i = 0; i < releases.size(); i++) {

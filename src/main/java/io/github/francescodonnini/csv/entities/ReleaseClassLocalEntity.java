@@ -12,6 +12,8 @@ import java.util.Set;
 public class ReleaseClassLocalEntity {
     @CsvBindByName(column = "version", required = true)
     private int order;
+    @CsvBindByName(column = "parent")
+    private String parent;
     @CsvBindByName(column = "path", required = true)
     private String path;
     @CsvBindByName(column = "name", required = true)
@@ -33,6 +35,14 @@ public class ReleaseClassLocalEntity {
 
     public void setOrder(int order) {
         this.order = order;
+    }
+
+    public String getParent() {
+        return parent;
+    }
+
+    public void setParent(String parent) {
+        this.parent = parent;
     }
 
     public String getPath() {

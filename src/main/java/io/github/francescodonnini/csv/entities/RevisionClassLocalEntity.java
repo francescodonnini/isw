@@ -17,6 +17,8 @@ public class RevisionClassLocalEntity {
     private LocalDateTime time;
     @CsvBindByName(column = "topLevel")
     private boolean topLevel;
+    @CsvBindByName(column = "parent")
+    private String parent;
     @CsvBindByName(column = "path", required = true)
     private String path;
     @CsvBindByName(column = "trackingId")
@@ -91,6 +93,14 @@ public class RevisionClassLocalEntity {
 
     public void setCommit(String commit) {
         this.commit = commit;
+    }
+
+    public String getParent() {
+        return parent;
+    }
+
+    public void setParent(String parent) {
+        this.parent = parent;
     }
 
     public String getPath() {
