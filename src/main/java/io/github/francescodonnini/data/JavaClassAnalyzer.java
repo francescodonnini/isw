@@ -5,48 +5,43 @@ import com.sun.source.util.JavacTask;
 import com.sun.source.util.SourcePositions;
 import com.sun.source.util.TreeScanner;
 import com.sun.source.util.Trees;
-import io.github.francescodonnini.collectors.ast.*;
-import io.github.francescodonnini.model.JavaClass;
-import io.github.francescodonnini.model.JavaMethod;
-import io.github.francescodonnini.model.LineRange;
+import io.github.francescodonnini.collectors.ast.AbstractCounter;
+import io.github.francescodonnini.model.ComplexityClassMetrics;
+import io.github.francescodonnini.model.RevisionJavaClass;
 
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class JavaMethodExtractor extends TreeScanner<Void, Void> {
-    private final Logger logger = Logger.getLogger(JavaMethodExtractor.class.getName());
+public class JavaClassAnalyzer extends TreeScanner<Void, Void> {
+    private final Logger logger = Logger.getLogger(JavaClassAnalyzer.class.getName());
     private final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     private CompilationUnitTree compilationUnit;
     private SourcePositions sourcePositions;
-    private final List<JavaClass> classes = new ArrayList<>();
-    private ParseContext context;
-    private JavaClass currentClass;
-    private int depth = 0;
     private final List<AbstractCounter> counters;
+    private RevisionJavaClass current;
+    private final List<RevisionJavaClass> classes = new ArrayList<>();
+    private Path path;
 
-    public JavaMethodExtractor(List<AbstractCounter> counters) {
+    public JavaClassAnalyzer(List<AbstractCounter> counters) {
         this.counters = counters;
     }
 
-    public List<JavaClass> getClasses() {
-        return new ArrayList<>(classes);
-    }
-
-    public void parse(ParseContext context) throws IOException {
-        this.context = context;
-        var file = new InMemoryFile(context.path().toString(), context.content());
+    public List<RevisionJavaClass> run(Path path, String content) throws IOException {
+        this.path = path;
+        var file = new InMemoryFile(path.toString(), content);
         var task = (JavacTask) compiler.getTask(null, null, null, null, null, List.of(file));
         setSourcePositions(Trees.instance(task).getSourcePositions());
         for (var cu : task.parse()) {
             setCompilationUnit(cu);
             cu.accept(this, null);
         }
+        return classes;
     }
 
     private void setSourcePositions(SourcePositions sourcePositions) {
@@ -60,10 +55,7 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     @Override
     public Void visitNewClass(NewClassTree node, Void unused) {
         if (isAnonymousClass(node)) {
-            depth++;
-            var r = super.visitNewClass(node, unused);
-            depth--;
-            return r;
+            return super.visitNewClass(node, unused);
         }
         return super.visitNewClass(node, unused);
     }
@@ -75,28 +67,39 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
     @Override
     public Void visitClass(ClassTree node, Void unused) {
         if (isGenerated(node)) {
-            logger.log(Level.INFO, () -> "skip class %s because it is generated (commit %s)".formatted(context.path(), context.commit().substring(0, 6)));
             return null;
         }
+
         if (isNamedClass(node)) {
-            var parent = currentClass;
-            setNamedClass(node, isPrimary(node));
+            var parent = current;
+            current = RevisionJavaClass.builder()
+                    .path(path)
+                    .content(getContent(node).orElse("(empty)"))
+                    .name(className(node))
+                    .topLevel(isPrimary(node))
+                    .metrics(new ComplexityClassMetrics())
+                    .build();
             var r = super.visitClass(node, unused);
-            classes.add(currentClass);
-            collectMetrics(node, currentClass);
-            currentClass = parent;
+
+            classes.add(current);
+            collectMetrics(node, current);
+            current = parent;
             return r;
         }
         return null;
     }
 
+    private String className(ClassTree node) {
+        return node.getSimpleName().toString();
+    }
+
     private boolean isPrimary(ClassTree node) {
-        var fileName = context.getAbsolutePath()
+        var fileName = path
                 .getFileName()
                 .toString();
         var n = fileName.lastIndexOf('.');
         fileName = n >= 0 ? fileName.substring(0, n) : fileName;
-        return currentClass == null && node.getSimpleName().toString().equals(fileName);
+        return current == null && node.getSimpleName().toString().equals(fileName);
     }
 
     private boolean isGenerated(ClassTree node) {
@@ -109,52 +112,15 @@ public class JavaMethodExtractor extends TreeScanner<Void, Void> {
         return false;
     }
 
-    private void setNamedClass(ClassTree currentClass, boolean primary) {
-        this.currentClass = JavaClass.builder()
-                .trackingId(context.trackingId())
-                .commit(context.commit())
-                .parent(context.parent())
-                .path(context.path())
-                .name(currentClass.getSimpleName().toString())
-                .time(context.time())
-                .topLevel(primary)
-                .create();
-    }
-
     private boolean isNamedClass(ClassTree node) {
         return node.getSimpleName() != null && !node.getSimpleName().isEmpty();
     }
 
-    private void collectMetrics(ClassTree node, JavaClass clazz) {
+    private void collectMetrics(ClassTree node, RevisionJavaClass clazz) {
         counters.forEach(c -> {
             c.reset();
             c.visitClass(node, clazz);
         });
-    }
-
-    @Override
-    public Void visitMethod(MethodTree node, Void unused) {
-        if (depth == 0) {
-            int loc;
-            var o = getContent(node);
-            if (o.isPresent()) {
-                var locCounter = new LineNumberCounter(o.get());
-                loc = locCounter.count();
-                var lineRange = getLineRange(node);
-                var m = new JavaMethod(false, currentClass, AstUtils.getSignature(node), lineRange);
-                m.getMetrics().setLineOfCode(loc);
-            }
-        }
-        return super.visitMethod(node, unused);
-    }
-
-    private LineRange getLineRange(MethodTree node) {
-        var startPos = sourcePositions.getStartPosition(compilationUnit, node);
-        var endPos = sourcePositions.getEndPosition(compilationUnit, node);
-        var lineMap = compilationUnit.getLineMap();
-        var startLine = (int) lineMap.getLineNumber(startPos);
-        var endLine = (int) lineMap.getLineNumber(endPos);
-        return new LineRange(startLine, endLine);
     }
 
     private Optional<String> getContent(Tree node) {

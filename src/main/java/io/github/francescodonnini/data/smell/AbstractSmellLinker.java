@@ -2,8 +2,7 @@ package io.github.francescodonnini.data.smell;
 
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.opencsv.enums.CSVReaderNullFieldIndicator;
-import io.github.francescodonnini.model.JavaClass;
-import io.github.francescodonnini.model.JavaMethod;
+import io.github.francescodonnini.model.RevisionJavaClass;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -24,7 +23,7 @@ public abstract class AbstractSmellLinker implements SmellLinker {
     }
 
     @Override
-    public void link(List<JavaClass> classes) {
+    public void link(List<RevisionJavaClass> classes) {
         prepareIndex(classes);
         try (var stream = Files.newDirectoryStream(reportsDir)) {
             for (var path : stream) {
@@ -44,21 +43,15 @@ public abstract class AbstractSmellLinker implements SmellLinker {
                 .parse();
     }
 
-    protected abstract void prepareIndex(List<JavaClass> classes);
+    protected abstract void prepareIndex(List<RevisionJavaClass> classes);
 
     protected abstract void processReport(String fileName, List<CsvReportEntity> entities);
 
-    protected void link(CsvReportEntity e, Map<String, JavaClass> index) {
+    protected void link(CsvReportEntity e, Map<String, RevisionJavaClass> index) {
         var cls = index.get(e.getFilePath());
         if (cls == null) {
             return;
         }
-        cls.getMethods().stream()
-                .filter(m -> isBetween(m, e.getLine()))
-                .forEach(m -> m.getMetrics().incCodeSmells());
-    }
-
-    private boolean isBetween(JavaMethod m, int line) {
-        return m.getStartLine() <= line && m.getEndLine() >= line;
+        cls.getMetrics().incSmellCount();
     }
 }

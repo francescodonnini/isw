@@ -1,18 +1,13 @@
 package io.github.francescodonnini.data;
 
-import io.github.francescodonnini.data.pmd.CPDConsumer;
-import io.github.francescodonnini.data.pmd.CPDFactory;
 import io.github.francescodonnini.data.pmd.JavaLanguage;
 import io.github.francescodonnini.data.pmd.PMDFactory;
-import io.github.francescodonnini.model.JavaClass;
-import io.github.francescodonnini.model.JavaMethod;
 import io.github.francescodonnini.model.Release;
+import io.github.francescodonnini.model.RevisionJavaClass;
 import io.github.francescodonnini.utils.FileUtils;
 import io.github.francescodonnini.utils.GitUtils;
 import net.sourceforge.pmd.PMDConfiguration;
 import net.sourceforge.pmd.PmdAnalysis;
-import net.sourceforge.pmd.cpd.CPDConfiguration;
-import net.sourceforge.pmd.cpd.CpdAnalysis;
 import net.sourceforge.pmd.lang.document.FileId;
 import net.sourceforge.pmd.lang.document.TextFile;
 import org.eclipse.jgit.api.Git;
@@ -43,25 +38,24 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
+public class RevisionDataExtractor {
     private static final String JAVA_FILE_EXT = ".java";
-    private final Logger logger = Logger.getLogger(DataLoaderImpl.class.getName());
+    private final Logger logger = Logger.getLogger(RevisionDataExtractor.class.getName());
     // projectPath è il percorso delle repository dove leggere i file da cui creare le entry per il dataset.
     private final Path  projectPath;
     private final Path reportsPath;
     private final Git git;
     private final TrackingIdService trackingId = new TrackingIdService();
     private final PMDConfiguration pmdConfig;
-    private final CPDConfiguration cpdConfig;
-    private final JavaMethodExtractorFactory factory;
-    private final List<JavaClass> classes = new ArrayList<>();
-    private final List<JavaMethod> methods = new ArrayList<>();
+    private final JavaClassAnalyzerFactory factory;
+    private final List<RevisionJavaClass> classes = new ArrayList<>();
     private boolean dataLoaded = false;
     private final List<Release> releases;
-    private final List<Integer> methodsPerRelease = new ArrayList<>();
+    private final List<Integer> classesPerRelease = new ArrayList<>();
+    private int currentChangeSetSize = 0;
 
-    public DataLoaderImpl(
-            JavaMethodExtractorFactory factory,
+    public RevisionDataExtractor(
+            JavaClassAnalyzerFactory factory,
             List<Release> releases,
             Path projectPath,
             Path reportsPath) throws IOException {
@@ -71,24 +65,12 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         this.releases = releases;
         this.git = GitUtils.createGit(projectPath);
         pmdConfig = PMDFactory.create();
-        cpdConfig = CPDFactory.create();
     }
 
-    @Override
-    public List<JavaClass> getClasses() throws DataLoaderException {
+    public List<RevisionJavaClass> getRevisionClasses() throws DataLoaderException {
         try {
             lazyDataLoading();
             return new ArrayList<>(classes);
-        } catch (GitAPIException | IOException e) {
-            throw new DataLoaderException(e);
-        }
-    }
-
-    @Override
-    public List<JavaMethod> getMethods() throws DataLoaderException {
-        try {
-            lazyDataLoading();
-            return new ArrayList<>(methods);
         } catch (GitAPIException | IOException e) {
             throw new DataLoaderException(e);
         }
@@ -144,11 +126,11 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
                     logger.log(Level.INFO,
                             "A total of {0} has been read for release {1} (commit {2})",
                             new Object[] {
-                                    methodsPerRelease.stream().mapToInt(i -> i).sum(),
+                                    classesPerRelease.stream().mapToInt(i -> i).sum(),
                                     lastRelease,
                                     commit.getName()
                     });
-                    methodsPerRelease.clear();
+                    classesPerRelease.clear();
                     filter.reset();
                 }
             }
@@ -189,8 +171,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
     private void loadData(RevCommit commit, List<DiffEntry> diffList, Predicate<Path> predicate) throws IOException {
         try (var walk = new TreeWalk(git.getRepository());
              var reader = git.getRepository().newObjectReader();
-             var pmd = createPMDAnalysis(commit.getName());
-             var cpd = CpdAnalysis.create(cpdConfig)) {
+             var pmd = createPMDAnalysis(commit.getName())) {
             walk.addTree(commit.getTree());
             walk.setRecursive(true);
 
@@ -200,10 +181,11 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
             while (walk.next()) {
                 var path = Path.of(walk.getPathString());
                 if (predicate.test(path)) {
-                    prepareFile(walk, reader, commit, pmd, cpd)
+                    prepareFile(walk, reader, commit, pmd)
                             .ifPresent(files::add);
                 }
             }
+            currentChangeSetSize = files.size();
             var lists = files.parallelStream()
                             .map(this::parseClass)
                             .filter(c -> !c.isEmpty())
@@ -213,7 +195,6 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
                     .toList();
             parseCommit(list, commit, diffList);
             pmd.performAnalysis();
-            cpd.performAnalysis(new CPDConsumer(list));
             addProgramData(list);
         }
     }
@@ -222,8 +203,7 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
             TreeWalk walk,
             ObjectReader reader,
             RevCommit commit,
-            PmdAnalysis pmd,
-            CpdAnalysis cpd) throws IOException {
+            PmdAnalysis pmd) throws IOException {
         var path = Path.of(walk.getPathString());
         var objectId = walk.getObjectId(0);
         var loader = reader.open(objectId);
@@ -236,7 +216,6 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
                 .builderForCharSeq(content, FileId.fromPath(path), JavaLanguage.LANGUAGE_VERSION)
                 .build();
         pmd.files().addFile(textFile);
-        cpd.files().addFile(textFile);
         return Optional.of(new ParseContext(
                 trackingId.getId(path),
                 commit.getName(),
@@ -260,15 +239,9 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         }
     }
 
-    private void addProgramData(List<JavaClass> classList) {
-        classList.stream()
-                .filter(c -> !c.getMethods().isEmpty())
-                .forEach(c -> {
-            var methodList = c.getMethods();
-            this.methods.addAll(methodList);
-            classes.add(c);
-            methodsPerRelease.add(methodList.size());
-        });
+    private void addProgramData(List<RevisionJavaClass> classList) {
+        classes.addAll(classList);
+        classesPerRelease.add(classList.size());
     }
 
     private PmdAnalysis createPMDAnalysis(String reportName) throws IOException {
@@ -302,18 +275,26 @@ public class DataLoaderImpl implements ClassDataLoader, MethodDataLoader {
         return touchedFiles;
     }
 
-    private List<JavaClass> parseClass(ParseContext ctx) {
+    private List<RevisionJavaClass> parseClass(ParseContext ctx) {
         try {
             var extractor = factory.create();
-            extractor.parse(ctx);
-            return extractor.getClasses();
+            var classes = extractor.run(ctx.getAbsolutePath(), ctx.content());
+            classes.forEach(c -> setContext(c, ctx));
+            return classes;
         } catch (IOException e) {
             logger.log(Level.SEVERE, e, () -> "Error parsing file " + ctx.path());
             return List.of();
         }
     }
 
-    private void parseCommit(List<JavaClass> classList, RevCommit commit, List<DiffEntry> diffList) {
+    private void setContext(RevisionJavaClass cls, ParseContext ctx) {
+        cls.setTime(ctx.time());
+        cls.setTrackingId(ctx.trackingId());
+        cls.setCommit(ctx.commit());
+        cls.getMetrics().setChangeSetSize(currentChangeSetSize);
+    }
+
+    private void parseCommit(List<RevisionJavaClass> classList, RevCommit commit, List<DiffEntry> diffList) {
         if (classList.isEmpty()) {
             return;
         }

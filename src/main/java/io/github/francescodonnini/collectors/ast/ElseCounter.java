@@ -1,29 +1,29 @@
 package io.github.francescodonnini.collectors.ast;
 
+import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.IfTree;
 import com.sun.source.tree.MethodTree;
-import io.github.francescodonnini.model.JavaClass;
+import io.github.francescodonnini.model.RevisionJavaClass;
 
 public class ElseCounter extends AbstractCounter {
-    private int counter = 0;
+    private int total = 0;
 
     @Override
-    public Void visitMethod(MethodTree node, JavaClass javaClass) {
-        var oldCounter = counter;
-        counter = 0;
-        var v = super.visitMethod(node, javaClass);
-        update(AstUtils.getSignature(node), m -> {
-            m.setElseCount(counter);
-            return null;
-        });
-        counter += oldCounter;
-        return v;
+    public Void visitClass(ClassTree node, RevisionJavaClass javaClass) {
+        var unused = super.visitClass(node, javaClass);
+        javaClass.getMetrics().setElseCount(total);
+        return unused;
     }
 
     @Override
-    public Void visitIf(IfTree node, JavaClass javaClass) {
+    public Void visitMethod(MethodTree node, RevisionJavaClass javaClass) {
+        return super.visitMethod(node, javaClass);
+    }
+
+    @Override
+    public Void visitIf(IfTree node, RevisionJavaClass javaClass) {
         if (node.getElseStatement() != null) {
-            counter++;
+            total++;
         }
         return super.visitIf(node, javaClass);
     }
@@ -31,6 +31,6 @@ public class ElseCounter extends AbstractCounter {
     @Override
     public void reset() {
         super.reset();
-        counter = 0;
+        total = 0;
     }
 }

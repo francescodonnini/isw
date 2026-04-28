@@ -1,9 +1,9 @@
 package io.github.francescodonnini.pipeline.inputs;
 
 import io.github.francescodonnini.model.Issue;
-import io.github.francescodonnini.model.JavaClass;
-import io.github.francescodonnini.model.JavaMethod;
 import io.github.francescodonnini.model.Release;
+import io.github.francescodonnini.model.ReleaseJavaClass;
+import io.github.francescodonnini.model.RevisionJavaClass;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,14 +13,10 @@ public class ProjectInfo {
     private Proportion proportion;
     private double movingWindowPercentage;
     private final List<Release> releases = new ArrayList<>();
-    private final List<JavaClass> classes = new ArrayList<>();
-    private final List<JavaMethod> methods = new ArrayList<>();
+    private final List<ReleaseJavaClass> releaseClasses = new ArrayList<>();
+    private final List<RevisionJavaClass> revisionClasses = new ArrayList<>();
     private final List<Issue> issues = new ArrayList<>();
     private boolean fromStart;
-
-    public List<JavaClass> getClasses() {
-        return classes;
-    }
 
     public List<Release> getAllReleases() {
         return releases;
@@ -31,18 +27,22 @@ public class ProjectInfo {
         this.releases.addAll(allReleases);
     }
 
-    public void setClasses(List<JavaClass> classes) {
-        this.classes.clear();
-        this.classes.addAll(classes);
+    public List<ReleaseJavaClass> getReleaseClasses() {
+        return releaseClasses;
     }
 
-    public List<JavaMethod> getMethods() {
-        return methods;
+    public void setReleaseClasses(List<ReleaseJavaClass> releaseClasses) {
+        this.releaseClasses.clear();
+        this.releaseClasses.addAll(releaseClasses);
     }
 
-    public void setMethods(List<JavaMethod> methods) {
-        this.methods.clear();
-        this.methods.addAll(methods);
+    public List<RevisionJavaClass> getRevisionClasses() {
+        return revisionClasses;
+    }
+
+    public void setRevisionClasses(List<RevisionJavaClass> revisionClasses) {
+        this.revisionClasses.clear();
+        this.revisionClasses.addAll(revisionClasses);
     }
 
     public List<Issue> getIssues() {

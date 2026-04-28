@@ -1,7 +1,7 @@
 package io.github.francescodonnini.collectors.ast;
 
 import com.sun.source.tree.*;
-import io.github.francescodonnini.model.JavaClass;
+import io.github.francescodonnini.model.RevisionJavaClass;
 
 /**
  * Uno statement è un'unità completa di esecuzione (v. <a href="https://docs.oracle.com/javase/tutorial/java/nutsandbolts/expressions.html"></a>).
@@ -17,132 +17,129 @@ import io.github.francescodonnini.model.JavaClass;
  * - branching: break, continue, return.
  */
 public class StatementsCounter extends AbstractCounter {
-    private int counter = 0;
+    private int total = 0;
     private boolean insideBlock = false;
 
     @Override
-    public Void visitMethod(MethodTree node, JavaClass unused) {
-        var oldCounter = counter;
-        counter = 0;
+    public Void visitMethod(MethodTree node, RevisionJavaClass unused) {
+        var oldCounter = total;
+        total = 0;
         var rv = super.visitMethod(node, unused);
-        update(AstUtils.getSignature(node), m -> {
-            m.setStatementsCount(counter);
-            return null;
-        });
-        counter += oldCounter;
+        unused.getMetrics().setStatementCount(total);
+        total += oldCounter;
         return rv;
     }
 
     @Override
-    public Void visitBlock(BlockTree node, JavaClass javaClass) {
+    public Void visitBlock(BlockTree node, RevisionJavaClass unused) {
         var oldInsideBlock = insideBlock;
         insideBlock = true;
-        var rv = super.visitBlock(node, javaClass);
+        var rv = super.visitBlock(node, unused);
         insideBlock = oldInsideBlock;
         return rv;
     }
 
     @Override
-    public Void visitAssert(AssertTree node, JavaClass javaClass) {
-        counter++;
-        return super.visitAssert(node, javaClass);
+    public Void visitAssert(AssertTree node, RevisionJavaClass unused) {
+        total++;
+        return super.visitAssert(node, unused);
     }
 
     @Override
-    public Void visitBreak(BreakTree node, JavaClass unused) {
-        counter++;
+    public Void visitBreak(BreakTree node, RevisionJavaClass unused) {
+        total++;
         return super.visitBreak(node, unused);
     }
 
     @Override
-    public Void visitContinue(ContinueTree node, JavaClass unused) {
-        counter++;
+    public Void visitContinue(ContinueTree node, RevisionJavaClass unused) {
+        total++;
         return super.visitContinue(node, unused);
     }
 
     @Override
-    public Void visitExpressionStatement(ExpressionStatementTree node, JavaClass unused) {
-        counter++;
+    public Void visitExpressionStatement(ExpressionStatementTree node, RevisionJavaClass unused) {
+        total++;
         return super.visitExpressionStatement(node, unused);
     }
 
     @Override
-    public Void visitIf(IfTree node, JavaClass unused) {
-        counter++;
+    public Void visitIf(IfTree node, RevisionJavaClass unused) {
+        total++;
         return super.visitIf(node, unused);
     }
 
     @Override
-    public Void visitEmptyStatement(EmptyStatementTree node, JavaClass javaClass) {
-        counter++;
-        return super.visitEmptyStatement(node, javaClass);
+    public Void visitEmptyStatement(EmptyStatementTree node, RevisionJavaClass unused) {
+        total++;
+        return super.visitEmptyStatement(node, unused);
     }
 
     @Override
-    public Void visitEnhancedForLoop(EnhancedForLoopTree node, JavaClass unused) {
-        counter++;
+    public Void visitEnhancedForLoop(EnhancedForLoopTree node, RevisionJavaClass unused) {
+        total++;
         return super.visitEnhancedForLoop(node, unused);
     }
 
     @Override
-    public Void visitForLoop(ForLoopTree node, JavaClass unused) {
-        counter++;
+    public Void visitForLoop(ForLoopTree node, RevisionJavaClass unused) {
+        total++;
         return super.visitForLoop(node, unused);
     }
 
     @Override
-    public Void visitDoWhileLoop(DoWhileLoopTree node, JavaClass unused) {
-        counter++;
+    public Void visitDoWhileLoop(DoWhileLoopTree node, RevisionJavaClass unused) {
+        total++;
         return super.visitDoWhileLoop(node, unused);
     }
 
     @Override
-    public Void visitLabeledStatement(LabeledStatementTree node, JavaClass javaClass) {
-        counter++;
-        return super.visitLabeledStatement(node, javaClass);
+    public Void visitLabeledStatement(LabeledStatementTree node, RevisionJavaClass unused) {
+        total++;
+        return super.visitLabeledStatement(node, unused);
     }
 
     @Override
-    public Void visitReturn(ReturnTree node, JavaClass unused) {
-        counter++;
+    public Void visitReturn(ReturnTree node, RevisionJavaClass unused) {
+        total++;
         return super.visitReturn(node, unused);
     }
 
     @Override
-    public Void visitSwitch(SwitchTree node, JavaClass unused) {
-        counter++;
+    public Void visitSwitch(SwitchTree node, RevisionJavaClass unused) {
+        total++;
         return super.visitSwitch(node, unused);
     }
 
     @Override
-    public Void visitSynchronized(SynchronizedTree node, JavaClass javaClass) {
-        counter++;
-        return super.visitSynchronized(node, javaClass);
+    public Void visitSynchronized(SynchronizedTree node, RevisionJavaClass unused) {
+        total++;
+        return super.visitSynchronized(node, unused);
     }
 
     @Override
-    public Void visitTry(TryTree node, JavaClass javaClass) {
-        counter++;
-        return super.visitTry(node, javaClass);
+    public Void visitTry(TryTree node, RevisionJavaClass unused) {
+        total++;
+        return super.visitTry(node, unused);
     }
 
     @Override
-    public Void visitVariable(VariableTree node, JavaClass javaClass) {
+    public Void visitVariable(VariableTree node, RevisionJavaClass unused) {
         if (insideBlock) {
-            counter++;
+            total++;
         }
-        return super.visitVariable(node, javaClass);
+        return super.visitVariable(node, unused);
     }
 
     @Override
-    public Void visitWhileLoop(WhileLoopTree node, JavaClass unused) {
-        counter++;
+    public Void visitWhileLoop(WhileLoopTree node, RevisionJavaClass unused) {
+        total++;
         return super.visitWhileLoop(node, unused);
     }
 
     @Override
     public void reset() {
         super.reset();
-        counter = 0;
+        total = 0;
     }
 }

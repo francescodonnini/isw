@@ -1,74 +1,77 @@
 package io.github.francescodonnini.collectors.ast;
 
 import com.sun.source.tree.*;
-import io.github.francescodonnini.model.JavaClass;
+import io.github.francescodonnini.model.RevisionJavaClass;
 
 public class NestingDepth extends AbstractCounter {
     private int currentNestingDepth = 0;
     private int maxNestingDepth = 0;
 
     @Override
-    public Void visitMethod(MethodTree node, JavaClass javaClass) {
+    public Void visitClass(ClassTree node, RevisionJavaClass javaClass) {
+        var unused = super.visitClass(node, javaClass);
+        javaClass.getMetrics().setNestingDepth(maxNestingDepth);
+        return unused;
+    }
+
+    @Override
+    public Void visitMethod(MethodTree node, RevisionJavaClass javaClass) {
         var oldNestingDepth = currentNestingDepth;
         currentNestingDepth = 0;
         var oldMaxNestingDepth = maxNestingDepth;
         maxNestingDepth = 0;
-        var v = super.visitMethod(node, javaClass);
-        update(AstUtils.getSignature(node), m -> {
-            m.setNestingDepth(maxNestingDepth);
-            return null;
-        });
+        var unused = super.visitMethod(node, javaClass);
         currentNestingDepth += oldNestingDepth;
         maxNestingDepth += oldMaxNestingDepth;
-        return v;
+        return unused;
     }
 
     @Override
-    public Void visitCase(CaseTree node, JavaClass javaClass) {
+    public Void visitCase(CaseTree node, RevisionJavaClass javaClass) {
         updateNestingDepth();
-        var v = super.visitCase(node, javaClass);
+        var unused = super.visitCase(node, javaClass);
         currentNestingDepth--;
-        return v;
+        return unused;
     }
 
     @Override
-    public Void visitDoWhileLoop(DoWhileLoopTree node, JavaClass javaClass) {
+    public Void visitDoWhileLoop(DoWhileLoopTree node, RevisionJavaClass javaClass) {
         updateNestingDepth();
-        var v = super.visitDoWhileLoop(node, javaClass);
+        var unused = super.visitDoWhileLoop(node, javaClass);
         currentNestingDepth--;
-        return v;
+        return unused;
     }
 
     @Override
-    public Void visitEnhancedForLoop(EnhancedForLoopTree node, JavaClass javaClass) {
+    public Void visitEnhancedForLoop(EnhancedForLoopTree node, RevisionJavaClass javaClass) {
         updateNestingDepth();
-        var v = super.visitEnhancedForLoop(node, javaClass);
+        var unused = super.visitEnhancedForLoop(node, javaClass);
         currentNestingDepth--;
-        return v;
+        return unused;
     }
 
     @Override
-    public Void visitForLoop(ForLoopTree node, JavaClass javaClass) {
+    public Void visitForLoop(ForLoopTree node, RevisionJavaClass javaClass) {
         updateNestingDepth();
-        var v = super.visitForLoop(node, javaClass);
+        var unused = super.visitForLoop(node, javaClass);
         currentNestingDepth--;
-        return v;
+        return unused;
     }
 
     @Override
-    public Void visitIf(IfTree node, JavaClass javaClass) {
+    public Void visitIf(IfTree node, RevisionJavaClass javaClass) {
         updateNestingDepth();
-        var v = super.visitIf(node, javaClass);
+        var unused = super.visitIf(node, javaClass);
         currentNestingDepth--;
-        return v;
+        return unused;
     }
 
     @Override
-    public Void visitWhileLoop(WhileLoopTree node, JavaClass javaClass) {
+    public Void visitWhileLoop(WhileLoopTree node, RevisionJavaClass javaClass) {
         updateNestingDepth();
-        var v = super.visitWhileLoop(node, javaClass);
+        var unused = super.visitWhileLoop(node, javaClass);
         currentNestingDepth--;
-        return v;
+        return unused;
     }
 
     private void updateNestingDepth() {

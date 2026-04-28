@@ -26,7 +26,7 @@ public class ExportToArffStep implements Step<ProjectInfo, ProjectInfo> {
                 .resolve("%s.arff".formatted(name));
         try {
             new JavaMethodArffSerializer()
-                    .toArff(path, input.getAllReleases(), input.getMethods());
+                    .toArff(path, input.getAllReleases(), input.getReleaseClasses());
         } catch (IOException e) {
             throw new PipelineException("cannot convert dataset to arff", e);
         }

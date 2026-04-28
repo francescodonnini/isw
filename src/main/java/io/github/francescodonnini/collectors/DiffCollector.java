@@ -1,88 +1,102 @@
 package io.github.francescodonnini.collectors;
 
-import io.github.francescodonnini.model.JavaMethod;
+import io.github.francescodonnini.model.ProcessClassMetrics;
 import io.github.francescodonnini.model.Release;
+import io.github.francescodonnini.model.ReleaseJavaClass;
+import io.github.francescodonnini.model.RevisionJavaClass;
 
+import java.time.Duration;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class DiffCollector {
     private final Logger logger = Logger.getLogger(DiffCollector.class.getName());
     private final List<Release> releases;
-    private final List<JavaMethod> methods;
-    private final Map<JavaMethodId, List<JavaMethod>> history;
+    private final Map<ClassID, List<RevisionJavaClass>> history;
+    private final List<RevisionJavaClass> classes = new ArrayList<>();
     private final boolean fromStart;
 
-    /**
-     * DiffCollector colleziona le metriche relative al cambiamento di un metodo nel tempo
-     * @param releases lista delle release di un progetto
-     * @param methods lista degli snapshot dei metodi in un certo istante nel tempo (revision)
-     */
-    public DiffCollector(List<Release> releases, List<JavaMethod> methods, boolean fromStart) {
+    public DiffCollector(
+            List<Release> releases,
+            List<RevisionJavaClass> classes,
+            boolean fromStart) {
         if (releases.isEmpty()) {
             throw new IllegalArgumentException("release list is empty");
         }
-        if (methods.isEmpty()) {
+        if (classes.isEmpty()) {
             throw new IllegalArgumentException("method list is empty");
         }
+        this.fromStart = fromStart;
         this.releases = releases.stream()
                 .sorted(Comparator.comparing(Release::releaseDate))
                 .toList();
-        this.methods = methods;
         this.history = new HashMap<>();
         var maxDate = releases.getLast().releaseDate();
-        this.methods.stream()
-                .filter(m -> isBetween(m, LocalDate.MIN, maxDate))
-                .sorted(Comparator.comparing(m -> m.getJavaClass().getTime()))
-                .forEach(m -> history.computeIfAbsent(JavaMethodId.of(m), s -> new ArrayList<>()).add(m));
-        this.fromStart = fromStart;
+        classes.stream()
+                .filter(c -> isBetween(c, LocalDate.MIN, maxDate))
+                .sorted(Comparator.comparing(RevisionJavaClass::getTime))
+                .forEach(c -> {
+                    history.computeIfAbsent(ClassID.of(c), s -> new ArrayList<>()).add(c);
+                    this.classes.add(c);
+                });
     }
 
     /**
      * collect() calcola le metriche relative al cambiamento di un metodo nel tempo
      * @return una lista di snapshot di un metodo in una certa release
      */
-    public List<JavaMethod> collect() {
-        logger.log(Level.WARNING, "start to diff {0} methods", methods.size());
-        var result = new ArrayList<JavaMethod>();
+    public List<ReleaseJavaClass> collect() {
+        logger.log(Level.WARNING, "start to diff {0} methods", classes.size());
+        var result = new ArrayList<ReleaseJavaClass>();
         var start = LocalDate.MIN;
         var previousEnd = LocalDate.MIN;
         var progress = 0;
+        var order = 0;
         for (var release : releases) {
             var end = release.releaseDate();
-            var methodList = collect(start, end, previousEnd);
-            result.addAll(methodList);
+            var classList = collect(start, end, previousEnd, order);
+            result.addAll(classList);
             previousEnd = end;
             if (!fromStart) {
                 start = end;
             }
             ++progress;
-            logger.log(Level.INFO, "extracted {0} methods from {1}", new Object[]{methodList.size(), release.id()});
+            logger.log(Level.INFO, "extracted {0} methods from {1}", new Object[]{classList.size(), release.id()});
             logger.log(Level.INFO, "{0}/{1} ({2}%)", new Object[]{progress, releases.size(), ((double)progress / releases.size() * 100)});
         }
         return result;
     }
 
-    private boolean isBetween(JavaMethod m, LocalDate start, LocalDate end) {
-        var date = m.getJavaClass().getTime().toLocalDate();
+    private boolean isBetween(RevisionJavaClass m, LocalDate start, LocalDate end) {
+        var date = m.getTime().toLocalDate();
         return date.isAfter(start) && !date.isAfter(end);
     }
 
-    private List<JavaMethod> collect(LocalDate start, LocalDate end, LocalDate previousEnd) {
-        var result = new ArrayList<JavaMethod>();
+    private List<ReleaseJavaClass> collect(LocalDate start, LocalDate end, LocalDate previousEnd, int order) {
+        var result = new ArrayList<ReleaseJavaClass>();
         for (var e : history.entrySet()) {
             var revisions = e.getValue().stream()
                     .filter(m -> isBetween(m, start, end))
                     .toList();
-            diff(revisions, end, previousEnd)
+            diff(revisions, end, previousEnd, order)
                     .ifPresent(result::add);
         }
         return result;
     }
 
-    private Optional<JavaMethod> diff(List<JavaMethod> revisions, LocalDate end, LocalDate previousEnd) {
+    private Optional<ReleaseJavaClass> diff(
+            List<RevisionJavaClass> revisions,
+            LocalDate end,
+            LocalDate previousEnd,
+            int order) {
         if (revisions.isEmpty()) {
             return Optional.empty();
         }
@@ -90,15 +104,56 @@ public class DiffCollector {
         if (!isBetween(last, previousEnd, end)) {
             return Optional.empty();
         }
-        revisions.forEach(m -> addToHistory(last, m));
-        return Optional.of(last);
+
+        var processMetrics = new ProcessClassMetrics();
+        var locTouched = new IntAccumulator();
+        var changeSet = new IntAccumulator();
+        var age = new TimeAccumulator();
+        var authors = new HashSet<String>();
+        var commits = new HashSet<String>();
+        for (var revision : revisions) {
+            locTouched.add(revision.getMetrics().getLoc());
+            changeSet.add(revision.getMetrics().getChangeSetSize());
+            age.add(revision.getTime());
+            revision.getAuthor().ifPresent(authors::add);
+            commits.add(revision.getCommit());
+        }
+        processMetrics.setNumOfAuthors(authors.size());
+        processMetrics.setNumOfRevisions(revisions.size());
+        setChurn(processMetrics, locTouched);
+        setLocAdded(processMetrics, locTouched);
+        setChangeSet(processMetrics, changeSet);
+        var ageResult = age.getResult();
+        processMetrics.setAge((Duration) ageResult.average());
+        return Optional.of(
+                ReleaseJavaClass.builder()
+                        .path(last.getPath())
+                        .name(last.getName())
+                        .order(order)
+                        .complexity(last.getMetrics())
+                        .process(processMetrics)
+                        .commits(commits)
+                        .build());
     }
 
-    private void addToHistory(JavaMethod to, JavaMethod from) {
-        from.getJavaClass().getAuthor().ifPresent(a -> to.getMetrics().addAuthor(a));
-        to.getMetrics().updateMethodHistories();
-        to.getMetrics().addElseCount(from.getMetrics().getElseCount());
-        to.getMetrics().addLoc(from.getMetrics().getLineOfCode());
-        to.getMetrics().addStatementCount(from.getMetrics().getStatementsCount());
+    private void setChurn(ProcessClassMetrics metrics, IntAccumulator locTouched) {
+        var churn = locTouched.getResult();
+        metrics.setChurn(churn.sum());
+        metrics.setAvgChurn(churn.average());
+        metrics.setMaxChurn(churn.max());
+    }
+
+    private void setLocAdded(ProcessClassMetrics metrics, IntAccumulator locTouched) {
+        var locAdded = locTouched.getResult(i -> i > 0);
+        metrics.setLocAdded(locAdded.sum());
+        metrics.setAvgLocAdded(locAdded.average());
+        metrics.setMaxLocAdded(locAdded.max());
+    }
+
+    private void setChangeSet(ProcessClassMetrics metrics, IntAccumulator changeSet) {
+        var result = changeSet.getResult();
+        metrics.setChangeSet(result.sum());
+        metrics.setAvgChangeSet(result.average());
+        metrics.setMaxChangeSet(result.max());
     }
 }

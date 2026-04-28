@@ -1,11 +1,10 @@
 package io.github.francescodonnini.data;
 
 import io.github.francescodonnini.model.Issue;
-import io.github.francescodonnini.model.JavaMethod;
 import io.github.francescodonnini.model.Release;
+import io.github.francescodonnini.model.ReleaseJavaClass;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.diff.DiffFormatter;
-import org.eclipse.jgit.diff.Edit;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
@@ -22,8 +21,8 @@ public class LabelMakerImpl implements LabelMaker {
     private final Git git;
     private final List<Issue> issues;
     private final List<Release> releases;
-    private Map<String, Set<String>> releaseMethodMap;
-    private Map<String, List<JavaMethod>> idMethodMap;
+    private Map<String, Set<String>> releaseClassMap;
+    private Map<String, List<ReleaseJavaClass>> idClassMap;
     private int buggy;
 
     public LabelMakerImpl(Git git, List<Issue> issues, List<Release> releases) {
@@ -33,14 +32,18 @@ public class LabelMakerImpl implements LabelMaker {
     }
 
     @Override
-    public void makeLabels(List<JavaMethod> methods) {
+    public void makeLabels(List<ReleaseJavaClass> classes) {
         try {
-            createMethodIndices(methods);
+            createClassIndices(classes);
             var df = new DiffFormatter(DisabledOutputStream.INSTANCE);
             df.setRepository(git.getRepository());
             df.setDetectRenames(true);
-            var index = methods.stream()
-                    .collect(Collectors.groupingBy(m -> m.getJavaClass().getCommit()));
+            var index = new HashMap<String, List<ReleaseJavaClass>>();
+            for (var cls : classes) {
+                for (var commit : cls.getCommits()) {
+                    index.computeIfAbsent(commit, h -> new ArrayList<>()).add(cls);
+                }
+            }
             var progress = 0;
             for (var issue : issues) {
                 buggy = 0;
@@ -59,53 +62,52 @@ public class LabelMakerImpl implements LabelMaker {
         }
     }
 
-    private void createMethodIndices(List<JavaMethod> methods) {
-        releaseMethodMap = new HashMap<>();
+    private void createClassIndices(List<ReleaseJavaClass> classes) {
+        releaseClassMap = new HashMap<>();
         var prev = LocalDate.MIN;
         for (var release : releases) {
             var curr = release.releaseDate();
             final var finalPrev = prev;
-            methods.stream()
+            classes.stream()
                     .filter(m -> isBetween(m, finalPrev, curr))
-                    .forEach(m -> releaseMethodMap.computeIfAbsent(release.id(), h -> new HashSet<>()).add(getId(m)));
+                    .forEach(m -> releaseClassMap.computeIfAbsent(release.id(), h -> new HashSet<>()).add(getId(m)));
             prev = curr;
         }
-        idMethodMap = methods.stream()
+        idClassMap = classes.stream()
                 .collect(Collectors.groupingBy(this::getId));
     }
 
-    private boolean isBetween(JavaMethod m, LocalDate a, LocalDate b) {
-        var time = m.getJavaClass().getTime().toLocalDate();
+    private boolean isBetween(ReleaseJavaClass c, LocalDate a, LocalDate b) {
+        var time = c.getTime().toLocalDate();
         return !time.isBefore(a) && !time.isAfter(b);
     }
 
 
-    private void parseCommit(DiffFormatter df, List<JavaMethod> susceptible, RevCommit commit, Issue issue) throws IOException {
+    private void parseCommit(DiffFormatter df, List<ReleaseJavaClass> susceptible, RevCommit commit, Issue issue) throws IOException {
         var diffList = df.scan(getParent(commit), commit.getTree());
         for (var diff : diffList) {
             var path = diff.getNewPath();
-            var editList = df.toFileHeader(diff).toEditList();
             susceptible.stream()
-                    .filter(m -> m.getPath().toString().equals(path))
-                    .filter(m -> EditUtils.isTouched(m, editList, this::match))
-                    .forEach(m -> setBuggy(m, issue));
+                    .filter(c -> c.getPath().toString().equals(path))
+                    .forEach(c -> setBuggy(c, issue));
         }
     }
 
-    private void setBuggy(JavaMethod m, Issue issue) {
+    private void setBuggy(ReleaseJavaClass c, Issue issue) {
         ++buggy;
-        m.setBuggy(true);
-        backtrack(m, issue.affectedVersions());
+        c.setBuggy(true);
+        c.getProcessMetrics().incNumOfFixes();
+        backtrack(c, issue.affectedVersions());
     }
 
-    private String getId(JavaMethod m) {
-        return m.getPath().toString() + m.getSignature();
+    private String getId(ReleaseJavaClass c) {
+        return c.getPath().toString() + c.getName();
     }
 
-    private void backtrack(JavaMethod m, List<Release> affectedVersions) {
-        Optional.ofNullable(idMethodMap.get(getId(m)))
+    private void backtrack(ReleaseJavaClass c, List<Release> affectedVersions) {
+        Optional.ofNullable(idClassMap.get(getId(c)))
                 .ifPresent(list -> list.stream()
-                        .filter(x -> x != m)
+                        .filter(x -> x != c)
                         .filter(x -> isAffected(x, affectedVersions))
                         .forEach(x -> {
                             x.setBuggy(true);
@@ -113,9 +115,9 @@ public class LabelMakerImpl implements LabelMaker {
                         }));
     }
 
-    private boolean isAffected(JavaMethod m, List<Release> affectedVersions) {
+    private boolean isAffected(ReleaseJavaClass m, List<Release> affectedVersions) {
         for (var r : affectedVersions) {
-            if (releaseMethodMap.getOrDefault(r.id(), Set.of()).contains(getId(m))) {
+            if (releaseClassMap.getOrDefault(r.id(), Set.of()).contains(getId(m))) {
                 return true;
             }
         }
@@ -129,12 +131,5 @@ public class LabelMakerImpl implements LabelMaker {
             logger.log(Level.INFO, "commit %s has no parent".formatted(commit));
             return null;
         }
-    }
-
-    private boolean match(Edit edit) {
-        return switch (edit.getType()) {
-            case DELETE, INSERT, REPLACE -> true;
-            default -> false;
-        };
     }
 }

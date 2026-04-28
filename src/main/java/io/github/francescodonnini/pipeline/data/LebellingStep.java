@@ -22,7 +22,7 @@ public class LebellingStep implements Step<ProjectInfo, ProjectInfo> {
                 .resolve(input.getProject().toLowerCase());
         try (var git = GitUtils.createGit(source)) {
             new LabelMakerImpl(git, input.getIssues(), input.getAllReleases())
-                    .makeLabels(input.getMethods());
+                    .makeLabels(input.getReleaseClasses());
         } catch (IOException e) {
             throw new PipelineException("cannot read git repository " + source, e);
         }
