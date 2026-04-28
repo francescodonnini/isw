@@ -13,7 +13,7 @@ public class JavaMethodArffSerializer {
         FileUtils.createDirectory(path.getParent());
         try (var off = new FileWriter(path.toFile())) {
             off.write("@relation methods\n\n");
-            booleanAttribute(off, "buggy");
+            buggyAttribute(off);
             numericAttribute(off, "cyclomatic_complexity");
             numericAttribute(off, "loc");
             numericAttribute(off, "smell_count");
@@ -47,8 +47,8 @@ public class JavaMethodArffSerializer {
         }
     }
 
-    private void booleanAttribute(Writer writer, String name) throws IOException {
-        writer.write("@ATTRIBUTE %s\t\t{0,1}%n".formatted(name));
+    private void buggyAttribute(Writer writer) throws IOException {
+        writer.write("@ATTRIBUTE buggy\t\t{0,1}\n");
     }
 
     private void numericAttribute(Writer writer, String name) throws IOException {
@@ -80,6 +80,13 @@ public class JavaMethodArffSerializer {
                 .append(process.getLocAdded()).append(",")
                 .append(process.getAvgLocAdded()).append(",")
                 .append(process.getMaxLocAdded()).append(",")
+                .append(process.getNumOfRevisions()).append(",")
+                .append(process.getNumOfFixes()).append(",")
+                .append(process.getNumOfAuthors()).append(",")
+                .append(process.getChangeSet()).append(",")
+                .append(process.getAvgChangeSet()).append(",")
+                .append(process.getMaxChangeSet()).append(",")
+                .append(process.getAge().toDays()).append(",")
                 .append(r.order()).append("\n")
                 .toString();
         writer.write(s);

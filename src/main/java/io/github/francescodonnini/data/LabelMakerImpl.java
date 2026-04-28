@@ -10,6 +10,7 @@ import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.logging.Level;
@@ -55,7 +56,7 @@ public class LabelMakerImpl implements LabelMaker {
                 }
                 progress++;
                 logger.log(Level.INFO, "{0}/{1} ({2}%)", new Object[]{progress, issues.size(), ((double)progress / issues.size() * 100)});
-                logger.log(Level.INFO, "buggy methods: {0}", buggy);
+                logger.log(Level.INFO, "buggy classes: {0}", buggy);
             }
         } catch (IOException e) {
             logger.log(Level.SEVERE, e.getMessage());
@@ -84,11 +85,12 @@ public class LabelMakerImpl implements LabelMaker {
 
 
     private void parseCommit(DiffFormatter df, List<ReleaseJavaClass> susceptible, RevCommit commit, Issue issue) throws IOException {
+        var parent = Path.of(git.getRepository().getDirectory().getParent());
         var diffList = df.scan(getParent(commit), commit.getTree());
         for (var diff : diffList) {
-            var path = diff.getNewPath();
+            var path = parent.resolve(diff.getNewPath());
             susceptible.stream()
-                    .filter(c -> c.getPath().toString().equals(path))
+                    .filter(c -> c.getPath().equals(path))
                     .forEach(c -> setBuggy(c, issue));
         }
     }

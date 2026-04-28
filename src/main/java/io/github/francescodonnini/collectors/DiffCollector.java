@@ -129,6 +129,7 @@ public class DiffCollector {
                 ReleaseJavaClass.builder()
                         .path(last.getPath())
                         .name(last.getName())
+                        .time(last.getTime())
                         .order(order)
                         .complexity(last.getMetrics())
                         .process(processMetrics)
