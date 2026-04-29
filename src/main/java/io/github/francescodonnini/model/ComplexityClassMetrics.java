@@ -64,4 +64,8 @@ public class ComplexityClassMetrics {
     public void setChangeSetSize(int changeSetSize) {
         this.changeSetSize = changeSetSize;
     }
+
+    public void setSmellCount(int smellCount) {
+        this.smellCount = smellCount;
+    }
 }

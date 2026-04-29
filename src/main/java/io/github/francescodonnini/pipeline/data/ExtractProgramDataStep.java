@@ -51,12 +51,14 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
                     .getRevisionClasses(destinationPath("classes", "revisions", info));
             info.setRevisionClasses(classes);
             calculateChanges(info);
-        } catch (FileNotFoundException | RuntimeException e) {
-            loadRawData(info);
+        } catch (FileNotFoundException unused) {
+            loadRevisionData(info);
+        } catch (RuntimeException e) {
+            throw new PipelineException(e);
         }
     }
 
-    private void loadRawData(ProjectInfo info) throws PipelineException {
+    private void loadRevisionData(ProjectInfo info) throws PipelineException {
         try {
             var source = context.getSources()
                     .resolve(info.getProject().toLowerCase());

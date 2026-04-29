@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class DiffCollector {
     private final Logger logger = Logger.getLogger(DiffCollector.class.getName());
@@ -69,23 +70,28 @@ public class DiffCollector {
                 start = end;
             }
             ++progress;
-            logger.log(Level.INFO, "extracted {0} methods from {1}", new Object[]{classList.size(), release.id()});
+
+            logger.log(Level.INFO, "extracted {0} classes from {1}", new Object[]{classList.size(), release.id()});
             logger.log(Level.INFO, "{0}/{1} ({2}%)", new Object[]{progress, releases.size(), ((double)progress / releases.size() * 100)});
         }
         return result;
     }
 
-    private boolean isBetween(RevisionJavaClass m, LocalDate start, LocalDate end) {
-        var date = m.getTime().toLocalDate();
+    private boolean isBetween(RevisionJavaClass cls, LocalDate start, LocalDate end) {
+        var date = cls.getTime().toLocalDate();
         return date.isAfter(start) && !date.isAfter(end);
     }
 
-    private List<ReleaseJavaClass> collect(LocalDate start, LocalDate end, LocalDate previousEnd, int order) {
+    private List<ReleaseJavaClass> collect(
+            LocalDate start,
+            LocalDate end,
+            LocalDate previousEnd,
+            int order) {
         var result = new ArrayList<ReleaseJavaClass>();
         for (var e : history.entrySet()) {
             var revisions = e.getValue().stream()
                     .filter(m -> isBetween(m, start, end))
-                    .toList();
+                    .collect(Collectors.toCollection(ArrayList::new));
             diff(revisions, end, previousEnd, order)
                     .ifPresent(result::add);
         }
@@ -104,7 +110,13 @@ public class DiffCollector {
         if (!isBetween(last, previousEnd, end)) {
             return Optional.empty();
         }
-
+        var smellCount = 0;
+        var smellRevision = getPrevious(last, previousEnd);
+        if (smellRevision.isPresent()) {
+            var revision = smellRevision.get();
+            revisions.addFirst(revision);
+            smellCount = revision.getMetrics().getSmellCount();
+        }
         var processMetrics = new ProcessClassMetrics();
         var locTouched = new IntAccumulator();
         var changeSet = new IntAccumulator();
@@ -125,6 +137,8 @@ public class DiffCollector {
         setChangeSet(processMetrics, changeSet);
         var ageResult = age.getResult();
         processMetrics.setAge((Duration) ageResult.average());
+        var complexity = last.getMetrics();
+        complexity.setSmellCount(smellCount);
         return Optional.of(
                 ReleaseJavaClass.builder()
                         .path(last.getPath())
@@ -135,6 +149,22 @@ public class DiffCollector {
                         .process(processMetrics)
                         .commits(commits)
                         .build());
+    }
+
+    private Optional<RevisionJavaClass> getPrevious(RevisionJavaClass cls, LocalDate end) {
+        var id = ClassID.of(cls);
+        if (!history.containsKey(id)) {
+            return Optional.empty();
+        }
+
+        var list = history.get(id)
+                .stream()
+                .filter(c -> c.getTime().toLocalDate().isBefore(end))
+                .toList();
+        if (list.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(list.getLast());
     }
 
     private void setChurn(ProcessClassMetrics metrics, IntAccumulator locTouched) {
