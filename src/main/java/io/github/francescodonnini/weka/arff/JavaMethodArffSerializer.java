@@ -32,6 +32,7 @@ public class JavaMethodArffSerializer {
             numericAttribute(off, "change_set_avg");
             numericAttribute(off, "change_set_max");
             numericAttribute(off, "age");
+            numericAttribute(off, "avg_change_time");
             numericAttribute(off, "release");
             off.write("@DATA\n");
             for (var i = 0; i < releases.size(); i++) {
@@ -94,6 +95,7 @@ public class JavaMethodArffSerializer {
                 .append(process.getAvgChangeSet()).append(",")
                 .append(process.getMaxChangeSet()).append(",")
                 .append(process.getAge().toDays()).append(",")
+                .append(process.getAverageChangeTime().toDays()).append(",")
                 .append(r.order()).append("\n")
                 .toString();
         writer.write(s);

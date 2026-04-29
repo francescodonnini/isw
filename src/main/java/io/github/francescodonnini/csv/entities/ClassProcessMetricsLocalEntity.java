@@ -31,6 +31,8 @@ public class ClassProcessMetricsLocalEntity {
     private double avgChangeSet;
     @CsvBindByName(column = "ageDays", required = true)
     private long ageDays;
+    @CsvBindByName(column = "avgChangeTime", required = true)
+    private long avgChangeTimeDays;
 
     public int getLocTouched() {
         return locTouched;
@@ -142,5 +144,13 @@ public class ClassProcessMetricsLocalEntity {
 
     public void setAgeDays(long ageDays) {
         this.ageDays = ageDays;
+    }
+
+    public long getAvgChangeTimeDays() {
+        return avgChangeTimeDays;
+    }
+
+    public void setAvgChangeTimeDays(long avgChangeTimeDays) {
+        this.avgChangeTimeDays = avgChangeTimeDays;
     }
 }

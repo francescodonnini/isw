@@ -1,6 +1,6 @@
 package io.github.francescodonnini.pipeline.data;
 
-import io.github.francescodonnini.data.LabelMakerImpl;
+import io.github.francescodonnini.data.LabelMaker;
 import io.github.francescodonnini.pipeline.PipelineException;
 import io.github.francescodonnini.pipeline.inputs.DataPipelineContext;
 import io.github.francescodonnini.pipeline.inputs.ProjectInfo;
@@ -21,7 +21,7 @@ public class LebellingStep implements Step<ProjectInfo, ProjectInfo> {
         var source = context.getSources()
                 .resolve(input.getProject().toLowerCase());
         try (var git = GitUtils.createGit(source)) {
-            new LabelMakerImpl(git, input.getIssues(), input.getAllReleases())
+            new LabelMaker(git, input.getIssues(), input.getAllReleases())
                     .makeLabels(input.getReleaseClasses());
         } catch (IOException e) {
             throw new PipelineException("cannot read git repository " + source, e);

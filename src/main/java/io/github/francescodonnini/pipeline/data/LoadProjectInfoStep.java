@@ -19,6 +19,7 @@ public class LoadProjectInfoStep implements Step<ProjectInfo, ProjectInfo> {
     public ProjectInfo execute(ProjectInfo input) {
         var releases = context.getReleaseApi()
                 .getReleases(input.getProject());
+        releases = releases.subList(0, (int) Math.ceil(releases.size() * (1 - context.getDropFactor())));
         logger.log(Level.INFO, "Total number of releases: {0}", releases.size());
         var issues = context.getIssueApi()
                 .getIssues(input.getProject());

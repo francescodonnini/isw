@@ -33,7 +33,9 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
     public ProjectInfo execute(ProjectInfo input) throws PipelineException {
         try {
             var classes = new CsvJavaClassApi()
-                    .getReleaseClasses(cachedClassesPath(input, NO_LABEL));
+                    .getReleaseClasses(cachedClassesPath(input, NO_LABEL))
+                    .stream().filter(c -> !c.getTime().toLocalDate().isAfter(input.getAllReleases().getLast().releaseDate()))
+                    .toList();
             input.setReleaseClasses(classes);
         } catch (FileNotFoundException | RuntimeException e) {
             logger.log(Level.WARNING, "cannot find any classes/methods cached files", e);
@@ -48,7 +50,7 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
     private void tryGetCommitData(ProjectInfo info) throws PipelineException {
         try {
             var classes = new CsvJavaClassApi()
-                    .getRevisionClasses(destinationPath("classes", "revisions", info));
+                    .getRevisionClasses(destinationPath("revisions", info));
             info.setRevisionClasses(classes);
             calculateChanges(info);
         } catch (FileNotFoundException unused) {
@@ -86,6 +88,7 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
         var classes = new DiffCollector(info.getAllReleases(), info.getRevisionClasses(), info.isFromStart())
                 .collect();
         saveReleaseClasses(cachedClassesPath(info, NO_LABEL), classes);
+        info.setReleaseClasses(classes);
     }
 
     private void saveReleaseClasses(String path, List<ReleaseJavaClass> classes) throws PipelineException {
@@ -107,16 +110,16 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
     }
 
     private String cachedClassesPath(ProjectInfo info, String desc) {
-        return destinationPath("classes", desc, info);
+        return destinationPath(desc, info);
     }
 
-    private String destinationPath(String prefix, String description, ProjectInfo input) {
+    private String destinationPath(String description, ProjectInfo input) {
         if (input.isFromStart() && !description.equals("revisions")) {
             description += "_fromStart";
         }
         return context.getCache()
                 .resolve(input.getProject())
-                .resolve("%s(%s).csv".formatted(prefix, description))
+                .resolve("classes(%s).csv".formatted(description))
                 .toString();
     }
 }

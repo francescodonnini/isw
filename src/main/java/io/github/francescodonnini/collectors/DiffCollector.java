@@ -201,6 +201,6 @@ public class DiffCollector {
     }
 
     private void setAverageChangeTime(ProcessClassMetrics metrics, TimeAccumulator changeTime) {
-        metrics.setAge((Duration) changeTime.getResult().average());
+        metrics.setAverageChangeTime((Duration) changeTime.getResult().average());
     }
 }

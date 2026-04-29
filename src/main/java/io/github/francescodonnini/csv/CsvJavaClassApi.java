@@ -91,6 +91,7 @@ public class CsvJavaClassApi {
         c.setMaxChangeSet(bean.getMaxChangeSet());
         c.setAvgChangeSet(bean.getAvgChangeSet());
         c.setAge(Duration.ofDays(bean.getAgeDays()));
+        c.setAverageChangeTime(Duration.ofDays(bean.getAvgChangeTimeDays()));
         return c;
     }
 
@@ -170,6 +171,7 @@ public class CsvJavaClassApi {
         bean.setMaxChangeSet(c.getMaxChangeSet());
         bean.setAvgChangeSet(c.getAvgChangeSet());
         bean.setAgeDays(c.getAge().toDays());
+        bean.setAvgChangeTimeDays(c.getAverageChangeTime().toDays());
         return bean;
     }
 
