@@ -18,12 +18,11 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class LabelMaker {
-    private record ClassID(Path path, String name) {
+    private record ClassID(long trackingId, String name) {
         public static ClassID of(ReleaseJavaClass c) {
-            return new ClassID(c.getPath(), c.getName());
+            return new ClassID(c.getTrackingId(), c.getName());
         }
     }
-
     private static final Logger logger = Logger.getLogger(LabelMaker.class.getName());
     private final Git git;
     private final List<Issue> issues;

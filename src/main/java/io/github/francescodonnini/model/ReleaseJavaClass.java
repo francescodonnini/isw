@@ -9,6 +9,7 @@ public class ReleaseJavaClass {
     public static class Builder {
         private Path path;
         private String name;
+        private long trackingId;
         private int order;
         private LocalDateTime time;
         private ComplexityClassMetrics complexityMetrics;
@@ -22,6 +23,11 @@ public class ReleaseJavaClass {
 
         public Builder name(String name) {
             this.name = name;
+            return this;
+        }
+
+        public Builder trackingId(long trackingId) {
+            this.trackingId = trackingId;
             return this;
         }
 
@@ -61,6 +67,7 @@ public class ReleaseJavaClass {
 
     private final Path path;
     private final String name;
+    private final long trackingId;
     private final int order;
     private final LocalDateTime time;
     private final ComplexityClassMetrics complexityMetrics;
@@ -71,6 +78,7 @@ public class ReleaseJavaClass {
     private ReleaseJavaClass(Builder builder) {
         this.path = builder.path;
         this.name = builder.name;
+        this.trackingId = builder.trackingId;
         this.order = builder.order;
         this.time = builder.time;
         this.commits.addAll(builder.commits);
@@ -84,6 +92,10 @@ public class ReleaseJavaClass {
 
     public String getName() {
         return name;
+    }
+
+    public long getTrackingId() {
+        return trackingId;
     }
 
     public int getOrder() {

@@ -1,24 +1,36 @@
 package io.github.francescodonnini.collectors;
 
-import io.github.francescodonnini.model.ProcessClassMetrics;
-import io.github.francescodonnini.model.Release;
-import io.github.francescodonnini.model.ReleaseJavaClass;
-import io.github.francescodonnini.model.RevisionJavaClass;
+import io.github.francescodonnini.model.*;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class DiffCollector {
+    private record ClassID(long trackingId, String className) {
+        public static ClassID of(RevisionJavaClass c) {
+            var name = c.getName();
+            if (c.isTopLevel()) {
+                name += "[P]";
+            }
+            return new ClassID(c.getTrackingId(), name);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null || getClass() != o.getClass()) return false;
+            ClassID that = (ClassID) o;
+            return trackingId == that.trackingId && Objects.equals(className, that.className);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(trackingId, className);
+        }
+    }
     private final Logger logger = Logger.getLogger(DiffCollector.class.getName());
     private final List<Release> releases;
     private final Map<ClassID, List<RevisionJavaClass>> history;
@@ -142,6 +154,7 @@ public class DiffCollector {
                 ReleaseJavaClass.builder()
                         .path(last.getPath())
                         .name(last.getName())
+                        .trackingId(last.getTrackingId())
                         .time(last.getTime())
                         .order(order)
                         .complexity(last.getMetrics())
