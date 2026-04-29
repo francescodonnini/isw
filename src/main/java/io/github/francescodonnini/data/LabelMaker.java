@@ -1,5 +1,6 @@
 package io.github.francescodonnini.data;
 
+import io.github.francescodonnini.model.ClassID;
 import io.github.francescodonnini.model.Issue;
 import io.github.francescodonnini.model.Release;
 import io.github.francescodonnini.model.ReleaseJavaClass;
@@ -18,11 +19,6 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class LabelMaker {
-    private record ClassID(long trackingId, String name) {
-        public static ClassID of(ReleaseJavaClass c) {
-            return new ClassID(c.getTrackingId(), c.getName());
-        }
-    }
     private static final Logger logger = Logger.getLogger(LabelMaker.class.getName());
     private final Git git;
     private final List<Issue> issues;
