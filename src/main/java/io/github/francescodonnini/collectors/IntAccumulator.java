@@ -8,6 +8,9 @@ public class IntAccumulator extends Accumulator<Integer, Integer> {
     }
 
     public AccumulatorResult<Integer, Double> getResult() {
+        if (items.size() == 1) {
+            return new AccumulatorResult<>(items.getFirst(), (double) items.getFirst(), items.getFirst());
+        }
         return getResult(unused -> true);
     }
 

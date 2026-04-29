@@ -114,19 +114,18 @@ public class DiffCollector {
         var smellRevision = getPrevious(last, previousEnd);
         if (smellRevision.isPresent()) {
             var revision = smellRevision.get();
-            revisions.addFirst(revision);
             smellCount = revision.getMetrics().getSmellCount();
         }
         var processMetrics = new ProcessClassMetrics();
         var locTouched = new IntAccumulator();
         var changeSet = new IntAccumulator();
-        var age = new TimeAccumulator();
+        var changeTime = new TimeAccumulator();
         var authors = new HashSet<String>();
         var commits = new HashSet<String>();
         for (var revision : revisions) {
             locTouched.add(revision.getMetrics().getLoc());
             changeSet.add(revision.getMetrics().getChangeSetSize());
-            age.add(revision.getTime());
+            changeTime.add(revision.getTime());
             revision.getAuthor().ifPresent(authors::add);
             commits.add(revision.getCommit());
         }
@@ -135,8 +134,8 @@ public class DiffCollector {
         setChurn(processMetrics, locTouched);
         setLocAdded(processMetrics, locTouched);
         setChangeSet(processMetrics, changeSet);
-        var ageResult = age.getResult();
-        processMetrics.setAge((Duration) ageResult.average());
+        setAge(processMetrics, last);
+        setAverageChangeTime(processMetrics, changeTime);
         var complexity = last.getMetrics();
         complexity.setSmellCount(smellCount);
         return Optional.of(
@@ -186,5 +185,22 @@ public class DiffCollector {
         metrics.setChangeSet(result.sum());
         metrics.setAvgChangeSet(result.average());
         metrics.setMaxChangeSet(result.max());
+    }
+
+    private void setAge(ProcessClassMetrics metrics, RevisionJavaClass last) {
+        var id = ClassID.of(last);
+        var fullHistory = history.get(id);
+        if (fullHistory != null && !fullHistory.isEmpty()) {
+            var firstEverTime = fullHistory.getFirst().getTime();
+            var lastTime = last.getTime();
+            var absoluteAge = Duration.between(firstEverTime, lastTime);
+            metrics.setAge(absoluteAge);
+        } else {
+            metrics.setAge(Duration.ZERO);
+        }
+    }
+
+    private void setAverageChangeTime(ProcessClassMetrics metrics, TimeAccumulator changeTime) {
+        metrics.setAge((Duration) changeTime.getResult().average());
     }
 }

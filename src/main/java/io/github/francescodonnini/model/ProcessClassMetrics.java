@@ -17,6 +17,7 @@ public class ProcessClassMetrics {
     private int maxChangeSet;
     private double avgChangeSet;
     private Duration age;
+    private Duration averageChangeTime;
 
     public int getLocTouched() {
         return locTouched;
@@ -132,5 +133,13 @@ public class ProcessClassMetrics {
 
     public void setAge(Duration age) {
         this.age = age;
+    }
+
+    public Duration getAverageChangeTime() {
+        return averageChangeTime;
+    }
+
+    public void setAverageChangeTime(Duration averageChangeTime) {
+        this.averageChangeTime = averageChangeTime;
     }
 }
