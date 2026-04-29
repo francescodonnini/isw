@@ -60,8 +60,8 @@ public class DiffCollector {
             if (!fromStart) {
                 start = end;
             }
+            ++order;
             ++progress;
-
             logger.log(Level.INFO, "extracted {0} classes from {1}", new Object[]{classList.size(), release.id()});
             logger.log(Level.INFO, "{0}/{1} ({2}%)", new Object[]{progress, releases.size(), ((double)progress / releases.size() * 100)});
         }
