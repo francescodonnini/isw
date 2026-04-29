@@ -17,6 +17,7 @@ public class DataPipelineContext {
     private final Path sources;
     private final Path reports;
     private final boolean useCache;
+    private final double dropFactor;
 
     public DataPipelineContext(IssueApi issueApi, ReleaseApi releaseApi, Settings settings) {
         this.issueApi = issueApi;
@@ -30,6 +31,7 @@ public class DataPipelineContext {
         reports = Path.of(settings.getString("pmdReportsPath"));
         FileUtils.createDirectory(reports);
         useCache = settings.getBool("useCache", false);
+        dropFactor = settings.getDouble("dropFactor", 0.66);
         logInfo();
     }
 
@@ -38,7 +40,8 @@ public class DataPipelineContext {
                 "cachePath:   " + cache + "\n" +
                 "dataPath:    " + data + "\n" +
                 "sourcesPath: " + sources + "\n" +
-                "reportsPath: " + reports + "\n";
+                "reportsPath: " + reports + "\n" +
+                "dropFactor:  " + dropFactor + "\n";
         logger.info(s);
     }
 
@@ -68,5 +71,9 @@ public class DataPipelineContext {
 
     public boolean useCache() {
         return useCache;
+    }
+
+    public double getDropFactor() {
+        return dropFactor;
     }
 }
