@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 public class JiraIssueApi {
     private final Logger logger = Logger.getLogger(JiraIssueApi.class.getName());
-    private static final String PATTERN = "%s-\\d+";
+    private static final String PATTERN = "\\b%s-\\d+\\b";
     private final RestApi restApi;
     private final ReleaseApi releaseApi;
     private final Path source;
@@ -145,8 +145,13 @@ public class JiraIssueApi {
         var mapping = new HashMap<String, List<RevCommit>>();
         for (var commit : GitUtils.getCommits(source.resolve(projectName), ApacheProjects.remoteUrl(projectName))) {
             var matcher = p.matcher(commit.getFullMessage());
-            if (matcher.find()) {
+            var matchCount = 0;
+            while (matcher.find()) {
                 mapping.computeIfAbsent(matcher.group(), m -> new ArrayList<>()).add(commit);
+                ++matchCount;
+            }
+            if (matchCount > 1) {
+                logger.log(Level.INFO, "more than one fix commit: {0}", commit.getShortMessage());
             }
         }
         return mapping;
