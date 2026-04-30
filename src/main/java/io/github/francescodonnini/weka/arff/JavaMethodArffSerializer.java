@@ -1,6 +1,5 @@
 package io.github.francescodonnini.weka.arff;
 
-import io.github.francescodonnini.model.Release;
 import io.github.francescodonnini.model.ReleaseJavaClass;
 import io.github.francescodonnini.utils.FileUtils;
 
@@ -9,7 +8,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 public class JavaMethodArffSerializer {
-    public void toArff(Path path, List<Release> releases, List<ReleaseJavaClass> classes) throws IOException {
+    public void toArff(Path path, List<ReleaseJavaClass> classes) throws IOException {
         FileUtils.createDirectory(path.getParent());
         try (var off = new FileWriter(path.toFile())) {
             off.write("@relation methods\n\n");
@@ -37,22 +36,8 @@ public class JavaMethodArffSerializer {
             numericAttribute(off, "fan_out");
             numericAttribute(off, "release");
             off.write("@DATA\n");
-            for (var i = 0; i < releases.size(); i++) {
-                final var r = releases.get(i);
-                List<ReleaseJavaClass> current;
-                if (i == 0) {
-                    current = classes.stream()
-                            .filter(m -> between(m, null, r))
-                            .toList();
-                } else {
-                    final var last = releases.get(i - 1);
-                    current = classes.stream()
-                            .filter(m -> between(m, last, r))
-                            .toList();
-                }
-                for (var m : current) {
-                    row(off, m, r);
-                }
+            for (var c : classes) {
+                row(off, c);
             }
         }
     }
@@ -65,43 +50,32 @@ public class JavaMethodArffSerializer {
         writer.write("@ATTRIBUTE %s\t\tNUMERIC%n".formatted(name));
     }
 
-    private boolean between(ReleaseJavaClass c, Release last, Release current) {
-        if (last == null) {
-            return !c.getTime().isAfter(current.releaseDate().atStartOfDay());
-        } else {
-            return c.getTime().isAfter(last.releaseDate().atStartOfDay())
-                    && !c.getTime().isAfter(current.releaseDate().atStartOfDay());
-        }
-    }
-
-    private void row(Writer writer, ReleaseJavaClass c, Release r) throws IOException {
+    private void row(Writer writer, ReleaseJavaClass c) throws IOException {
         var complexity = c.getComplexityMetrics();
         var process = c.getProcessMetrics();
-        var s = new StringBuilder()
-                .append(c.isBuggy() ? "1" : "0").append(",")
-                .append(complexity.getCc()).append(",")
-                .append(complexity.getLoc()).append(",")
-                .append(complexity.getSmellCount()).append(",")
-                .append(complexity.getStatementCount()).append(",")
-                .append(complexity.getNestingDepth()).append(",")
-                .append(complexity.getFanIn()).append(",")
-                .append(complexity.getFanOut()).append(",")
-                .append(process.getChurn()).append(",")
-                .append(process.getAvgChurn()).append(",")
-                .append(process.getMaxChurn()).append(",")
-                .append(process.getLocAdded()).append(",")
-                .append(process.getAvgLocAdded()).append(",")
-                .append(process.getMaxLocAdded()).append(",")
-                .append(process.getNumOfRevisions()).append(",")
-                .append(process.getNumOfFixes()).append(",")
-                .append(process.getNumOfAuthors()).append(",")
-                .append(process.getChangeSet()).append(",")
-                .append(process.getAvgChangeSet()).append(",")
-                .append(process.getMaxChangeSet()).append(",")
-                .append(process.getAge().toDays()).append(",")
-                .append(process.getAverageChangeTime().toDays()).append(",")
-                .append(r.order()).append("\n")
-                .toString();
+        var s = (c.isBuggy() ? "1" : "0") + "," +
+                complexity.getCc() + "," +
+                complexity.getLoc() + "," +
+                complexity.getSmellCount() + "," +
+                complexity.getStatementCount() + "," +
+                complexity.getNestingDepth() + "," +
+                complexity.getFanIn() + "," +
+                complexity.getFanOut() + "," +
+                process.getChurn() + "," +
+                process.getAvgChurn() + "," +
+                process.getMaxChurn() + "," +
+                process.getLocAdded() + "," +
+                process.getAvgLocAdded() + "," +
+                process.getMaxLocAdded() + "," +
+                process.getNumOfRevisions() + "," +
+                process.getNumOfFixes() + "," +
+                process.getNumOfAuthors() + "," +
+                process.getChangeSet() + "," +
+                process.getAvgChangeSet() + "," +
+                process.getMaxChangeSet() + "," +
+                process.getAge().toDays() + "," +
+                process.getAverageChangeTime().toDays() + "," +
+                c.getOrder() + "\n";
         writer.write(s);
     }
 }
