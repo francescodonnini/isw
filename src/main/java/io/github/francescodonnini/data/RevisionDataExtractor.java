@@ -147,9 +147,9 @@ public class RevisionDataExtractor {
 
     private Map<String, Release> mapLastCommitPerRelease(List<RevCommit> sortedCommits) {
         var map = new HashMap<String, Release>();
+        RevCommit last = null;
         var i = 0;
         for (var release : releases) {
-            RevCommit last = null;
             while (i < sortedCommits.size()) {
                 var commit = sortedCommits.get(i);
                 if (GitUtils.getCommitDate(commit).isAfter(release.releaseDate())) {

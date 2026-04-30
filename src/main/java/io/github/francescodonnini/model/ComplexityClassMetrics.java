@@ -1,5 +1,8 @@
 package io.github.francescodonnini.model;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class ComplexityClassMetrics {
     int loc;
     int cc;
@@ -8,6 +11,9 @@ public class ComplexityClassMetrics {
     private int statementCount;
     private int smellCount;
     private int changeSetSize;
+    private int fanOut;
+    private final Set<String> dependencies = new HashSet<>();
+    private int fanIn;
 
     public int getElseCount() {
         return elseCount;
@@ -67,5 +73,33 @@ public class ComplexityClassMetrics {
 
     public void setSmellCount(int smellCount) {
         this.smellCount = smellCount;
+    }
+
+    public int getFanOut() {
+        return fanOut;
+    }
+
+    public void setFanOut(int fanOut) {
+        this.fanOut = fanOut;
+    }
+
+    public Set<String> getDependencies() {
+        return dependencies;
+    }
+
+    public void addDependencies(Set<String> dependencies) {
+        this.dependencies.addAll(dependencies);
+    }
+
+    public int getFanIn() {
+        return fanIn;
+    }
+
+    public void setFanIn(int fanIn) {
+        this.fanIn = fanIn;
+    }
+
+    public void incFanIn() {
+        this.fanIn++;
     }
 }

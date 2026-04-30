@@ -4,7 +4,13 @@ import io.github.francescodonnini.model.*;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -55,6 +61,7 @@ public class DiffCollector {
         for (var release : releases) {
             var end = release.releaseDate();
             var classList = collect(start, end, previousEnd, order);
+            calculateFanIn(classList);
             result.addAll(classList);
             previousEnd = end;
             if (!fromStart) {
@@ -66,6 +73,25 @@ public class DiffCollector {
             logger.log(Level.INFO, "{0}/{1} ({2}%)", new Object[]{progress, releases.size(), ((double)progress / releases.size() * 100)});
         }
         return result;
+    }
+
+    private void calculateFanIn(List<ReleaseJavaClass> classList) {
+        for (var cls : classList) {
+            cls.getComplexityMetrics().setFanIn(0);
+        }
+
+        for (var outboundCls : classList) {
+            var outboundDeps = outboundCls.getComplexityMetrics().getDependencies();
+            if (outboundDeps != null && !outboundDeps.isEmpty()) {
+                for (var targetCls : classList) {
+                    if (outboundCls != targetCls) {
+                        if (outboundDeps.contains(targetCls.getName())) {
+                            targetCls.getComplexityMetrics().incFanIn();
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private boolean isBetween(RevisionJavaClass cls, LocalDate start, LocalDate end) {

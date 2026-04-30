@@ -1,16 +1,16 @@
 package io.github.francescodonnini.csv.entities;
 
+import com.opencsv.bean.CsvBindAndSplitByName;
 import com.opencsv.bean.CsvBindByName;
 import com.opencsv.bean.CsvCustomBindByName;
 import com.opencsv.bean.CsvRecurse;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 public class RevisionClassLocalEntity {
     @CsvBindByName(column = "name", required = true)
     private String name;
-    @CsvBindByName(column = "buggy", required = true)
-    private boolean buggy;
     @CsvRecurse
     private ClassComplexityMetricsLocalEntity metrics;
     @CsvCustomBindByName(column = "time", required = true, converter = io.github.francescodonnini.csv.converters.LocalDateTimeConverter.class)
@@ -27,6 +27,8 @@ public class RevisionClassLocalEntity {
     private String author;
     @CsvBindByName(column = "commit", required = true)
     private String commit;
+    @CsvBindAndSplitByName(column = "dependencies", elementType = String.class, splitOn = "\\|", writeDelimiter = "|")
+    private Set<String> dependencies;
 
     public long getTrackingId() {
         return trackingId;
@@ -53,14 +55,6 @@ public class RevisionClassLocalEntity {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public boolean isBuggy() {
-        return buggy;
-    }
-
-    public void setBuggy(boolean buggy) {
-        this.buggy = buggy;
     }
 
     public ClassComplexityMetricsLocalEntity getMetrics() {
@@ -109,5 +103,13 @@ public class RevisionClassLocalEntity {
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public Set<String> getDependencies() {
+        return dependencies;
+    }
+
+    public void setDependencies(Set<String> dependencies) {
+        this.dependencies = dependencies;
     }
 }

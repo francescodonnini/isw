@@ -17,6 +17,10 @@ public class ClassComplexityMetricsLocalEntity {
     private int smellCount;
     @CsvBindByName(column = "changeSetSize", required = true)
     private int changeSetSize;
+    @CsvBindByName(column = "fanOut", required = true)
+    private int fanOut;
+    @CsvBindByName(column = "fanIn", required = true)
+    private int fanIn;
 
     public int getLoc() {
         return loc;
@@ -72,5 +76,21 @@ public class ClassComplexityMetricsLocalEntity {
 
     public void setChangeSetSize(int changeSetSize) {
         this.changeSetSize = changeSetSize;
+    }
+
+    public int getFanIn() {
+        return fanIn;
+    }
+
+    public void setFanIn(int fanIn) {
+        this.fanIn = fanIn;
+    }
+
+    public int getFanOut() {
+        return fanOut;
+    }
+
+    public void setFanOut(int fanOut) {
+        this.fanOut = fanOut;
     }
 }

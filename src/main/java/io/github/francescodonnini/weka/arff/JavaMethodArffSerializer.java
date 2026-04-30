@@ -33,6 +33,8 @@ public class JavaMethodArffSerializer {
             numericAttribute(off, "change_set_max");
             numericAttribute(off, "age");
             numericAttribute(off, "avg_change_time");
+            numericAttribute(off, "fan_in");
+            numericAttribute(off, "fan_out");
             numericAttribute(off, "release");
             off.write("@DATA\n");
             for (var i = 0; i < releases.size(); i++) {
@@ -82,6 +84,8 @@ public class JavaMethodArffSerializer {
                 .append(complexity.getSmellCount()).append(",")
                 .append(complexity.getStatementCount()).append(",")
                 .append(complexity.getNestingDepth()).append(",")
+                .append(complexity.getFanIn()).append(",")
+                .append(complexity.getFanOut()).append(",")
                 .append(process.getChurn()).append(",")
                 .append(process.getAvgChurn()).append(",")
                 .append(process.getMaxChurn()).append(",")

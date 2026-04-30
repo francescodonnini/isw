@@ -20,7 +20,8 @@ public class JavaClassAnalyzerFactory {
                 factory.build(CyclomaticComplexityCounter.class),
                 factory.build(ElseCounter.class),
                 factory.build(NestingDepth.class),
-                factory.build(StatementsCounter.class)
+                factory.build(StatementsCounter.class),
+                factory.build(FanOutCounter.class)
         );
         return new JavaClassAnalyzer(counters);
     }

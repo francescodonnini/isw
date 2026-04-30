@@ -10,6 +10,8 @@ public class AbstractCounterFactoryImpl implements AbstractCounterFactory {
             return new ElseCounter();
         } else if (kind == NestingDepth.class) {
             return new NestingDepth();
+        } else if (kind == FanOutCounter.class) {
+            return new FanOutCounter();
         } else {
             throw new IllegalArgumentException("unknown kind: " + kind);
         }

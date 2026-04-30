@@ -69,9 +69,9 @@ public class CsvJavaClassApi {
         c.setNestingDepth(bean.getNestingDepth());
         c.setStatementCount(bean.getStatementCount());
         c.setChangeSetSize(bean.getChangeSetSize());
-        for (int i = 0; i < bean.getSmellCount(); ++i) {
-            c.incSmellCount();
-        }
+        c.setFanIn(bean.getFanIn());
+        c.setFanOut(bean.getFanOut());
+        c.setSmellCount(bean.getSmellCount());
         return c;
     }
 
@@ -106,6 +106,9 @@ public class CsvJavaClassApi {
         r.setCommit(bean.getCommit());
         r.setTrackingId(bean.getTrackingId());
         bean.getAuthor().ifPresent(r::setAuthor);
+        if (bean.getDependencies() != null) {
+            r.getMetrics().addDependencies(bean.getDependencies());
+        }
         return r;
     }
 
@@ -152,6 +155,8 @@ public class CsvJavaClassApi {
         bean.setStatementCount(c.getStatementCount());
         bean.setSmellCount(c.getSmellCount());
         bean.setChangeSetSize(c.getChangeSetSize());
+        bean.setFanIn(c.getFanIn());
+        bean.setFanOut(c.getFanOut());
         return bean;
     }
 
@@ -178,7 +183,6 @@ public class CsvJavaClassApi {
     private RevisionClassLocalEntity to(RevisionJavaClass c) {
         var bean = new RevisionClassLocalEntity();
         bean.setName(c.getName());
-        bean.setBuggy(false);
         bean.setMetrics(to(c.getMetrics()));
         bean.setTime(c.getTime());
         bean.setTopLevel(c.isTopLevel());
@@ -186,6 +190,9 @@ public class CsvJavaClassApi {
         bean.setTrackingId(c.getTrackingId());
         c.getAuthor().ifPresent(bean::setAuthor);
         bean.setCommit(c.getCommit());
+        if (c.getMetrics().getDependencies() != null) {
+            bean.setDependencies(c.getMetrics().getDependencies());
+        }
         return bean;
     }
 }
