@@ -1,6 +1,13 @@
 package io.github.francescodonnini.data;
 
-import io.github.francescodonnini.collectors.ast.*;
+import io.github.francescodonnini.collectors.ast.AbstractCounterFactory;
+import io.github.francescodonnini.collectors.ast.AbstractCounterFactoryImpl;
+import io.github.francescodonnini.collectors.ast.CohesionCounter;
+import io.github.francescodonnini.collectors.ast.CyclomaticComplexityCounter;
+import io.github.francescodonnini.collectors.ast.ElseCounter;
+import io.github.francescodonnini.collectors.ast.FanOutCounter;
+import io.github.francescodonnini.collectors.ast.NestingDepth;
+import io.github.francescodonnini.collectors.ast.StatementsCounter;
 
 import java.util.List;
 
