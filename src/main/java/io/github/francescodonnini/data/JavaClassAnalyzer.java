@@ -53,11 +53,6 @@ public class JavaClassAnalyzer extends TreeScanner<Void, Void> {
     }
 
     @Override
-    public Void visitNewClass(NewClassTree node, Void unused) {
-        return super.visitNewClass(node, unused);
-    }
-
-    @Override
     public Void visitClass(ClassTree node, Void unused) {
         if (isGenerated(node)) {
             return null;
