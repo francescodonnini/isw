@@ -76,11 +76,8 @@ public class DiffCollector {
     }
 
     private void calculateFanIn(List<ReleaseJavaClass> classList) {
-        for (var cls : classList) {
-            cls.getComplexityMetrics().setFanIn(0);
-        }
-
         for (var outboundCls : classList) {
+            outboundCls.getComplexityMetrics().setFanIn(0);
             calculateFanIn(outboundCls, classList);
         }
     }
@@ -91,10 +88,8 @@ public class DiffCollector {
             return;
         }
         for (var targetCls : classList) {
-            if (outboundCls != targetCls) {
-                if (outboundDeps.contains(targetCls.getName())) {
-                    targetCls.getComplexityMetrics().incFanIn();
-                }
+            if (outboundCls != targetCls && outboundDeps.contains(targetCls.getName())) {
+                targetCls.getComplexityMetrics().incFanIn();
             }
         }
     }
