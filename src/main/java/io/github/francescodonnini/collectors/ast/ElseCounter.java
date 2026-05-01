@@ -2,7 +2,6 @@ package io.github.francescodonnini.collectors.ast;
 
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.IfTree;
-import com.sun.source.tree.MethodTree;
 import io.github.francescodonnini.model.RevisionJavaClass;
 
 public class ElseCounter extends AbstractCounter {
