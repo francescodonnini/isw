@@ -14,6 +14,7 @@ public class IntAccumulator extends Accumulator<Integer, Integer> {
         return getResult(unused -> true);
     }
 
+    @Override
     public AccumulatorResult<Integer, Double> getResult(Predicate<Integer> pred) {
         var diff = diff(pred);
         var sum = diff.stream().mapToInt(Integer::intValue).sum();

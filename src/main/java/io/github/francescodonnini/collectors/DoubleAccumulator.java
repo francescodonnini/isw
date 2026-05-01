@@ -14,6 +14,7 @@ public class DoubleAccumulator extends Accumulator<Double, Double> {
         return getResult(unused -> true);
     }
 
+    @Override
     public AccumulatorResult<Double, Double> getResult(Predicate<Double> pred) {
         var diff = diff(pred);
         var sum = diff.stream().mapToDouble(Double::doubleValue).sum();
