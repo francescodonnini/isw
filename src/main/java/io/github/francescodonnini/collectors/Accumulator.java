@@ -9,7 +9,7 @@ public abstract class Accumulator<T, D> {
     protected final List<T> items = new ArrayList<>();
     private final BiFunction<T, T, D> diffFunc;
 
-    public Accumulator(BiFunction<T, T, D> diffFunc) {
+    protected Accumulator(BiFunction<T, T, D> diffFunc) {
         this.diffFunc = diffFunc;
     }
 
