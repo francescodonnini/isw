@@ -16,11 +16,6 @@ public class ElseCounter extends AbstractCounter {
     }
 
     @Override
-    public Void visitMethod(MethodTree node, RevisionJavaClass javaClass) {
-        return super.visitMethod(node, javaClass);
-    }
-
-    @Override
     public Void visitIf(IfTree node, RevisionJavaClass javaClass) {
         if (node.getElseStatement() != null) {
             total++;
