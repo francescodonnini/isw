@@ -315,9 +315,9 @@ public class RevisionDataExtractor {
     private List<RevisionJavaClass> parseClass(ParseContext ctx) {
         try {
             var extractor = factory.create();
-            var classes = extractor.run(ctx.path(), ctx.content());
-            classes.forEach(c -> setContext(c, ctx));
-            return classes;
+            var classList = extractor.run(ctx.path(), ctx.content());
+            classList.forEach(c -> setContext(c, ctx));
+            return classList;
         } catch (IOException e) {
             logger.log(Level.SEVERE, e, () -> "Error parsing file " + ctx.path());
             return List.of();
