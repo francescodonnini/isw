@@ -12,6 +12,8 @@ public class AbstractCounterFactoryImpl implements AbstractCounterFactory {
             return new NestingDepth();
         } else if (kind == FanOutCounter.class) {
             return new FanOutCounter();
+        } else if (kind == CohesionCounter.class) {
+            return new CohesionCounter();
         } else {
             throw new IllegalArgumentException("unknown kind: " + kind);
         }

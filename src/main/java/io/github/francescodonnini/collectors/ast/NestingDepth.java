@@ -83,7 +83,6 @@ public class NestingDepth extends AbstractCounter {
 
     @Override
     public void reset() {
-        super.reset();
         currentNestingDepth = 0;
         maxNestingDepth = 0;
     }

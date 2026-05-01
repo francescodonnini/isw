@@ -14,6 +14,15 @@ public class ComplexityClassMetrics {
     private int fanOut;
     private final Set<String> dependencies = new HashSet<>();
     private int fanIn;
+    private int cohesion;
+
+    public int getCohesion() {
+        return cohesion;
+    }
+
+    public void setCohesion(int cohesion) {
+        this.cohesion = cohesion;
+    }
 
     public int getElseCount() {
         return elseCount;

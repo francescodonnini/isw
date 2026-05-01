@@ -30,7 +30,6 @@ public class ElseCounter extends AbstractCounter {
 
     @Override
     public void reset() {
-        super.reset();
         total = 0;
     }
 }

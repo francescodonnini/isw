@@ -21,6 +21,16 @@ public class ClassComplexityMetricsLocalEntity {
     private int fanOut;
     @CsvBindByName(column = "fanIn", required = true)
     private int fanIn;
+    @CsvBindByName(column = "lcom", required = true)
+    private int lcom;
+
+    public int getLCOM() {
+        return lcom;
+    }
+
+    public void setLCOM(int lcom) {
+        this.lcom = lcom;
+    }
 
     public int getLoc() {
         return loc;

@@ -13,7 +13,6 @@ public class FanOutCounter extends AbstractCounter {
 
     @Override
     public void reset() {
-        super.reset();
         dependencies.clear();
     }
 

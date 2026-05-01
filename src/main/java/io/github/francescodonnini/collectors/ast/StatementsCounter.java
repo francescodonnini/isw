@@ -139,7 +139,6 @@ public class StatementsCounter extends AbstractCounter {
 
     @Override
     public void reset() {
-        super.reset();
         total = 0;
     }
 }

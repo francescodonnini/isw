@@ -29,6 +29,16 @@ public class RevisionClassLocalEntity {
     private String commit;
     @CsvBindAndSplitByName(column = "dependencies", elementType = String.class, splitOn = "\\|", writeDelimiter = "|")
     private Set<String> dependencies;
+    @CsvBindByName(column = "entropy", required = true)
+    private double entropy;
+
+    public double getEntropy() {
+        return entropy;
+    }
+
+    public void setEntropy(double entropy) {
+        this.entropy = entropy;
+    }
 
     public long getTrackingId() {
         return trackingId;

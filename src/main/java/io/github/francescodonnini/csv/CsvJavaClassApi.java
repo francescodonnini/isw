@@ -72,6 +72,7 @@ public class CsvJavaClassApi {
         c.setFanIn(bean.getFanIn());
         c.setFanOut(bean.getFanOut());
         c.setSmellCount(bean.getSmellCount());
+        c.setCohesion(bean.getLCOM());
         return c;
     }
 
@@ -92,6 +93,9 @@ public class CsvJavaClassApi {
         c.setAvgChangeSet(bean.getAvgChangeSet());
         c.setAge(Duration.ofDays(bean.getAgeDays()));
         c.setAverageChangeTime(Duration.ofDays(bean.getAvgChangeTimeDays()));
+        c.setEntropy(bean.getEntropy());
+        c.setAvgEntropy(bean.getAvgEntropy());
+        c.setMaxEntropy(bean.getMaxEntropy());
         return c;
     }
 
@@ -100,6 +104,7 @@ public class CsvJavaClassApi {
                 .name(bean.getName())
                 .path(Path.of(bean.getPath()))
                 .topLevel(bean.isTopLevel())
+                .entropy(bean.getEntropy())
                 .metrics(from(bean.getMetrics()))
                 .build();
         r.setTime(bean.getTime());
@@ -157,6 +162,7 @@ public class CsvJavaClassApi {
         bean.setChangeSetSize(c.getChangeSetSize());
         bean.setFanIn(c.getFanIn());
         bean.setFanOut(c.getFanOut());
+        bean.setLCOM(c.getCohesion());
         return bean;
     }
 
@@ -177,6 +183,9 @@ public class CsvJavaClassApi {
         bean.setAvgChangeSet(c.getAvgChangeSet());
         bean.setAgeDays(c.getAge().toDays());
         bean.setAvgChangeTimeDays(c.getAverageChangeTime().toDays());
+        bean.setEntropy(c.getEntropy());
+        bean.setAvgEntropy(c.getAvgEntropy());
+        bean.setMaxEntropy(c.getMaxEntropy());
         return bean;
     }
 
@@ -193,6 +202,7 @@ public class CsvJavaClassApi {
         if (c.getMetrics().getDependencies() != null) {
             bean.setDependencies(c.getMetrics().getDependencies());
         }
+        bean.setEntropy(c.getCommitEntropy());
         return bean;
     }
 }

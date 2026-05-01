@@ -9,6 +9,7 @@ public class RevisionJavaClass {
         private Path path;
         private boolean topLevel;
         private String name;
+        private double commitEntropy;
         private ComplexityClassMetrics metrics;
 
         public Builder path(Path path) {
@@ -23,6 +24,11 @@ public class RevisionJavaClass {
 
         public Builder name(String name) {
             this.name = name;
+            return this;
+        }
+
+        public Builder entropy(double entropy) {
+            commitEntropy = entropy;
             return this;
         }
 
@@ -49,11 +55,13 @@ public class RevisionJavaClass {
     private String commit;
     private long trackingId;
     private String author;
+    private double commitEntropy;
 
     private RevisionJavaClass(Builder builder) {
         this.path = builder.path;
         this.topLevel = builder.topLevel;
         this.name = builder.name;
+        this.commitEntropy = builder.commitEntropy;
         this.metrics = builder.metrics;
     }
 
@@ -103,5 +111,13 @@ public class RevisionJavaClass {
 
     public void setAuthor(String author) {
         this.author = author;
+    }
+
+    public double getCommitEntropy() {
+        return commitEntropy;
+    }
+
+    public void setCommitEntropy(double commitEntropy) {
+        this.commitEntropy = commitEntropy;
     }
 }

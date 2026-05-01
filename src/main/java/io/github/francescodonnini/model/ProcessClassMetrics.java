@@ -18,6 +18,33 @@ public class ProcessClassMetrics {
     private double avgChangeSet;
     private Duration age;
     private Duration averageChangeTime;
+    private double entropy;
+    private double maxEntropy;
+    private double avgEntropy;
+
+    public double getEntropy() {
+        return entropy;
+    }
+
+    public void setEntropy(double entropy) {
+        this.entropy = entropy;
+    }
+
+    public double getMaxEntropy() {
+        return maxEntropy;
+    }
+
+    public void setMaxEntropy(double maxEntropy) {
+        this.maxEntropy = maxEntropy;
+    }
+
+    public double getAvgEntropy() {
+        return avgEntropy;
+    }
+
+    public void setAvgEntropy(double avgEntropy) {
+        this.avgEntropy = avgEntropy;
+    }
 
     public int getLocTouched() {
         return locTouched;

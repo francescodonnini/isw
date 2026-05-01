@@ -82,7 +82,6 @@ public class CyclomaticComplexityCounter extends AbstractCounter {
 
     @Override
     public void reset() {
-        super.reset();
         total = 1;
     }
 }

@@ -120,7 +120,7 @@ public class RevisionDataExtractor {
 
                 filter.setLastCommitPerRelease(lastRelease);
                 filter.add(susceptible);
-                loadData(commit, diffList, filter);
+                loadData(commit, diffList, filter, df);
 
                 if (lastRelease != null) {
                     logger.log(Level.INFO,
@@ -168,7 +168,11 @@ public class RevisionDataExtractor {
         return map;
     }
 
-    private void loadData(RevCommit commit, List<DiffEntry> diffList, Predicate<Path> predicate) throws IOException {
+    private void loadData(RevCommit commit,
+                          List<DiffEntry> diffList,
+                          Predicate<Path> predicate,
+                          DiffFormatter df) throws IOException {
+        var entropy = calculateEntropy(diffList, df);
         try (var walk = new TreeWalk(git.getRepository());
              var reader = git.getRepository().newObjectReader();
              var pmd = createPMDAnalysis(commit.getName())) {
@@ -193,10 +197,43 @@ public class RevisionDataExtractor {
             var list = lists.stream()
                     .flatMap(Collection::stream)
                     .toList();
-            parseCommit(list, commit, diffList);
+            parseCommit(list, commit, diffList, entropy);
             pmd.performAnalysis();
             addProgramData(list);
         }
+    }
+
+    private double calculateEntropy(List<DiffEntry> diffList, DiffFormatter df) {
+        if (diffList == null || diffList.isEmpty()) {
+            return 0.0;
+        }
+
+        var changesPerFile = new HashMap<String, Integer>();
+        var total = 0;
+        for (var diff : diffList) {
+            try {
+                var fileChanges = df.toFileHeader(diff).toEditList()
+                        .stream()
+                        .mapToInt(e -> e.getLengthA() + e.getLengthB())
+                        .sum();
+                if (fileChanges > 0) {
+                    changesPerFile.put(diff.getNewPath(), fileChanges);
+                    total += fileChanges;
+                }
+            } catch (IOException e) {
+                logger.log(Level.WARNING, "Cannot read edits for entry " + diff.getNewPath(), e);
+            }
+        }
+        if (total == 0) {
+            return 0.0;
+        }
+
+        var entropy = 0.0;
+        for (var changes : changesPerFile.values()) {
+            var p = (double) changes / total;
+            entropy -= p * Math.log(p) / Math.log(2);
+        }
+        return entropy;
     }
 
     private Optional<ParseContext> prepareFile(
@@ -294,7 +331,10 @@ public class RevisionDataExtractor {
         cls.getMetrics().setChangeSetSize(currentChangeSetSize);
     }
 
-    private void parseCommit(List<RevisionJavaClass> classList, RevCommit commit, List<DiffEntry> diffList) {
+    private void parseCommit(List<RevisionJavaClass> classList,
+                             RevCommit commit,
+                             List<DiffEntry> diffList,
+                             double entropy) {
         if (classList.isEmpty()) {
             return;
         }
@@ -308,6 +348,7 @@ public class RevisionDataExtractor {
                 var author = GitUtils.getAuthor(commit);
                 for (var c : index.get(path)) {
                     author.ifPresent(c::setAuthor);
+                    c.setCommitEntropy(entropy);
                 }
             }
         }

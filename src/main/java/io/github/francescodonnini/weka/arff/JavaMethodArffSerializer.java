@@ -11,13 +11,16 @@ public class JavaMethodArffSerializer {
     public void toArff(Path path, List<ReleaseJavaClass> classes) throws IOException {
         FileUtils.createDirectory(path.getParent());
         try (var off = new FileWriter(path.toFile())) {
-            off.write("@relation methods\n\n");
+            off.write("@relation classes\n\n");
             buggyAttribute(off);
             numericAttribute(off, "cyclomatic_complexity");
             numericAttribute(off, "loc");
             numericAttribute(off, "smell_count");
             numericAttribute(off, "stmt_count");
             numericAttribute(off, "nesting_depth");
+            numericAttribute(off, "fan_in");
+            numericAttribute(off, "fan_out");
+            numericAttribute(off, "lcom");
             numericAttribute(off, "churn");
             numericAttribute(off, "churn_avg");
             numericAttribute(off, "churn_max");
@@ -32,8 +35,9 @@ public class JavaMethodArffSerializer {
             numericAttribute(off, "change_set_max");
             numericAttribute(off, "age");
             numericAttribute(off, "avg_change_time");
-            numericAttribute(off, "fan_in");
-            numericAttribute(off, "fan_out");
+            numericAttribute(off, "entropy");
+            numericAttribute(off, "entropy_avg");
+            numericAttribute(off, "entropy_max");
             numericAttribute(off, "release");
             off.write("@DATA\n");
             for (var c : classes) {
@@ -61,6 +65,7 @@ public class JavaMethodArffSerializer {
                 complexity.getNestingDepth() + "," +
                 complexity.getFanIn() + "," +
                 complexity.getFanOut() + "," +
+                complexity.getCohesion() + "," +
                 process.getChurn() + "," +
                 process.getAvgChurn() + "," +
                 process.getMaxChurn() + "," +
@@ -75,6 +80,9 @@ public class JavaMethodArffSerializer {
                 process.getMaxChangeSet() + "," +
                 process.getAge().toDays() + "," +
                 process.getAverageChangeTime().toDays() + "," +
+                process.getEntropy() + "," +
+                process.getAvgEntropy() + "," +
+                process.getMaxEntropy() + "," +
                 c.getOrder() + "\n";
         writer.write(s);
     }

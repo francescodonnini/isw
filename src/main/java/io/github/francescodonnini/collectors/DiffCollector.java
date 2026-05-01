@@ -137,12 +137,14 @@ public class DiffCollector {
         var locTouched = new IntAccumulator();
         var changeSet = new IntAccumulator();
         var changeTime = new TimeAccumulator();
+        var entropy = new DoubleAccumulator();
         var authors = new HashSet<String>();
         var commits = new HashSet<String>();
         for (var revision : revisions) {
             locTouched.add(revision.getMetrics().getLoc());
             changeSet.add(revision.getMetrics().getChangeSetSize());
             changeTime.add(revision.getTime());
+            entropy.add(revision.getCommitEntropy());
             revision.getAuthor().ifPresent(authors::add);
             commits.add(revision.getCommit());
         }
@@ -153,6 +155,7 @@ public class DiffCollector {
         setChangeSet(processMetrics, changeSet);
         setAge(processMetrics, last);
         setAverageChangeTime(processMetrics, changeTime);
+        setEntropy(processMetrics, entropy);
         var complexity = last.getMetrics();
         complexity.setSmellCount(smellCount);
         return Optional.of(
@@ -166,6 +169,13 @@ public class DiffCollector {
                         .process(processMetrics)
                         .commits(commits)
                         .build());
+    }
+
+    private void setEntropy(ProcessClassMetrics metrics, DoubleAccumulator entropy) {
+        var r = entropy.getResult();
+        metrics.setEntropy(r.sum());
+        metrics.setAvgEntropy(r.average());
+        metrics.setMaxEntropy(r.max());
     }
 
     private Optional<RevisionJavaClass> getPrevious(RevisionJavaClass cls, LocalDate end) {

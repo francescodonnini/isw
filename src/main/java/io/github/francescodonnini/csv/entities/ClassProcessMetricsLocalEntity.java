@@ -33,6 +33,36 @@ public class ClassProcessMetricsLocalEntity {
     private long ageDays;
     @CsvBindByName(column = "avgChangeTime", required = true)
     private long avgChangeTimeDays;
+    @CsvBindByName(column = "entropy", required = true)
+    private double entropy;
+    @CsvBindByName(column = "maxEntropy", required = true)
+    private double maxEntropy;
+    @CsvBindByName(column = "avgEntropy", required = true)
+    private double avgEntropy;
+
+    public double getEntropy() {
+        return entropy;
+    }
+
+    public void setEntropy(double entropy) {
+        this.entropy = entropy;
+    }
+
+    public double getMaxEntropy() {
+        return maxEntropy;
+    }
+
+    public void setMaxEntropy(double maxEntropy) {
+        this.maxEntropy = maxEntropy;
+    }
+
+    public double getAvgEntropy() {
+        return avgEntropy;
+    }
+
+    public void setAvgEntropy(double avgEntropy) {
+        this.avgEntropy = avgEntropy;
+    }
 
     public int getLocTouched() {
         return locTouched;
