@@ -21,7 +21,8 @@ public class JavaClassAnalyzerFactory {
                 factory.build(ElseCounter.class),
                 factory.build(NestingDepth.class),
                 factory.build(StatementsCounter.class),
-                factory.build(FanOutCounter.class)
+                factory.build(FanOutCounter.class),
+                factory.build(CohesionCounter.class)
         );
         return new JavaClassAnalyzer(counters);
     }
