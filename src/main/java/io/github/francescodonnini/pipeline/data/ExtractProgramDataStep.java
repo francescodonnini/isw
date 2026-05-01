@@ -21,6 +21,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
+    private static final String REVISIONS = "revisions";
     private static final String NO_LABEL = "nolbl";
     private final Logger logger = Logger.getLogger(ExtractProgramDataStep.class.getName());
     private final DataPipelineContext context;
@@ -50,7 +51,7 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
     private void tryGetCommitData(ProjectInfo info) throws PipelineException {
         try {
             var classes = new CsvJavaClassApi()
-                    .getRevisionClasses(destinationPath("revisions", info));
+                    .getRevisionClasses(destinationPath(REVISIONS, info));
             info.setRevisionClasses(classes);
             calculateChanges(info);
         } catch (FileNotFoundException unused) {
@@ -72,7 +73,7 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
                     source,
                     report);
             var classes = loader.getRevisionClasses();
-            saveRevisionClasses(cachedClassesPath(info, "revisions"), classes);
+            saveRevisionClasses(cachedClassesPath(info, REVISIONS), classes);
             info.setRevisionClasses(classes);
             calculateChanges(info);
         } catch (IOException e) {
@@ -114,7 +115,7 @@ public class ExtractProgramDataStep implements Step<ProjectInfo, ProjectInfo> {
     }
 
     private String destinationPath(String description, ProjectInfo input) {
-        if (input.isFromStart() && !description.equals("revisions")) {
+        if (input.isFromStart() && !description.equals(REVISIONS)) {
             description += "_fromStart";
         }
         return context.getCache()
