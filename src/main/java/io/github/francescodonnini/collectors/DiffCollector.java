@@ -81,14 +81,19 @@ public class DiffCollector {
         }
 
         for (var outboundCls : classList) {
-            var outboundDeps = outboundCls.getComplexityMetrics().getDependencies();
-            if (outboundDeps != null && !outboundDeps.isEmpty()) {
-                for (var targetCls : classList) {
-                    if (outboundCls != targetCls) {
-                        if (outboundDeps.contains(targetCls.getName())) {
-                            targetCls.getComplexityMetrics().incFanIn();
-                        }
-                    }
+            calculateFanIn(outboundCls, classList);
+        }
+    }
+
+    private void calculateFanIn(ReleaseJavaClass outboundCls, List<ReleaseJavaClass> classList) {
+        var outboundDeps = outboundCls.getComplexityMetrics().getDependencies();
+        if (outboundDeps == null || outboundDeps.isEmpty()) {
+            return;
+        }
+        for (var targetCls : classList) {
+            if (outboundCls != targetCls) {
+                if (outboundDeps.contains(targetCls.getName())) {
+                    targetCls.getComplexityMetrics().incFanIn();
                 }
             }
         }
