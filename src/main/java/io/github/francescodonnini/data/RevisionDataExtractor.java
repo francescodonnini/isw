@@ -221,7 +221,7 @@ public class RevisionDataExtractor {
                     total += fileChanges;
                 }
             } catch (IOException e) {
-                logger.log(Level.WARNING, "Cannot read edits for entry " + diff.getNewPath(), e);
+                logger.log(Level.WARNING, "Cannot read edits for entry {}", diff.getNewPath());
             }
         }
         if (total == 0) {
