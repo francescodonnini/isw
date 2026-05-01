@@ -7,6 +7,7 @@ public class DoubleAccumulator extends Accumulator<Double, Double> {
         super((a, b) -> a - b);
     }
 
+    @Override
     public AccumulatorResult<Double, Double> getResult() {
         if (items.size() == 1) {
             return new AccumulatorResult<>(items.getFirst(), items.getFirst(), items.getFirst());
