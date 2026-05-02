@@ -340,16 +340,11 @@ public class RevisionDataExtractor {
         if (classList.isEmpty()) {
             return;
         }
+
         var index = classList.stream()
                 .collect(Collectors.groupingBy(c -> c.getPath().toString()));
-
         var author = GitUtils.getAuthor(commit);
-
-        var devExp = 0;
-        if (author.isPresent()) {
-            devExp = developersExperience.getOrDefault(author.get(), 0);
-        }
-
+        var devExp = getDevExp(commit);
         for (var diff : diffList) {
             var path = diff.getNewPath();
 
@@ -358,12 +353,7 @@ public class RevisionDataExtractor {
             if (path.endsWith(JAVA_FILE_EXT) && index.containsKey(path)) {
                 var classesInFile = index.get(path);
                 var fileId = classesInFile.getFirst().getTrackingId();
-
-                var fileExpMap = fileDevelopersExperience.computeIfAbsent(fileId, unused -> new HashMap<>());
-                var fileExp = 0;
-                if (author.isPresent()) {
-                    fileExp = fileExpMap.getOrDefault(author.get(), 0);
-                }
+                var fileExp = getFileExp(commit, fileId);
 
                 for (var c : index.get(path)) {
                     c.setCommitEntropy(entropy);
@@ -372,14 +362,46 @@ public class RevisionDataExtractor {
                     author.ifPresent(c::setAuthor);
                 }
 
-                if (author.isPresent()) {
-                    fileExpMap.put(author.get(), fileExp + 1);
-                }
+                updateFileExp(commit, fileId, fileExp);
             }
         }
+        updateDevExp(commit, devExp);
+    }
 
-        if (author.isPresent()) {
-            developersExperience.put(author.get(), devExp + 1);
+    private int getDevExp(RevCommit commit) {
+        var author = GitUtils.getAuthor(commit);
+        if (author.isEmpty()) {
+            return 0;
         }
+        return developersExperience.getOrDefault(author.get(), 0);
+    }
+
+    private int getFileExp(RevCommit commit, long fileId) {
+        var author = GitUtils.getAuthor(commit);
+        if (author.isEmpty()) {
+            return 0;
+        }
+        return fileDevelopersExperience
+                .computeIfAbsent(fileId, unused -> new HashMap<>())
+                .getOrDefault(author.get(), 0);
+    }
+
+    private void updateDevExp(RevCommit commit, int devExp) {
+        var author = GitUtils.getAuthor(commit);
+        if (author.isEmpty()) {
+            return;
+        }
+        developersExperience.put(author.get(), devExp + 1);
+    }
+
+    private void updateFileExp(RevCommit commit, long fileId, int fileExp) {
+        var author = GitUtils.getAuthor(commit);
+        if (author.isEmpty()) {
+            return;
+        }
+
+        fileDevelopersExperience
+                .computeIfAbsent(fileId, unused -> new HashMap<>())
+                .put(author.get(), fileExp + 1);
     }
 }
