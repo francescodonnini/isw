@@ -357,9 +357,9 @@ public class RevisionDataExtractor {
             // la modifica.
             if (path.endsWith(JAVA_FILE_EXT) && index.containsKey(path)) {
                 var classesInFile = index.get(path);
-                var trackingId = classesInFile.getFirst().getTrackingId();
+                var fileId = classesInFile.getFirst().getTrackingId();
 
-                var fileExpMap = fileDevelopersExperience.computeIfAbsent(trackingId, unused -> new HashMap<>());
+                var fileExpMap = fileDevelopersExperience.computeIfAbsent(fileId, unused -> new HashMap<>());
                 var fileExp = 0;
                 if (author.isPresent()) {
                     fileExp = fileExpMap.getOrDefault(author.get(), 0);
