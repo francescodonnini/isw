@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
-public abstract class Accumulator<T, D> {
+public abstract class Accumulator<T, D, R> {
     protected final List<T> items = new ArrayList<>();
     private final BiFunction<T, T, D> diffFunc;
 
@@ -32,7 +32,7 @@ public abstract class Accumulator<T, D> {
         return result;
     }
 
-    public abstract AccumulatorResult<D, ?> getResult(Predicate<D> pred);
+    public abstract AccumulatorResult<D, R> getResult(Predicate<D> pred);
 
     public AccumulatorResult<D, ?> getResult() {
         return getResult(unused -> true);

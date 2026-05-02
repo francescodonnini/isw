@@ -2,7 +2,7 @@ package io.github.francescodonnini.collectors;
 
 import java.util.function.Predicate;
 
-public class IntAccumulator extends Accumulator<Integer, Integer> {
+public class IntAccumulator extends Accumulator<Integer, Integer, Double> {
     public IntAccumulator() {
         super((a, b) -> a - b);
     }

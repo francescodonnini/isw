@@ -4,7 +4,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.function.Predicate;
 
-public class TimeAccumulator extends Accumulator<LocalDateTime, Duration> {
+public class TimeAccumulator extends Accumulator<LocalDateTime, Duration, Duration> {
 
     public TimeAccumulator() {
         super((a, b) -> Duration.between(b, a));
