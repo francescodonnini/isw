@@ -54,7 +54,7 @@ public class GitUtils {
 
     public static Optional<String> getAuthor(RevCommit commit) {
         var author = commit.getAuthorIdent().getEmailAddress();
-        if (author == null || author.isEmpty()) {
+        if (author == null || author.isEmpty() || author.equals("unknown@apache.org")) {
             return Optional.empty();
         }
         return Optional.of(author);

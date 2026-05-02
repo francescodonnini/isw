@@ -31,6 +31,26 @@ public class RevisionClassLocalEntity {
     private Set<String> dependencies;
     @CsvBindByName(column = "entropy", required = true)
     private double entropy;
+    @CsvBindByName(column = "fileExp", required = true)
+    private int fileExp;
+    @CsvBindByName(column = "devExp", required = true)
+    private int devExp;
+
+    public int getFileExp() {
+        return fileExp;
+    }
+
+    public void setFileExp(int fileExp) {
+        this.fileExp = fileExp;
+    }
+
+    public int getDevExp() {
+        return devExp;
+    }
+
+    public void setDevExp(int devExp) {
+        this.devExp = devExp;
+    }
 
     public double getEntropy() {
         return entropy;

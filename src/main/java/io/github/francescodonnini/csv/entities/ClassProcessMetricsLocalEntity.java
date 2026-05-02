@@ -39,6 +39,57 @@ public class ClassProcessMetricsLocalEntity {
     private double maxEntropy;
     @CsvBindByName(column = "avgEntropy", required = true)
     private double avgEntropy;
+    @CsvBindByName(column = "activeDays", required = true)
+    private int activeDays;
+    @CsvBindByName(column = "fileExpMax", required = true)
+    private int fileExpMax;
+    @CsvBindByName(column = "fileExpAvg", required = true)
+    private double fileExpAvg;
+
+    @CsvBindByName(column = "devExpMax", required = true)
+    private int devExpMax;
+    @CsvBindByName(column = "devExpAvg", required = true)
+    private double devExpAvg;
+
+    public int getFileExpMax() {
+        return fileExpMax;
+    }
+
+    public void setFileExpMax(int fileExpMax) {
+        this.fileExpMax = fileExpMax;
+    }
+
+    public double getFileExpAvg() {
+        return fileExpAvg;
+    }
+
+    public void setFileExpAvg(double fileExpAvg) {
+        this.fileExpAvg = fileExpAvg;
+    }
+
+    public int getDevExpMax() {
+        return devExpMax;
+    }
+
+    public void setDevExpMax(int devExpMax) {
+        this.devExpMax = devExpMax;
+    }
+
+    public double getDevExpAvg() {
+        return devExpAvg;
+    }
+
+    public void setDevExpAvg(double devExpAvg) {
+        this.devExpAvg = devExpAvg;
+    }
+
+    public int getActiveDays() {
+        return activeDays;
+    }
+
+    public void setActiveDays(int activeDays) {
+        this.activeDays = activeDays;
+    }
 
     public double getEntropy() {
         return entropy;

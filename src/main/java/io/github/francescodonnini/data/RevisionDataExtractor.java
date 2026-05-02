@@ -53,6 +53,8 @@ public class RevisionDataExtractor {
     private final List<Release> releases;
     private final List<Integer> classesPerRelease = new ArrayList<>();
     private int currentChangeSetSize = 0;
+    private final Map<String, Integer> developersExperience = new HashMap<>();
+    private final Map<Long, Map<String, Integer>> fileDevelopersExperience = new HashMap<>();
 
     public RevisionDataExtractor(
             JavaClassAnalyzerFactory factory,
@@ -340,17 +342,44 @@ public class RevisionDataExtractor {
         }
         var index = classList.stream()
                 .collect(Collectors.groupingBy(c -> c.getPath().toString()));
+
+        var author = GitUtils.getAuthor(commit);
+
+        var devExp = 0;
+        if (author.isPresent()) {
+            devExp = developersExperience.getOrDefault(author.get(), 0);
+        }
+
         for (var diff : diffList) {
             var path = diff.getNewPath();
+
             // Se il percorso del file modificato non è un file .java allora non è necessario analizzare
             // la modifica.
             if (path.endsWith(JAVA_FILE_EXT) && index.containsKey(path)) {
-                var author = GitUtils.getAuthor(commit);
+                var classesInFile = index.get(path);
+                var trackingId = classesInFile.getFirst().getTrackingId();
+
+                var fileExpMap = fileDevelopersExperience.computeIfAbsent(trackingId, unused -> new HashMap<>());
+                var fileExp = 0;
+                if (author.isPresent()) {
+                    fileExp = fileExpMap.getOrDefault(author.get(), 0);
+                }
+
                 for (var c : index.get(path)) {
-                    author.ifPresent(c::setAuthor);
                     c.setCommitEntropy(entropy);
+                    c.setDevExp(devExp);
+                    c.setFileExp(fileExp);
+                    author.ifPresent(c::setAuthor);
+                }
+
+                if (author.isPresent()) {
+                    fileExpMap.put(author.get(), fileExp + 1);
                 }
             }
+        }
+
+        if (author.isPresent()) {
+            developersExperience.put(author.get(), devExp + 1);
         }
     }
 }

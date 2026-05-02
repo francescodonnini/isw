@@ -21,6 +21,43 @@ public class ProcessClassMetrics {
     private double entropy;
     private double maxEntropy;
     private double avgEntropy;
+    private int activeDays;
+    private int fileExpMax;
+    private double fileExpAvg;
+    private int devExpMax;
+    private double devExpAvg;
+
+    public int getFileExpMax() {
+        return fileExpMax;
+    }
+
+    public void setFileExpMax(int fileExpMax) {
+        this.fileExpMax = fileExpMax;
+    }
+
+    public double getFileExpAvg() {
+        return fileExpAvg;
+    }
+
+    public void setFileExpAvg(double fileExpAvg) {
+        this.fileExpAvg = fileExpAvg;
+    }
+
+    public int getDevExpMax() {
+        return devExpMax;
+    }
+
+    public void setDevExpMax(int devExpMax) {
+        this.devExpMax = devExpMax;
+    }
+
+    public double getDevExpAvg() {
+        return devExpAvg;
+    }
+
+    public void setDevExpAvg(double devExpAvg) {
+        this.devExpAvg = devExpAvg;
+    }
 
     public double getEntropy() {
         return entropy;
@@ -168,5 +205,13 @@ public class ProcessClassMetrics {
 
     public void setAverageChangeTime(Duration averageChangeTime) {
         this.averageChangeTime = averageChangeTime;
+    }
+
+    public int getActiveDays() {
+        return activeDays;
+    }
+
+    public void setActiveDays(int activeDays) {
+        this.activeDays = activeDays;
     }
 }

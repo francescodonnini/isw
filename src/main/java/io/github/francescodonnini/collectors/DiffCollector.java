@@ -138,24 +138,33 @@ public class DiffCollector {
         var changeSet = new IntAccumulator();
         var changeTime = new TimeAccumulator();
         var entropy = new DoubleAccumulator();
+        var fileExp = new IntAccumulator();
+        var devExp = new IntAccumulator();
         var authors = new HashSet<String>();
         var commits = new HashSet<String>();
+        var activeDays = new HashSet<LocalDate>();
         for (var revision : revisions) {
             locTouched.add(revision.getMetrics().getLoc());
             changeSet.add(revision.getMetrics().getChangeSetSize());
             changeTime.add(revision.getTime());
             entropy.add(revision.getCommitEntropy());
+            fileExp.add(revision.getFileExp());
+            devExp.add(revision.getDevExp());
             revision.getAuthor().ifPresent(authors::add);
             commits.add(revision.getCommit());
+            activeDays.add(revision.getTime().toLocalDate());
         }
-        processMetrics.setNumOfAuthors(authors.size());
+        processMetrics.setNumOfAuthors(Math.max(1, authors.size()));
         processMetrics.setNumOfRevisions(revisions.size());
+        processMetrics.setActiveDays(activeDays.size());
         setChurn(processMetrics, locTouched);
         setLocAdded(processMetrics, locTouched);
         setChangeSet(processMetrics, changeSet);
         setAge(processMetrics, last);
         setAverageChangeTime(processMetrics, changeTime);
         setEntropy(processMetrics, entropy);
+        setFileExp(processMetrics, fileExp);
+        setDevExp(processMetrics, devExp);
         var complexity = last.getMetrics();
         complexity.setSmellCount(smellCount);
         return Optional.of(
@@ -176,6 +185,18 @@ public class DiffCollector {
         metrics.setEntropy(r.sum());
         metrics.setAvgEntropy(r.average());
         metrics.setMaxEntropy(r.max());
+    }
+
+    private void setFileExp(ProcessClassMetrics metrics, IntAccumulator fileExp) {
+        var r = fileExp.getResult();
+        metrics.setFileExpAvg(r.average());
+        metrics.setFileExpMax(r.max());
+    }
+
+    private void setDevExp(ProcessClassMetrics metrics, IntAccumulator devExp) {
+        var r = devExp.getResult();
+        metrics.setDevExpAvg(r.average());
+        metrics.setDevExpMax(r.max());
     }
 
     private Optional<RevisionJavaClass> getPrevious(RevisionJavaClass cls, LocalDate end) {

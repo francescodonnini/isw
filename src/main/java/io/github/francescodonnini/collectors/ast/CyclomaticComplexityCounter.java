@@ -19,6 +19,7 @@ public class CyclomaticComplexityCounter extends AbstractCounter {
         // questo controllo è necessario nel caso in cui il metodo in esame non ha implementazione, cioè è un metodo
         // di un'interfaccia oppure astratto.
         if (body != null) {
+            total++;
             super.visitMethod(node, unused);
         }
         return null;

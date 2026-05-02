@@ -96,6 +96,11 @@ public class CsvJavaClassApi {
         c.setEntropy(bean.getEntropy());
         c.setAvgEntropy(bean.getAvgEntropy());
         c.setMaxEntropy(bean.getMaxEntropy());
+        c.setFileExpMax(bean.getFileExpMax());
+        c.setFileExpAvg(bean.getFileExpAvg());
+        c.setDevExpMax(bean.getDevExpMax());
+        c.setDevExpAvg(bean.getDevExpAvg());
+        c.setActiveDays(bean.getActiveDays());
         return c;
     }
 
@@ -105,6 +110,8 @@ public class CsvJavaClassApi {
                 .path(Path.of(bean.getPath()))
                 .topLevel(bean.isTopLevel())
                 .entropy(bean.getEntropy())
+                .fileExp(bean.getFileExp())
+                .devExp(bean.getDevExp())
                 .metrics(from(bean.getMetrics()))
                 .build();
         r.setTime(bean.getTime());
@@ -186,6 +193,11 @@ public class CsvJavaClassApi {
         bean.setEntropy(c.getEntropy());
         bean.setAvgEntropy(c.getAvgEntropy());
         bean.setMaxEntropy(c.getMaxEntropy());
+        bean.setActiveDays(c.getActiveDays());
+        bean.setFileExpMax(c.getFileExpMax());
+        bean.setFileExpAvg(c.getFileExpAvg());
+        bean.setDevExpMax(c.getDevExpMax());
+        bean.setDevExpAvg(c.getDevExpAvg());
         return bean;
     }
 
@@ -197,6 +209,8 @@ public class CsvJavaClassApi {
         bean.setTopLevel(c.isTopLevel());
         bean.setPath(c.getPath().toString());
         bean.setTrackingId(c.getTrackingId());
+        bean.setDevExp(c.getDevExp());
+        bean.setFileExp(c.getFileExp());
         c.getAuthor().ifPresent(bean::setAuthor);
         bean.setCommit(c.getCommit());
         if (c.getMetrics().getDependencies() != null) {

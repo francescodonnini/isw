@@ -38,6 +38,11 @@ public class JavaMethodArffSerializer {
             numericAttribute(off, "entropy");
             numericAttribute(off, "entropy_avg");
             numericAttribute(off, "entropy_max");
+            numericAttribute(off, "active_days");
+            numericAttribute(off, "file_exp_max");
+            numericAttribute(off, "file_exp_avg");
+            numericAttribute(off, "dev_exp_max");
+            numericAttribute(off, "dev_exp_avg");
             numericAttribute(off, "release");
             off.write("@DATA\n");
             for (var c : classes) {
@@ -83,6 +88,11 @@ public class JavaMethodArffSerializer {
                 process.getEntropy() + "," +
                 process.getAvgEntropy() + "," +
                 process.getMaxEntropy() + "," +
+                process.getActiveDays() + "," +
+                process.getFileExpMax() + "," +
+                process.getFileExpAvg() + "," +
+                process.getDevExpMax() + "," +
+                process.getDevExpAvg() + "," +
                 c.getOrder() + "\n";
         writer.write(s);
     }
