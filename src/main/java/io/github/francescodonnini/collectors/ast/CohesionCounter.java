@@ -76,10 +76,10 @@ public class CohesionCounter extends AbstractCounter {
     }
 
     private void trackAccess(String ident) {
-        if (currentMethod != null) {
-            if (classFields.contains(ident) && !localVariables.contains(ident)) {
-                methodFieldAccesses.get(currentMethod).add(ident);
-            }
+        if (currentMethod != null
+            && classFields.contains(ident)
+            && !localVariables.contains(ident)) {
+            methodFieldAccesses.get(currentMethod).add(ident);
         }
     }
 
