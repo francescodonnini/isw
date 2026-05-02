@@ -34,7 +34,7 @@ public abstract class Accumulator<T, D, R> {
 
     public abstract AccumulatorResult<D, R> getResult(Predicate<D> pred);
 
-    public AccumulatorResult<D, ?> getResult() {
+    public AccumulatorResult<D, R> getResult() {
         return getResult(unused -> true);
     }
 }

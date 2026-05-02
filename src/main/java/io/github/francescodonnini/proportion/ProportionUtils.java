@@ -7,8 +7,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.function.Predicate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ProportionUtils {
+    private static final Logger logger = Logger.getLogger(ProportionUtils.class.getName());
+
     private ProportionUtils() {}
 
     public static List<Issue> getLabelled(List<Issue> issues) {
@@ -52,10 +56,12 @@ public class ProportionUtils {
     }
 
     public static OptionalDouble calculateP(List<Issue> issues, Predicate<Issue> filter) {
-        return issues.stream()
+        var p = issues.stream()
                 .filter(filter)
                 .mapToDouble(ProportionUtils::calculateP)
                 .average();
+        logger.log(Level.INFO, "P_AVG: %f".formatted(p.orElse(0.0)));
+        return p;
     }
 
     public static double calculateP(Issue i) {
