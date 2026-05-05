@@ -13,13 +13,10 @@ public class Main {
             throw new IllegalArgumentException("expected at least two arguments but got " + args.length);
         }
         var slice = Arrays.copyOfRange(args, 1, args.length);
-        switch (CLI.from(args[0])) {
-            case CLI.ANALYZE:
-                new CommandLine(new AnalysisCli()).execute(slice);
-                break;
-            case CLI.DATA:
-                new CommandLine(new DataCli()).execute(slice);
-                break;
+        if (CLI.from(args[0]).equals(CLI.ANALYZE)) {
+            new CommandLine(new AnalysisCli()).execute(slice);
+        } else {
+            new CommandLine(new DataCli()).execute(slice);
         }
     }
 }
