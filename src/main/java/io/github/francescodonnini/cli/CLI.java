@@ -2,8 +2,7 @@ package io.github.francescodonnini.cli;
 
 public enum CLI {
     ANALYZE,
-    DATA,
-    ML;
+    DATA;
 
     public static CLI from(String s) {
         return switch (s.toLowerCase()) {
