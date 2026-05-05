@@ -9,7 +9,6 @@ public enum CLI {
         return switch (s.toLowerCase()) {
             case "analyze" -> CLI.ANALYZE;
             case "data" -> CLI.DATA;
-            case "ml" -> CLI.ML;
             default -> throw new IllegalArgumentException("Unknown CLI workflow " + s);
         };
     }

@@ -4,7 +4,7 @@ import io.github.francescodonnini.pipeline.PipelineException;
 import io.github.francescodonnini.pipeline.inputs.DataPipelineContext;
 import io.github.francescodonnini.pipeline.inputs.ProjectInfo;
 import io.github.francescodonnini.pipeline.Step;
-import io.github.francescodonnini.weka.arff.JavaMethodArffSerializer;
+import io.github.francescodonnini.utils.ArffExporter;
 
 import java.io.IOException;
 
@@ -25,7 +25,7 @@ public class ExportToArffStep implements Step<ProjectInfo, ProjectInfo> {
                 .resolve(input.getProject())
                 .resolve("%s.arff".formatted(name));
         try {
-            new JavaMethodArffSerializer()
+            new ArffExporter()
                     .toArff(path, input.getReleaseClasses());
         } catch (IOException e) {
             throw new PipelineException("cannot convert dataset to arff", e);

@@ -1,13 +1,12 @@
-package io.github.francescodonnini.weka.arff;
+package io.github.francescodonnini.utils;
 
 import io.github.francescodonnini.model.ReleaseJavaClass;
-import io.github.francescodonnini.utils.FileUtils;
 
 import java.io.*;
 import java.nio.file.Path;
 import java.util.List;
 
-public class JavaMethodArffSerializer {
+public class ArffExporter {
     public void toArff(Path path, List<ReleaseJavaClass> classes) throws IOException {
         FileUtils.createDirectory(path.getParent());
         try (var off = new FileWriter(path.toFile())) {
