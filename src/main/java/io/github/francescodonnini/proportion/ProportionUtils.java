@@ -60,7 +60,7 @@ public class ProportionUtils {
                 .filter(filter)
                 .mapToDouble(ProportionUtils::calculateP)
                 .average();
-        logger.log(Level.INFO, "P_AVG: %f".formatted(p.orElse(0.0)));
+        logger.log(Level.INFO, "P_AVG: {0}", p.orElse(0.0));
         return p;
     }
 
